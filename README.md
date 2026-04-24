@@ -1,4 +1,4 @@
--- [[ LAYROXC HUB - WALLBANG & SILENT AIM ]] --
+-- [[ LAYROXC HUB - ANTI-FLING & SILENT AIM ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Layroxc Hub MM2", "DarkTheme")
 
@@ -13,62 +13,49 @@ OpenButton.Size = UDim2.new(0, 50, 0, 50)
 OpenButton.Position = UDim2.new(0, 10, 0.4, 0)
 OpenButton.Text = "L"
 OpenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-OpenButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 0) -- Sarı buton
 OpenButton.Draggable = true 
 local UIKose = Instance.new("UICorner", OpenButton)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
 -- TABLAR
-local Combat = Window:NewTab("Combat")
-local Visuals = Window:NewTab("Visuals")
-local Social = Window:NewTab("Social")
+local Main = Window:NewTab("Saldırı")
+local Visuals = Window:NewTab("Görsel")
+local Security = Window:NewTab("Güvenlik")
+local Social = Window:NewTab("Sosyal")
 
-local CombatSec = Combat:NewSection("Saldırı Modları")
-local VisSec = Visuals:NewSection("Görsel Hileler")
+-- 1. SALDIRI (AIMBOT)
+local MainSec = Main:NewSection("Aimbot Ayarları")
 
--- 1. DUVAR ARKASI VURMA (WALLBANG / SILENT AIM)
-CombatSec:NewToggle("Wallbang (Duvar Arkası Vur)", "Mermiler engelleri geçer ve katile gider", function(state)
-    _G.Wallbang = state
+MainSec:NewToggle("Silent Aim (Kilitlen)", "Mermiler otomatik olarak katile gider", function(state)
+    _G.SilentAim = state
     RunService.RenderStepped:Connect(function()
-        if _G.Wallbang then
-            local gun = LocalPlayer.Character:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
-            if gun then
-                -- Katili Bul
-                for _, v in pairs(Players:GetPlayers()) do
-                    if v ~= LocalPlayer and v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
-                        local targetPos = v.Character.HumanoidRootPart.Position
-                        -- Mermiyi katilin üzerine yönlendirir (Duvarları yok sayar)
-                        local shootRemote = gun:FindFirstChild("Shoot") or gun:FindFirstChild("Remote")
-                        if shootRemote and shootRemote:IsA("RemoteEvent") then
-                            shootRemote:FireServer(targetPos)
-                        end
-                    end
+        if _G.SilentAim then
+            for _, v in pairs(Players:GetPlayers()) do
+                if v ~= LocalPlayer and v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
+                    -- Aimbot Kamerayı odaklar
+                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, v.Character.HumanoidRootPart.Position)
                 end
             end
         end
     end)
 end)
 
--- 2. KATİLİ VUR (TELEPORT)
-CombatSec:NewButton("Katilin Arkasına Işınlan", "Hızlı suikast için", function()
-    for _, v in pairs(Players:GetPlayers()) do
-        if v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-        end
-    end
-end)
+-- 2. GÖRSEL (KATİL İFŞA)
+local VisSec = Visuals:NewSection("Katil & Şerif ESP")
 
--- 3. MASTER ESP (ISIM + KUTU + ROL)
-VisSec:NewToggle("Duvar Arkası Görme (ESP)", "Katili kırmızı, Şerifi mavi gösterir", function(state)
-    _G.ESP = state
-    while _G.ESP do
+VisSec:NewToggle("Katili Göster (Full ESP)", "Katili duvar arkasından gösterir", function(state)
+    _G.KillerESP = state
+    while _G.KillerESP do
         for _, v in pairs(Players:GetPlayers()) do
             if v ~= LocalPlayer and v.Character then
                 if not v.Character:FindFirstChild("Highlight") then
                     local hl = Instance.new("Highlight", v.Character)
                     hl.Name = "Highlight"
+                    -- Envanter Kontrolü (Bıçak varsa kırmızı yap)
                     if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
                         hl.FillColor = Color3.fromRGB(255, 0, 0)
+                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
                     elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then
                         hl.FillColor = Color3.fromRGB(0, 0, 255)
                     else
@@ -77,12 +64,30 @@ VisSec:NewToggle("Duvar Arkası Görme (ESP)", "Katili kırmızı, Şerifi mavi 
                 end
             end
         end
-        task.wait(1)
+        task.wait(0.5)
     end
 end)
 
--- 4. SOSYAL (TIKTOK)
+-- 3. GÜVENLİK (ANTI-FLING)
+local SecSec = Security:NewSection("Koruma")
+
+SecSec:NewToggle("Anti-Fling", "Birinin sizi uçurmasını engeller", function(state)
+    _G.AntiFling = state
+    if state then
+        RunService.Stepped:Connect(function()
+            if _G.AntiFling and LocalPlayer.Character then
+                for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.CanCollide = false -- Çarpışmayı kapatarak uçmayı engeller
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- 4. SOSYAL
 Social:NewSection("TikTok: @layroxcderler")
-Social:NewButton("Profil Linkini Kopyala", "Kopyalamak için tıkla", function()
+Social:NewButton("Profil Linkini Kopyala", "Destek için takip et!", function()
     setclipboard("https://www.tiktok.com/@layroxcderler")
 end)
