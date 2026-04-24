@@ -7,9 +7,25 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Değişkenler
-local AimbotEnabled = false
-local FarmEnabled = false
+-- MOBİL AÇMA/KAPAMA BUTONU
+local OpenGui = Instance.new("ScreenGui")
+local OpenButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+
+OpenGui.Parent = game.CoreGui
+OpenButton.Parent = OpenGui
+OpenButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+OpenButton.Position = UDim2.new(0.02, 0, 0.4, 0)
+OpenButton.Size = UDim2.new(0, 50, 0, 50)
+OpenButton.Text = "L"
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.TextSize = 25
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = OpenButton
+
+OpenButton.MouseButton1Click:Connect(function()
+    Library:ToggleUI()
+end)
 
 -- TABLAR
 local Main = Window:NewTab("Saldırı & Görsel")
@@ -38,7 +54,7 @@ end)
 -- 2. AIMBOT (RAINBOW LINE)
 local AimLine = Drawing.new("Line")
 AimLine.Thickness = 2
-AimLine.Visible = false
+local AimbotEnabled = false
 
 MainSection:NewToggle("Aimbot & Rainbow Çizgi", "Katili hedefler", function(state)
     AimbotEnabled = state
@@ -64,7 +80,7 @@ MainSection:NewToggle("Aimbot & Rainbow Çizgi", "Katili hedefler", function(sta
     AimLine.Visible = false
 end)
 
--- 3. İSİM ESP (TRACES KALDIRILDI)
+-- 3. İSİM ESP & X-RAY
 MainSection:NewToggle("Oyuncu ESP", "Rolleri gösterir", function(state)
     _G.ESP = state
     while _G.ESP do
@@ -79,13 +95,10 @@ MainSection:NewToggle("Oyuncu ESP", "Rolleri gösterir", function(state)
                     lbl.Size = UDim2.new(1, 0, 1, 0)
                     lbl.BackgroundTransparency = 1
                     lbl.TextScaled = true
-                    
-                    local role = "Masum"
-                    local col = Color3.fromRGB(0, 255, 0)
-                    if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then role = "KATIL"; col = Color3.fromRGB(255, 0)
+                    local role = "Masum"; local col = Color3.fromRGB(0, 255, 0)
+                    if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then role = "KATIL"; col = Color3.fromRGB(255, 0, 0)
                     elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then role = "SHERIFF"; col = Color3.fromRGB(0, 0, 255) end
-                    lbl.Text = v.Name .. " [" .. role .. "]"
-                    lbl.TextColor3 = col
+                    lbl.Text = v.Name .. " [" .. role .. "]"; lbl.TextColor3 = col
                 end
             end
         end
@@ -93,51 +106,45 @@ MainSection:NewToggle("Oyuncu ESP", "Rolleri gösterir", function(state)
     end
 end)
 
--- 4. X-RAY & SPEED & JUMP
-PlayerSection:NewSlider("Hız", "Walkspeed", 300, 16, function(s) LocalPlayer.Character.Humanoid.WalkSpeed = s end)
-PlayerSection:NewSlider("Zıplama", "JumpPower", 300, 50, function(s) LocalPlayer.Character.Humanoid.JumpPower = s end)
-
 PlayerSection:NewButton("X-Ray Aç/Kapat", "Duvarları şeffaf yapar", function()
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and not obj:IsDescendantOf(LocalPlayer.Character) then
-            obj.Transparency = obj.Transparency == 0 and 0.5 or 0
+            obj.Transparency = (obj.Transparency == 0 and 0.5 or 0)
         end
     end
 end)
 
--- 5. TARGET & FLING
+-- 4. HIZ & ZIPLAMA
+PlayerSection:NewSlider("Hız", "Walkspeed", 300, 16, function(s) LocalPlayer.Character.Humanoid.WalkSpeed = s end)
+PlayerSection:NewSlider("Zıplama", "JumpPower", 300, 50, function(s) LocalPlayer.Character.Humanoid.JumpPower = s end)
+
+-- 5. TARGET & FLING (OYUNCU LİSTESİ)
 local SelectedPlayer = nil
 local PlayerNames = {}
 for _, v in pairs(Players:GetPlayers()) do if v ~= LocalPlayer then table.insert(PlayerNames, v.Name) end end
-local Drop = TargetSection:NewDropdown("Hedef Seç", "Uçurulacak kişi", PlayerNames, function(t) SelectedPlayer = t end)
+local Drop = TargetSection:NewDropdown("Hedef Seç", "Seçili kişiyi uçurur", PlayerNames, function(t) SelectedPlayer = t end)
 
-TargetSection:NewButton("Fling (Uçur)", "Kişiyi haritadan atar", function()
+TargetSection:NewButton("Fling (Uçur)", "Kişiyi fırlatır", function()
     local t = Players:FindFirstChild(SelectedPlayer)
     if t and t.Character then
         LocalPlayer.Character.HumanoidRootPart.CFrame = t.Character.HumanoidRootPart.CFrame
         local bv = Instance.new("BodyAngularVelocity", LocalPlayer.Character.HumanoidRootPart)
         bv.AngularVelocity = Vector3.new(0, 99999, 0)
         bv.MaxTorque = Vector3.new(0, 99999, 0)
-        task.wait(0.5)
-        bv:Destroy()
+        task.wait(0.5); bv:Destroy()
     end
 end)
 
--- 6. COIN FARM (GÜNCELLENDİ)
-FarmSection:NewToggle("Auto Coin Farm", "Paraları toplar", function(state)
-    FarmEnabled = state
-    while FarmEnabled do
+-- 6. COIN FARM (GÜÇLENDİRİLMİŞ)
+FarmSection:NewToggle("Auto Coin Farm", "Paraları otomatik toplar", function(state)
+    _G.Farm = state
+    while _G.Farm do
         for _, v in pairs(workspace:GetDescendants()) do
-            if (v.Name == "Coin" or v.Name == "Candy") and v:IsA("BasePart") then
+            if (v.Name == "Coin" or v.Name == "Candy" or v.Name == "Snowflake") and v:IsA("BasePart") and _G.Farm then
                 LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
                 task.wait(0.15)
             end
         end
         task.wait()
     end
-end)
-
--- MENÜYÜ AÇMA/KAPAMA AYARI
-MainSection:NewKeybind("Menüyü Gizle", "Sağ Control ile gizle", Enum.KeyCode.RightControl, function()
-    Library:ToggleUI()
 end)
