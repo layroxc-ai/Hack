@@ -1,4 +1,4 @@
--- [[ LAYROXC HUB - ANTI-FLING & SILENT AIM ]] --
+-- [[ LAYROXC HUB - FULL AUTO & ESP FIX ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Layroxc Hub MM2", "DarkTheme")
 
@@ -6,61 +6,75 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
--- MOBİL SÜRÜKLENEBİLİR BUTON (L)
+-- MOBİL BUTON
 local OpenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenButton = Instance.new("TextButton", OpenGui)
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
 OpenButton.Position = UDim2.new(0, 10, 0.4, 0)
 OpenButton.Text = "L"
-OpenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-OpenButton.TextColor3 = Color3.fromRGB(255, 255, 0) -- Sarı buton
 OpenButton.Draggable = true 
 local UIKose = Instance.new("UICorner", OpenButton)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
 -- TABLAR
-local Main = Window:NewTab("Saldırı")
+local Main = Window:NewTab("Otomasyon")
 local Visuals = Window:NewTab("Görsel")
-local Security = Window:NewTab("Güvenlik")
 local Social = Window:NewTab("Sosyal")
 
--- 1. SALDIRI (AIMBOT)
-local MainSec = Main:NewSection("Aimbot Ayarları")
+-- 1. OTOMASYON (AUTO SHOOT & GRAB)
+local AutoSec = Main:NewSection("Saldırı ve Toplama")
 
-MainSec:NewToggle("Silent Aim (Kilitlen)", "Mermiler otomatik olarak katile gider", function(state)
-    _G.SilentAim = state
+AutoSec:NewToggle("Auto Grab Gun", "Silah yere düşerse anında eline gelir", function(state)
+    _G.GrabGun = state
+    while _G.GrabGun do
+        local gun = workspace:FindFirstChild("GunDrop")
+        if gun and LocalPlayer.Character then
+            gun.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+        end
+        task.wait(0.1)
+    end
+end)
+
+AutoSec:NewToggle("Auto Shoot Murderer", "Katili görünce otomatik ateş eder", function(state)
+    _G.AutoShoot = state
     RunService.RenderStepped:Connect(function()
-        if _G.SilentAim then
-            for _, v in pairs(Players:GetPlayers()) do
-                if v ~= LocalPlayer and v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
-                    -- Aimbot Kamerayı odaklar
-                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, v.Character.HumanoidRootPart.Position)
+        if _G.AutoShoot then
+            local gun = LocalPlayer.Character:FindFirstChild("Gun")
+            if gun then
+                for _, v in pairs(Players:GetPlayers()) do
+                    if v ~= LocalPlayer and v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
+                        -- Katil menzildeyse ateş et
+                        gun:Activate() 
+                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, v.Character.HumanoidRootPart.Position)
+                    end
                 end
             end
         end
     end)
 end)
 
--- 2. GÖRSEL (KATİL İFŞA)
-local VisSec = Visuals:NewSection("Katil & Şerif ESP")
+-- 2. GÖRSEL (ESP FIX)
+local VisSec = Visuals:NewSection("ESP (Katil/Şerif İfşa)")
 
-VisSec:NewToggle("Katili Göster (Full ESP)", "Katili duvar arkasından gösterir", function(state)
-    _G.KillerESP = state
-    while _G.KillerESP do
+VisSec:NewToggle("Fixlenmiş ESP", "Asla kapanmayan ve rolleri gösteren ESP", function(state)
+    _G.MasterESP = state
+    while _G.MasterESP do
         for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character then
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                -- Eski Highlight'ları temizle ve yenile (Fixleme kısmı)
                 if not v.Character:FindFirstChild("Highlight") then
                     local hl = Instance.new("Highlight", v.Character)
                     hl.Name = "Highlight"
-                    -- Envanter Kontrolü (Bıçak varsa kırmızı yap)
-                    if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
-                        hl.FillColor = Color3.fromRGB(255, 0, 0)
-                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then
-                        hl.FillColor = Color3.fromRGB(0, 0, 255)
-                    else
-                        hl.FillColor = Color3.fromRGB(0, 255, 0)
-                    end
+                    hl.FillTransparency = 0.4
+                end
+                
+                local hl = v.Character.Highlight
+                if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
+                    hl.FillColor = Color3.fromRGB(255, 0, 0) -- KATİL
+                elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then
+                    hl.FillColor = Color3.fromRGB(0, 0, 255) -- ŞERİF
+                else
+                    hl.FillColor = Color3.fromRGB(0, 255, 0) -- MASUM
                 end
             end
         end
@@ -68,26 +82,8 @@ VisSec:NewToggle("Katili Göster (Full ESP)", "Katili duvar arkasından gösteri
     end
 end)
 
--- 3. GÜVENLİK (ANTI-FLING)
-local SecSec = Security:NewSection("Koruma")
-
-SecSec:NewToggle("Anti-Fling", "Birinin sizi uçurmasını engeller", function(state)
-    _G.AntiFling = state
-    if state then
-        RunService.Stepped:Connect(function()
-            if _G.AntiFling and LocalPlayer.Character then
-                for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.CanCollide = false -- Çarpışmayı kapatarak uçmayı engeller
-                    end
-                end
-            end
-        end)
-    end
-end)
-
--- 4. SOSYAL
+-- 3. SOSYAL
 Social:NewSection("TikTok: @layroxcderler")
-Social:NewButton("Profil Linkini Kopyala", "Destek için takip et!", function()
+Social:NewButton("Profilimi Kopyala", "Destek için takip et!", function()
     setclipboard("https://www.tiktok.com/@layroxcderler")
 end)
