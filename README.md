@@ -5,95 +5,93 @@ local Window = Library.CreateLib("Layroxc MM2", "DarkTheme")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-
--- Değişkenler
-local AimbotEnabled = false
-local FarmEnabled = false
-local ESPEnabled = false
+local Camera = workspace.CurrentCamera
 
 -- TABLAR
 local Main = Window:NewTab("Main")
 local MainSection = Main:NewSection("Combat & Visuals")
-local FarmTab = Window:NewTab("Auto Farm")
-local FarmSection = FarmTab:NewSection("Coin Farm")
+local VisualTab = Window:NewTab("Visuals")
+local VisualSection = VisualTab:NewSection("Lines & Effects")
+local TargetTab = Window:NewTab("Target")
+local TargetSection = TargetTab:NewSection("Player List")
 
--- 1. KİM KİM KONTROLÜ (ESP)
-MainSection:NewToggle("Player ESP", "Oyuncularin rollerini gor", function(state)
-    ESPEnabled = state
-    while ESPEnabled do
+-- RAINBOW RENK DÖNGÜSÜ
+local Hue = 0
+RunService.RenderStepped:Connect(function()
+    Hue = Hue + 0.01
+    if Hue > 1 then Hue = 0 end
+end)
+
+-- 1. RAINBOW AIMBOT LINE
+local AimLine = Drawing.new("Line")
+AimLine.Thickness = 2
+AimLine.Visible = false
+
+MainSection:NewToggle("Rainbow Aim Line", "Katili cizgiyle takip et", function(state)
+    _G.AimLine = state
+    while _G.AimLine do
+        local target = nil
         for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                if not v.Character:FindFirstChild("Highlight") then
-                    local hl = Instance.new("Highlight", v.Character)
-                    hl.FillTransparency = 0.5
-                    
-                    -- Rol Belirleme
-                    if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
-                        hl.FillColor = Color3.fromRGB(255, 0, 0) -- KATİL (Kırmızı)
-                    elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then
-                        hl.FillColor = Color3.fromRGB(0, 0, 255) -- SHERIFF (Mavi)
-                    else
-                        hl.FillColor = Color3.fromRGB(0, 255, 0) -- MASUM (Yeşil)
-                    end
-                end
+            if v ~= LocalPlayer and v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
+                target = v.Character.HumanoidRootPart
             end
         end
-        task.wait(2)
-        if not ESPEnabled then
-            for _, v in pairs(Players:GetPlayers()) do
-                if v.Character and v.Character:FindFirstChild("Highlight") then
-                    v.Character.Highlight:Destroy()
-                end
-            end
-        end
-    end
-end)
 
--- 2. AIMBOT
-MainSection:NewToggle("Silent Aim", "Katili otomatik hedefler", function(state)
-    AimbotEnabled = state
-    RunService.RenderStepped:Connect(function()
-        if AimbotEnabled then
-            for _, v in pairs(Players:GetPlayers()) do
-                if v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
-                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, v.Character.HumanoidRootPart.Position)
-                end
+        if target then
+            local vector, onScreen = Camera:WorldToViewportPoint(target.Position)
+            if onScreen then
+                AimLine.Color = Color3.fromHSV(Hue, 1, 1)
+                AimLine.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+                AimLine.To = Vector2.new(vector.X, vector.Y)
+                AimLine.Visible = true
+            else
+                AimLine.Visible = false
             end
-        end
-    end)
-end)
-
--- 3. KATİLİ VUR (KILL MURDERER)
-MainSection:NewButton("Kill Murderer", "Katili aninda vurur", function()
-    local target = nil
-    for _, v in pairs(Players:GetPlayers()) do
-        if v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
-            target = v.Character.HumanoidRootPart
-        end
-    end
-    
-    if target and LocalPlayer.Character:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun") then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = target.CFrame * CFrame.new(0, 0, 3) -- Arkasına ışınlan
-        -- Ateş etme tetikleyicisi buraya eklenebilir
-    end
-end)
-
--- 4. OTOMATİK COIN FARM
-FarmSection:NewToggle("Auto Coin Farm", "Paralari otomatik toplar", function(state)
-    FarmEnabled = state
-    while FarmEnabled do
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v.Name == "Coin" or v.Name == "Candy" or v.Name == "Snowflake" then
-                if v:IsA("BasePart") and FarmEnabled then
-                    LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
-                    task.wait(0.1) -- Ban yememek için çok az bekleme
-                end
-            end
+        else
+            AimLine.Visible = false
         end
         task.wait()
     end
+    AimLine.Visible = false
 end)
 
-FarmSection:NewButton("Reset when Full", "Canta dolunca reset atar", function()
-    LocalPlayer.Character.Humanoid:BreakJoints()
+-- 2. TRACES (İZLEYİCİ ÇİZGİLER)
+local Traces = {}
+VisualSection:NewToggle("Player Traces", "Oyunculara giden izler", function(state)
+    _G.Traces = state
+    if not state then
+        for _, line in pairs(Traces) do line:Remove() end
+        Traces = {}
+    end
 end)
+
+RunService.RenderStepped:Connect(function()
+    if _G.Traces then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                local line = Traces[v] or Drawing.new("Line")
+                line.Thickness = 1
+                line.Transparency = 0.8
+                
+                local vector, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+                if onScreen then
+                    -- Rol Rengi
+                    local color = Color3.fromRGB(0, 255, 0)
+                    if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then color = Color3.fromRGB(255, 0, 0)
+                    elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then color = Color3.fromRGB(0, 0, 255) end
+                    
+                    line.Color = color
+                    line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y) -- Ekranın altından çıkar
+                    line.To = Vector2.new(vector.X, vector.Y)
+                    line.Visible = true
+                else
+                    line.Visible = false
+                end
+                Traces[v] = line
+            end
+        end
+    end
+end)
+
+-- [DİĞER ÖZELLİKLER (SPEED, FLING, FARM) BURAYA EKLENEBİLİR]
+-- Önceki kodlardaki bölümleri buraya ekleyerek menüyü tamamlayabilirsin.
