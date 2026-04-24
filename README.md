@@ -1,6 +1,6 @@
--- [[ LAYROXC ULTRA AUTOMATION - MM2 & MUSCLE LEGENDS ]] --
+-- [[ LAYROXC HUB - WALLBANG & SILENT AIM ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Pro Hub", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub MM2", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -12,61 +12,61 @@ local OpenButton = Instance.new("TextButton", OpenGui)
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
 OpenButton.Position = UDim2.new(0, 10, 0.4, 0)
 OpenButton.Text = "L"
-OpenButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-OpenButton.TextColor3 = Color3.new(1, 1, 1)
+OpenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+OpenButton.TextColor3 = Color3.fromRGB(255, 0, 0)
 OpenButton.Draggable = true 
 local UIKose = Instance.new("UICorner", OpenButton)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
 -- TABLAR
-local MuscleTab = Window:NewTab("Muscle Legends")
-local MM2Tab = Window:NewTab("MM2")
-local SocialTab = Window:NewTab("Sosyal")
+local Combat = Window:NewTab("Combat")
+local Visuals = Window:NewTab("Visuals")
+local Social = Window:NewTab("Social")
 
-local MuscleSection = MuscleTab:NewSection("Otomatik Gelişim")
-local MM2Section = MM2Tab:NewSection("Otomatik Oyun")
+local CombatSec = Combat:NewSection("Saldırı Modları")
+local VisSec = Visuals:NewSection("Görsel Hileler")
 
--- 1. MUSCLE LEGENDS OTOMASYON
-MuscleSection:NewToggle("Ultra Hızlı Kas (Auto)", "Elinizdeki aleti saniyede 100 kere basar", function(state)
-    _G.AutoMuscle = state
-    while _G.AutoMuscle do
-        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
-        if tool then
-            tool:Activate()
+-- 1. DUVAR ARKASI VURMA (WALLBANG / SILENT AIM)
+CombatSec:NewToggle("Wallbang (Duvar Arkası Vur)", "Mermiler engelleri geçer ve katile gider", function(state)
+    _G.Wallbang = state
+    RunService.RenderStepped:Connect(function()
+        if _G.Wallbang then
+            local gun = LocalPlayer.Character:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
+            if gun then
+                -- Katili Bul
+                for _, v in pairs(Players:GetPlayers()) do
+                    if v ~= LocalPlayer and v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
+                        local targetPos = v.Character.HumanoidRootPart.Position
+                        -- Mermiyi katilin üzerine yönlendirir (Duvarları yok sayar)
+                        local shootRemote = gun:FindFirstChild("Shoot") or gun:FindFirstChild("Remote")
+                        if shootRemote and shootRemote:IsA("RemoteEvent") then
+                            shootRemote:FireServer(targetPos)
+                        end
+                    end
+                end
+            end
         end
-        task.wait(0.001) -- İnanılmaz hızlı tıklama
-    end
+    end)
 end)
 
-MuscleSection:NewToggle("Otomatik Rebirth", "Gücünüz yettiğinde otomatik rebirth atar", function(state)
-    _G.AutoRebirth = state
-    while _G.AutoRebirth do
-        game:GetService("ReplicatedStorage").rEvents.rebirthEvent:FireServer()
-        task.wait(2)
-    end
-end)
-
--- 2. MM2 OTOMASYON
-MM2Section:NewToggle("Otomatik Silah Çek (Bring Gun)", "Silah düştüğü an eline gelir", function(state)
-    _G.BringGun = state
-    while _G.BringGun do
-        local gunDrop = workspace:FindFirstChild("GunDrop")
-        if gunDrop and LocalPlayer.Character then
-            gunDrop.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+-- 2. KATİLİ VUR (TELEPORT)
+CombatSec:NewButton("Katilin Arkasına Işınlan", "Hızlı suikast için", function()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
         end
-        task.wait(0.1)
     end
 end)
 
-MM2Section:NewToggle("Otomatik Katil ESP", "Katili ve Şerifi her zaman gösterir", function(state)
-    _G.Visuals = state
-    while _G.Visuals do
+-- 3. MASTER ESP (ISIM + KUTU + ROL)
+VisSec:NewToggle("Duvar Arkası Görme (ESP)", "Katili kırmızı, Şerifi mavi gösterir", function(state)
+    _G.ESP = state
+    while _G.ESP do
         for _, v in pairs(Players:GetPlayers()) do
             if v ~= LocalPlayer and v.Character then
-                if not v.Character:FindFirstChild("BoxHighlight") then
+                if not v.Character:FindFirstChild("Highlight") then
                     local hl = Instance.new("Highlight", v.Character)
-                    hl.Name = "BoxHighlight"
-                    hl.FillTransparency = 0.5
+                    hl.Name = "Highlight"
                     if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
                         hl.FillColor = Color3.fromRGB(255, 0, 0)
                     elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then
@@ -81,8 +81,8 @@ MM2Section:NewToggle("Otomatik Katil ESP", "Katili ve Şerifi her zaman gösteri
     end
 end)
 
--- 3. SOSYAL
-SocialTab:NewSection("TikTok: @layroxcderler")
-SocialTab:NewButton("Profil Linkini Kopyala", "TikTok adresine git", function()
-    if setclipboard then setclipboard("https://www.tiktok.com/@layroxcderler") end
+-- 4. SOSYAL (TIKTOK)
+Social:NewSection("TikTok: @layroxcderler")
+Social:NewButton("Profil Linkini Kopyala", "Kopyalamak için tıkla", function()
+    setclipboard("https://www.tiktok.com/@layroxcderler")
 end)
