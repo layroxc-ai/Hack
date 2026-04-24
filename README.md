@@ -1,15 +1,12 @@
+-- [[ LAYROXC ULTRA AUTOMATION - MM2 & MUSCLE LEGENDS ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc MM2", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Pro Hub", "DarkTheme")
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
--- AYARLAR
-local TargetWalkSpeed = 16
-local TikTokLink = "https://www.tiktok.com/@layroxcderler"
-
--- MOBİL SÜRÜKLENEBİLİR BUTON
+-- MOBİL SÜRÜKLENEBİLİR BUTON (L)
 local OpenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenButton = Instance.new("TextButton", OpenGui)
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
@@ -22,31 +19,46 @@ local UIKose = Instance.new("UICorner", OpenButton)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
 -- TABLAR
-local Main = Window:NewTab("Saldırı & ESP")
-local PlayerTab = Window:NewTab("Karakter")
-local FarmTab = Window:NewTab("Farm")
+local MuscleTab = Window:NewTab("Muscle Legends")
+local MM2Tab = Window:NewTab("MM2")
 local SocialTab = Window:NewTab("Sosyal")
 
-local MainSection = Main:NewSection("Silah & Görsel")
-local SpeedSection = PlayerTab:NewSection("Hız & Hareket")
-local FarmSection = FarmTab:NewSection("Otomatik Toplama")
-local SocialSection = SocialTab:NewSection("Yapımcı: @layroxcderler")
+local MuscleSection = MuscleTab:NewSection("Otomatik Gelişim")
+local MM2Section = MM2Tab:NewSection("Otomatik Oyun")
 
--- 1. SİLAH BANA IŞINLANSIN (BRING GUN)
-MainSection:NewToggle("Silahı Bana Işınla", "Silah yere düştüğünde sana gelir", function(state)
-    _G.BringGun = state
-    while _G.BringGun do
-        local gunDrop = workspace:FindFirstChild("GunDrop")
-        if gunDrop and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            -- Silahı senin üzerine ışınlar (Sen hareket etmezsin, silah gelir)
-            gunDrop.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+-- 1. MUSCLE LEGENDS OTOMASYON
+MuscleSection:NewToggle("Ultra Hızlı Kas (Auto)", "Elinizdeki aleti saniyede 100 kere basar", function(state)
+    _G.AutoMuscle = state
+    while _G.AutoMuscle do
+        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool then
+            tool:Activate()
         end
-        task.wait(0.1) -- Çok hızlı kontrol
+        task.wait(0.001) -- İnanılmaz hızlı tıklama
     end
 end)
 
--- 2. BOX & SKELETON ESP (HIGHLIGHT)
-MainSection:NewToggle("Box & Skeleton ESP", "Kutu ve Renkli Görünüm", function(state)
+MuscleSection:NewToggle("Otomatik Rebirth", "Gücünüz yettiğinde otomatik rebirth atar", function(state)
+    _G.AutoRebirth = state
+    while _G.AutoRebirth do
+        game:GetService("ReplicatedStorage").rEvents.rebirthEvent:FireServer()
+        task.wait(2)
+    end
+end)
+
+-- 2. MM2 OTOMASYON
+MM2Section:NewToggle("Otomatik Silah Çek (Bring Gun)", "Silah düştüğü an eline gelir", function(state)
+    _G.BringGun = state
+    while _G.BringGun do
+        local gunDrop = workspace:FindFirstChild("GunDrop")
+        if gunDrop and LocalPlayer.Character then
+            gunDrop.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+        end
+        task.wait(0.1)
+    end
+end)
+
+MM2Section:NewToggle("Otomatik Katil ESP", "Katili ve Şerifi her zaman gösterir", function(state)
     _G.Visuals = state
     while _G.Visuals do
         for _, v in pairs(Players:GetPlayers()) do
@@ -55,70 +67,22 @@ MainSection:NewToggle("Box & Skeleton ESP", "Kutu ve Renkli Görünüm", functio
                     local hl = Instance.new("Highlight", v.Character)
                     hl.Name = "BoxHighlight"
                     hl.FillTransparency = 0.5
-                    -- Rol Kontrolü
                     if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
-                        hl.FillColor = Color3.fromRGB(255, 0, 0) -- KATİL
+                        hl.FillColor = Color3.fromRGB(255, 0, 0)
                     elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then
-                        hl.FillColor = Color3.fromRGB(0, 0, 255) -- SHERIFF
+                        hl.FillColor = Color3.fromRGB(0, 0, 255)
                     else
-                        hl.FillColor = Color3.fromRGB(0, 255, 0) -- MASUM
+                        hl.FillColor = Color3.fromRGB(0, 255, 0)
                     end
                 end
             end
         end
         task.wait(1)
     end
-    if not _G.Visuals then
-        for _, v in pairs(Players:GetPlayers()) do
-            if v.Character and v.Character:FindFirstChild("BoxHighlight") then
-                v.Character.BoxHighlight:Destroy()
-            end
-        end
-    end
 end)
 
--- 3. HIZ SABİTLEYİCİ (ASLA DÜŞMEZ)
-SpeedSection:NewSlider("Sabit Hız", "Hızı burdan ayarla", 300, 16, function(s)
-    TargetWalkSpeed = s
-end)
-
-RunService.Stepped:Connect(function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = TargetWalkSpeed
-    end
-end)
-
--- 4. KATİLİ VUR
-MainSection:NewButton("Katili Vur", "Anlık arkasına ışınlar", function()
-    for _, v in pairs(Players:GetPlayers()) do
-        if v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-        end
-    end
-end)
-
--- 5. TIKTOK BUTONU
-SocialSection:NewButton("TikTok Hesabım: @layroxcderler", "Linki kopyalar", function()
-    if setclipboard then 
-        setclipboard(TikTokLink)
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Layroxc MM2",
-            Text = "TikTok linki başarıyla kopyalandı!",
-            Duration = 5
-        })
-    end
-end)
-
--- 6. AUTO FARM
-FarmSection:NewToggle("Auto Coin Farm", "Paraları toplar", function(state)
-    _G.Farm = state
-    while _G.Farm do
-        for _, v in pairs(workspace:GetDescendants()) do
-            if (v.Name == "Coin" or v.Name == "Candy") and v:IsA("BasePart") and _G.Farm then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
-                task.wait(0.15)
-            end
-        end
-        task.wait()
-    end
+-- 3. SOSYAL
+SocialTab:NewSection("TikTok: @layroxcderler")
+SocialTab:NewButton("Profil Linkini Kopyala", "TikTok adresine git", function()
+    if setclipboard then setclipboard("https://www.tiktok.com/@layroxcderler") end
 end)
