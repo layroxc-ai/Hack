@@ -41,19 +41,18 @@ local Visuals = Window:NewTab("Visuals (ESP)")
 local Farm = Window:NewTab("Magnet & Farm")
 local Pro = Window:NewTab("Avatar & Fix")
 
--- [[ 1. COMBAT - KILL ALL / AIMBOT / TP ]] --
+-- [[ 1. COMBAT - TP / KILL ALL / AIM ]] --
 local RageSec = Main:NewSection("Execution Engine")
 
-RageSec:NewButton("TP Behind Murderer", "Teleports you right behind the Murderer", function()
+RageSec:NewButton("TP Behind Murderer", "Instantly behind the target", function()
     for _, v in pairs(Players:GetPlayers()) do
         if GetPlayerRole(v) == "MURDERER" and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            -- Katilin 3 birim arkasına ışınlar
             LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
         end
     end
 end)
 
-RageSec:NewButton("KILL ALL (CLEANUP)", "Instantly kills everyone if you are Murderer", function()
+RageSec:NewButton("KILL ALL (CLEANUP)", "Kill everyone as Murderer", function()
     local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
     if knife then
         for _, v in pairs(Players:GetPlayers()) do
@@ -83,7 +82,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 _G.KillAura = false
-RageSec:NewToggle("Kill Aura (25m)", "Automatically slices nearby players", function(state)
+RageSec:NewToggle("Kill Aura (25m)", "Auto-slice nearby players", function(state)
     _G.KillAura = state
     while _G.KillAura do
         pcall(function()
@@ -105,10 +104,10 @@ RageSec:NewToggle("Kill Aura (25m)", "Automatically slices nearby players", func
     end
 end)
 
--- [[ 2. VISUALS - FULL BOX ESP ]] --
-local EspSec = Visuals:NewSection("Vision Settings")
+-- [[ 2. VISUALS - MINI ESP ]] --
+local EspSec = Visuals:NewSection("Minimal Vision")
 _G.MasterESP = false
-EspSec:NewToggle("FULL BOX ESP ACTIVE", "Box + Name + Role", function(state) _G.MasterESP = state end)
+EspSec:NewToggle("MASTER ESP ACTIVE", "Small Box + Mini Name", function(state) _G.MasterESP = state end)
 
 RunService.RenderStepped:Connect(function()
     if _G.MasterESP then
@@ -121,12 +120,16 @@ RunService.RenderStepped:Connect(function()
                     elseif role == "SHERIFF" then color = Color3.fromRGB(0, 150, 255) end
                     
                     local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
-                    hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.7; hl.OutlineColor = color
+                    hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.8; hl.OutlineColor = color; hl.OutlineTransparency = 0.2
                     
                     local bg = v.Character.Head:FindFirstChild("LayName") or Instance.new("BillboardGui", v.Character.Head)
-                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 100, 0, 20); bg.ExtentsOffset = Vector3.new(0, 3, 0)
+                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 80, 0, 15); bg.ExtentsOffset = Vector3.new(0, 2.5, 0)
+                    
                     local lb = bg:FindFirstChild("TextLabel") or Instance.new("TextLabel", bg)
-                    lb.Size = UDim2.new(1, 0, 1, 0); lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 10; lb.Text = "["..role.."] "..v.Name
+                    lb.Size = UDim2.new(1, 0, 1, 0); lb.BackgroundTransparency = 1; lb.TextColor3 = color
+                    lb.TextSize = 7; -- EKSTRA KÜÇÜK BOYUT
+                    lb.Font = Enum.Font.RobotoMono; lb.TextStrokeTransparency = 0.5
+                    lb.Text = role .. " | " .. v.Name:sub(1,10)
                 end
             end)
         end
@@ -137,7 +140,7 @@ end)
 local FarmSec = Farm:NewSection("Item Collection")
 
 _G.GrabGun = false
-FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Never miss the dropped gun", function(state)
+FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Auto gun pickup", function(state)
     _G.GrabGun = state
     while _G.GrabGun do
         pcall(function()
