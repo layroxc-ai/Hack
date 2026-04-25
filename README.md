@@ -1,4 +1,4 @@
--- [[ LAYROXC HUB v59 - THE ABSOLUTE ENGINE (FULL VERSION) ]] --
+-- [[ LAYROXC HUB v59 - THE ABSOLUTE ENGINE (FIXED & MOVING) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
 
@@ -6,7 +6,6 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
-local TweenService = game:GetService("TweenService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
 -- Global Ayarlar (Ölünce Sıfırlanmaz)
@@ -71,20 +70,6 @@ end)
 RageSec:NewToggle("Smart Aimbot", "Locks onto Murderer", function(state) _G.Aimbot = state end)
 RageSec:NewToggle("Kill Aura (25m)", "Auto slice nearby", function(state) _G.KillAura = state end)
 
-RageSec:NewButton("Murderer TP Button (HUD)", "Screen Button for TP", function()
-    if game.CoreGui:FindFirstChild("TpGui") then game.CoreGui.TpGui:Destroy() end
-    local TpGui = Instance.new("ScreenGui", game.CoreGui); local TpBtn = Instance.new("TextButton", TpGui)
-    TpBtn.Size = UDim2.new(0, 120, 0, 40); TpBtn.Position = UDim2.new(0.5, -60, 0.8, 0)
-    TpBtn.Text = "TP TO MURDERER"; TpBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0); TpBtn.Draggable = true
-    TpBtn.MouseButton1Click:Connect(function()
-        for _, v in pairs(Players:GetPlayers()) do
-            if GetPlayerRole(v) == "MURDERER" and v.Character then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2)
-            end
-        end
-    end)
-end)
-
 -- [[ 2. VISUALS SEKTÖRÜ ]] --
 local EspSec = Visuals:NewSection("Minimal Vision")
 EspSec:NewToggle("MASTER ESP ACTIVE", "Small Box + Mini Name", function(state) _G.MasterESP = state end)
@@ -102,18 +87,6 @@ MoveSec:NewTextBox("JumpPower", "Default 50", function(txt) _G.JumpValue = tonum
 -- [[ 5. AVATAR & PRO SEKTÖRÜ ]] --
 local ProSec = Pro:NewSection("Styles & Support")
 
-ProSec:NewButton("FE Headless (Everyone Sees)", "Invisible Head", function()
-    pcall(function()
-        LocalPlayer.Character.Head.Transparency = 1
-        local headMove = true
-        RunService.RenderStepped:Connect(function()
-            if headMove and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
-                LocalPlayer.Character.Head.CFrame = CFrame.new(0, 500000, 0)
-            end
-        end)
-    end)
-end)
-
 ProSec:NewButton("Korblox (80 robux)", "Click to Purchase!", function()
     if setclipboard then setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE") end
     pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767) end)
@@ -122,7 +95,7 @@ end)
 -- [[ DÖNGÜSEL SİSTEMLER (LOOP) ]] --
 RunService.Stepped:Connect(function()
     pcall(function()
-        -- Movement Fix
+        -- Movement Fix (Ölünce Gitmez)
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedValue
             LocalPlayer.Character.Humanoid.JumpPower = _G.JumpValue
@@ -155,12 +128,13 @@ task.spawn(function()
                 end
             end
         end
-        -- Magnet & Stealth Farm
+        -- Magnet
         if _G.GrabGun then
             for _, v in pairs(workspace:GetDescendants()) do
                 if v.Name == "GunDrop" then v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end
             end
         end
+        -- Stealth Farm
         if _G.StealthFarm then
             for _, v in pairs(workspace:GetDescendants()) do
                 if (v.Name == "Coin" or v.Name == "Candy") then
