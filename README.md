@@ -178,23 +178,36 @@ FarmSec:NewToggle("STEALTH FARM (NO KICK)", "Güvenli Para Toplama", function(st
 end)
 
 -- [[ 4. PRO / AVATAR ]] --
-local ProSec = Pro:NewSection("Satın Alımlar")
+local ProSec = Pro:NewSection("Destek")
 
-ProSec:NewButton("Korblox", "Tıkla Linki Kopyala!", function()
-    -- Linki panoya kopyalar (Bazı executorlar setclipboard destekler)
-    if setclipboard then
-        setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE")
-    end
+ProSec:NewButton("Korblox", "Bağış Linkini Gösterir", function()
+    -- Eğer kopyalama çalışırsa diye yine de kopyalamayı deniyoruz
+    if setclipboard then setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE") end
     
-    -- Ekranda bildirim gösterir
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Layroxc Hub",
-        Text = "Korblox Linki Kopyalandı! Tarayıcıya yapıştırıp alabilirsiniz.",
-        Duration = 5
-    })
+    -- EKRANDA ÖZEL PENCERE AÇMA --
+    if game.CoreGui:FindFirstChild("DonateGui") then game.CoreGui.DonateGui:Destroy() end
+    local DonateGui = Instance.new("ScreenGui", game.CoreGui); DonateGui.Name = "DonateGui"
+    local Frame = Instance.new("Frame", DonateGui)
+    Frame.Size = UDim2.new(0, 300, 0, 150); Frame.Position = UDim2.new(0.5, -150, 0.4, 0)
+    Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Frame.BorderSizePixel = 0
+    Instance.new("UICorner", Frame)
     
-    -- Satın alma ekranını tekrar deniyoruz (Belki bu sefer tutar)
-    pcall(function()
-        MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767)
-    end)
+    local Title = Instance.new("TextLabel", Frame)
+    Title.Text = "KORBLOX BAĞIŞ LİNKİ"; Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.TextColor3 = Color3.new(1, 0, 0); Title.BackgroundTransparency = 1; Title.TextSize = 18
+    
+    local LinkBox = Instance.new("TextBox", Frame)
+    LinkBox.Text = "roblox.com/tr/game-pass/1812606767"; LinkBox.Size = UDim2.new(0.9, 0, 0, 40)
+    LinkBox.Position = UDim2.new(0.05, 0, 0.3, 0); LinkBox.ClearTextOnFocus = false
+    LinkBox.TextEditable = false; LinkBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    LinkBox.TextColor3 = Color3.new(1, 1, 1); LinkBox.TextScaled = true; Instance.new("UICorner", LinkBox)
+    
+    local CloseBtn = Instance.new("TextButton", Frame)
+    CloseBtn.Text = "Kapat"; CloseBtn.Size = UDim2.new(0.4, 0, 0, 30); CloseBtn.Position = UDim2.new(0.3, 0, 0.7, 0)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0); CloseBtn.TextColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", CloseBtn)
+    CloseBtn.MouseButton1Click:Connect(function() DonateGui:Destroy() end)
+    
+    -- Satın alma ekranını da tetiklemeyi deniyoruz
+    pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767) end)
 end)
