@@ -1,4 +1,4 @@
--- [[ LAYROXC HUB v59 - THE ABSOLUTE ENGINE (NO MISSING FEATURES) ]] --
+-- [[ LAYROXC HUB v59 - THE ABSOLUTE ENGINE (ENGLISH VERSION) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
 
@@ -9,7 +9,7 @@ local Camera = workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
--- [[ MOBİL ANA BUTON ]] --
+-- [[ MOBILE TOGGLE BUTTON ]] --
 local OpenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenButton = Instance.new("TextButton", OpenGui)
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
@@ -20,31 +20,31 @@ Instance.new("UICorner", OpenButton)
 OpenButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
--- [[ GÜÇLENDİRİLMİŞ ROL TESPİT SİSTEMİ ]] --
+-- [[ ADVANCED ROLE DETECTION ]] --
 local function GetPlayerRole(v)
-    if not v or not v:FindFirstChild("Backpack") then return "Masum" end
-    if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "KATİL" end
-    if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then return "ŞERİF" end
+    if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
+    if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
+    if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then return "SHERIFF" end
     
-    local role = "Masum"
+    local role = "Innocent"
     pcall(function()
         local gui = v.PlayerGui.MainGui.Game.RoleDesc.Text:lower()
-        if gui:find("murderer") or gui:find("katil") then role = "KATİL"
-        elseif gui:find("sheriff") or gui:find("şerif") or gui:find("hero") then role = "ŞERİF" end
+        if gui:find("murderer") then role = "MURDERER"
+        elseif gui:find("sheriff") or gui:find("hero") then role = "SHERIFF" end
     end)
     return role
 end
 
--- SEKMELER
-local Main = Window:NewTab("Saldırı (Rage)")
+-- TABS
+local Main = Window:NewTab("Combat (Rage)")
 local Visuals = Window:NewTab("Visuals (ESP)")
 local Farm = Window:NewTab("Magnet & Farm")
 local Pro = Window:NewTab("Avatar & Fix")
 
--- [[ 1. SALDIRI - KILL ALL / AIMBOT / TP ]] --
-local RageSec = Main:NewSection("İnfaz Motoru")
+-- [[ 1. COMBAT - KILL ALL / AIMBOT / TP ]] --
+local RageSec = Main:NewSection("Execution Engine")
 
-RageSec:NewButton("KILL ALL (TEMİZLİK)", "Katilsen Herkesi Tek Saniyede Keser", function()
+RageSec:NewButton("KILL ALL (CLEANUP)", "Instantly kills everyone if you are Murderer", function()
     local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
     if knife then
         for _, v in pairs(Players:GetPlayers()) do
@@ -61,12 +61,12 @@ RageSec:NewButton("KILL ALL (TEMİZLİK)", "Katilsen Herkesi Tek Saniyede Keser"
 end)
 
 _G.Aimbot = false
-RageSec:NewToggle("Smart Aimbot", "Katile Kilitlenir", function(state) _G.Aimbot = state end)
+RageSec:NewToggle("Smart Aimbot", "Locks onto the Murderer", function(state) _G.Aimbot = state end)
 
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         for _, v in pairs(Players:GetPlayers()) do
-            if GetPlayerRole(v) == "KATİL" and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            if GetPlayerRole(v) == "MURDERER" and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
                 Camera.CFrame = CFrame.new(Camera.CFrame.Position, v.Character.HumanoidRootPart.Position)
             end
         end
@@ -74,7 +74,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 _G.KillAura = false
-RageSec:NewToggle("Kill Aura (25m)", "Çevrendekileri Doğrar", function(state)
+RageSec:NewToggle("Kill Aura (25m)", "Automatically slices nearby players", function(state)
     _G.KillAura = state
     while _G.KillAura do
         pcall(function()
@@ -97,9 +97,9 @@ RageSec:NewToggle("Kill Aura (25m)", "Çevrendekileri Doğrar", function(state)
 end)
 
 -- [[ 2. VISUALS - FULL BOX ESP ]] --
-local EspSec = Visuals:NewSection("Görüş Ayarları")
+local EspSec = Visuals:NewSection("Vision Settings")
 _G.MasterESP = false
-EspSec:NewToggle("FULL BOX ESP AKTİF", "Kutu + İsim + Rol", function(state) _G.MasterESP = state end)
+EspSec:NewToggle("FULL BOX ESP ACTIVE", "Box + Name + Role", function(state) _G.MasterESP = state end)
 
 RunService.RenderStepped:Connect(function()
     if _G.MasterESP then
@@ -108,8 +108,8 @@ RunService.RenderStepped:Connect(function()
                 if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
                     local role = GetPlayerRole(v)
                     local color = Color3.fromRGB(0, 255, 0)
-                    if role == "KATİL" then color = Color3.fromRGB(255, 0, 0)
-                    elseif role == "ŞERİF" then color = Color3.fromRGB(0, 150, 255) end
+                    if role == "MURDERER" then color = Color3.fromRGB(255, 0, 0)
+                    elseif role == "SHERIFF" then color = Color3.fromRGB(0, 150, 255) end
                     
                     local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
                     hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.7; hl.OutlineColor = color
@@ -125,10 +125,10 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- [[ 3. MAGNET & STEALTH FARM ]] --
-local FarmSec = Farm:NewSection("Eşya Toplama")
+local FarmSec = Farm:NewSection("Item Collection")
 
 _G.GrabGun = false
-FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Silahı Asla Kaçırmaz", function(state)
+FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Never miss the dropped gun", function(state)
     _G.GrabGun = state
     while _G.GrabGun do
         pcall(function()
@@ -146,13 +146,13 @@ FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Silahı Asla Kaçırmaz", function(stat
 end)
 
 -- [[ 4. PRO / AVATAR ]] --
-local ProSec = Pro:NewSection("Satın Alımlar")
+local ProSec = Pro:NewSection("Support")
 
-ProSec:NewButton("Korblox (80 robux)", "Tıkla ve Bağış Yap!", function()
-    -- Kopyalama denemesi
+ProSec:NewButton("Korblox (80 robux)", "Click to Purchase!", function()
+    -- Copy attempt
     if setclipboard then setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE") end
     
-    -- Bilgi penceresi açma
+    -- INFO WINDOW
     if game.CoreGui:FindFirstChild("DonateGui") then game.CoreGui.DonateGui:Destroy() end
     local DonateGui = Instance.new("ScreenGui", game.CoreGui); DonateGui.Name = "DonateGui"
     local Frame = Instance.new("Frame", DonateGui)
@@ -161,21 +161,21 @@ ProSec:NewButton("Korblox (80 robux)", "Tıkla ve Bağış Yap!", function()
     Instance.new("UICorner", Frame)
     
     local Title = Instance.new("TextLabel", Frame)
-    Title.Text = "KORBLOX BAĞIŞ LİNKİ"; Title.Size = UDim2.new(1, 0, 0, 30)
-    Title.TextColor3 = Color3.fromRGB(200, 0, 0); Title.BackgroundTransparency = 1; Title.TextSize = 18
+    Title.Text = "TO PURCHASE KORBLOX"; Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.TextColor3 = Color3.fromRGB(255, 0, 0); Title.BackgroundTransparency = 1; Title.TextSize = 18
     
     local LinkBox = Instance.new("TextBox", Frame)
     LinkBox.Text = "roblox.com/tr/game-pass/1812606767"; LinkBox.Size = UDim2.new(0.9, 0, 0, 40)
-    LinkBox.Position = UDim2.new(0.05, 0, 0.3, 0); LinkBox.TextEditable = false
+    LinkBox.Position = UDim2.new(0.05, 0, 0.35, 0); LinkBox.TextEditable = false
     LinkBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50); LinkBox.TextColor3 = Color3.new(1, 1, 1)
     LinkBox.TextScaled = true; Instance.new("UICorner", LinkBox)
     
     local CloseBtn = Instance.new("TextButton", Frame)
-    CloseBtn.Text = "Kapat"; CloseBtn.Size = UDim2.new(0.4, 0, 0, 30); CloseBtn.Position = UDim2.new(0.3, 0, 0.7, 0)
+    CloseBtn.Text = "Close"; CloseBtn.Size = UDim2.new(0.4, 0, 0, 30); CloseBtn.Position = UDim2.new(0.3, 0, 0.75, 0)
     CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0); CloseBtn.TextColor3 = Color3.new(1, 1, 1)
     Instance.new("UICorner", CloseBtn)
     CloseBtn.MouseButton1Click:Connect(function() DonateGui:Destroy() end)
     
-    -- Resmi satın alma ekranı tetikleme
+    -- Official Purchase Prompt
     pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767) end)
 end)
