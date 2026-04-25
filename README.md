@@ -1,6 +1,6 @@
--- [[ LAYROXC HUB v54 - TOTAL RAGE (KILL ALL RESTORED) ]] --
+-- [[ LAYROXC HUB v55 - AIMBOT & ROLE FIX ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Hub - v54 FINAL", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - v55 FINAL", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -19,16 +19,22 @@ Instance.new("UICorner", OpenButton)
 OpenButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
--- [[ GELİŞMİŞ ROL TESPİT MOTORU ]] --
+-- [[ GELİŞMİŞ ROL TESPİT (AIMBOT İÇİN KRİTİK) ]] --
 local function GetPlayerRole(v)
+    if not v or not v:FindFirstChild("Backpack") then return "Masum" end
     if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "KATİL" end
     if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then return "ŞERİF" end
     
+    local roleText = ""
     pcall(function()
-        local roleLabel = v.PlayerGui.MainGui.Game.RoleDesc.Text:lower()
-        if roleLabel:find("murderer") or roleLabel:find("katil") then return "KATİL" end
-        if roleLabel:find("sheriff") or roleLabel:find("şerif") or roleLabel:find("hero") then return "ŞERİF" end
+        if v:FindFirstChild("PlayerGui") and v.PlayerGui:FindFirstChild("MainGui") then
+            roleText = v.PlayerGui.MainGui.Game.RoleDesc.Text:lower()
+        end
     end)
+    
+    if roleText:find("murderer") or roleText:find("katil") then return "KATİL" end
+    if roleText:find("sheriff") or roleText:find("şerif") or roleText:find("hero") then return "ŞERİF" end
+    
     return "Masum"
 end
 
@@ -36,19 +42,37 @@ end
 local Main = Window:NewTab("Saldırı (Rage)")
 local Visuals = Window:NewTab("Visuals (ESP)")
 local Farm = Window:NewTab("Farm & Magnet")
-local Pro = Window:NewTab("Avatar & Fix")
+local Pro = Window:NewTab("Avatar")
 
--- [[ 1. SALDIRI MOTORU - KILL ALL VE TP ]] --
+-- [[ 1. SALDIRI MOTORU - FIXED AIMBOT ]] --
 local RageSec = Main:NewSection("İnfaz Ayarları")
 
-RageSec:NewButton("KILL ALL (HERKESİ KES)", "Katilsen Saniyede Herkesi Temizler", function()
+_G.Aimbot = false
+RageSec:NewToggle("Smart Aimbot (FIXED)", "Katile Kitlenir (Bıçak Çekmese Bile)", function(state) 
+    _G.Aimbot = state 
+end)
+
+RunService.RenderStepped:Connect(function()
+    if _G.Aimbot then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                if GetPlayerRole(v) == "KATİL" then
+                    -- Yumuşak kilitlenme (Daha stabil)
+                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, v.Character.HumanoidRootPart.Position)
+                end
+            end
+        end
+    end
+end)
+
+RageSec:NewButton("KILL ALL", "Herkesi Keser", function()
     local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
     if knife then
         for _, v in pairs(Players:GetPlayers()) do
             if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
                 knife.Parent = LocalPlayer.Character
                 LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1)
-                task.wait(0.1)
+                task.wait(0.12)
                 knife:Activate()
                 firetouchinterest(v.Character.HumanoidRootPart, knife.Handle, 0)
                 firetouchinterest(v.Character.HumanoidRootPart, knife.Handle, 1)
@@ -57,7 +81,7 @@ RageSec:NewButton("KILL ALL (HERKESİ KES)", "Katilsen Saniyede Herkesi Temizler
     end
 end)
 
-RageSec:NewButton("TP Butonunu Ekrana Sabitle", "Katilin Arkasına Uçuş Tuşu", function()
+RageSec:NewButton("TP Butonu (Sabit)", "Katilin Ensesine Uçar", function()
     if game.CoreGui:FindFirstChild("TpGui") then game.CoreGui.TpGui:Destroy() end
     local TpGui = Instance.new("ScreenGui", game.CoreGui)
     TpGui.Name = "TpGui"
@@ -70,7 +94,6 @@ RageSec:NewButton("TP Butonunu Ekrana Sabitle", "Katilin Arkasına Uçuş Tuşu"
     TpButton.Font = Enum.Font.GothamBold
     TpButton.Draggable = true
     Instance.new("UICorner", TpButton)
-    
     TpButton.MouseButton1Click:Connect(function()
         for _, v in pairs(Players:GetPlayers()) do
             if GetPlayerRole(v) == "KATİL" and v.Character then
@@ -80,37 +103,10 @@ RageSec:NewButton("TP Butonunu Ekrana Sabitle", "Katilin Arkasına Uçuş Tuşu"
     end)
 end)
 
-_G.Aimbot = false
-RageSec:NewToggle("Smart Aimbot", "Katile Kilitlenir", function(state) _G.Aimbot = state end)
-
-_G.KillAura = false
-RageSec:NewToggle("Kill Aura", "Yakındakileri Otomatik Keser", function(state)
-    _G.KillAura = state
-    while _G.KillAura do
-        pcall(function()
-            local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
-            if knife then
-                for _, v in pairs(Players:GetPlayers()) do
-                    if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
-                        if dist < 18 then
-                            knife.Parent = LocalPlayer.Character
-                            knife:Activate()
-                            firetouchinterest(v.Character.HumanoidRootPart, knife.Handle, 0)
-                            firetouchinterest(v.Character.HumanoidRootPart, knife.Handle, 1)
-                        end
-                    end
-                end
-            end
-        end)
-        task.wait(0.1)
-    end
-end)
-
--- [[ 2. FULL ESP (BOX + NAME + SHERIFF) ]] --
-local EspSec = Visuals:NewSection("Gelişmiş ESP")
+-- [[ 2. VISUALS - FULL ESP ]] --
+local EspSec = Visuals:NewSection("ESP")
 _G.MasterESP = false
-EspSec:NewToggle("FULL ESP AKTİF", "Kutu, Rol ve İsim", function(state) _G.MasterESP = state end)
+EspSec:NewToggle("ESP Aktif", "Kutu ve İsim", function(state) _G.MasterESP = state end)
 
 RunService.RenderStepped:Connect(function()
     if _G.MasterESP then
@@ -135,10 +131,10 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- [[ 3. FARM & MAGNET ]] --
+-- [[ 3. FARM ]] --
 local FarmSec = Farm:NewSection("Toplama")
 _G.GrabGun = false
-FarmSec:NewToggle("Magnet Grab Gun", "Düşen Silahı Çeker", function(state)
+FarmSec:NewToggle("Magnet Gun", "Silahı Çeker", function(state)
     _G.GrabGun = state
     while _G.GrabGun do
         for _, v in pairs(workspace:GetDescendants()) do
