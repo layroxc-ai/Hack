@@ -1,6 +1,6 @@
--- [[ LAYROXC HUB v59 - THE ABSOLUTE ENGINE (NO CLIPPING - FULL VERSION) ]] --
+-- [[ LAYROXC HUB v59 - THE ABSOLUTE ENGINE (ULTIMATE COMPLETE EDITION) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - ⚠️BETA⚠️", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -8,7 +8,7 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local MarketplaceService = game:GetService("MarketplaceService")
 
--- ÖZEL AYARLAR (Ölünce Sıfırlanmaz)
+-- GLOBAL AYARLAR (Ölünce gitmez, her an çalışır)
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.Aimbot = false
@@ -38,7 +38,7 @@ local function GetRole(v)
     return "Innocent"
 end
 
--- TABS
+-- SEKMELER
 local Main = Window:NewTab("Combat (Rage)")
 local Visuals = Window:NewTab("Visuals (ESP)")
 local Farm = Window:NewTab("Magnet & Farm")
@@ -47,82 +47,67 @@ local Pro = Window:NewTab("Avatar & Pro")
 
 -- [[ 1. COMBAT SEKTÖRÜ ]] --
 local RageSec = Main:NewSection("Execution Engine")
-
-RageSec:NewButton("TP Behind Murderer", "Katilin Tam Arkasına Işınlar", function()
+RageSec:NewButton("TP Behind Murderer", "Katilin arkasına ışınlan", function()
     for _, v in pairs(Players:GetPlayers()) do
-        if GetRole(v) == "MURDERER" and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+        if GetRole(v) == "MURDERER" and v.Character then
             LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
         end
     end
 end)
-
-RageSec:NewToggle("Smart Aimbot", "Katile Otomatik Odaklanır", function(state) _G.Aimbot = state end)
-RageSec:NewToggle("Kill Aura (25m)", "Çevrendekileri Seri Keser", function(state) _G.KillAura = state end)
-
-RageSec:NewButton("Kill All (As Murderer)", "Herkesi Anında Temizler", function()
-    local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
-    if knife then
+RageSec:NewToggle("Smart Aimbot", "Katile kilitlenir", function(state) _G.Aimbot = state end)
+RageSec:NewToggle("Kill Aura (25m)", "Otomatik keser", function(state) _G.KillAura = state end)
+RageSec:NewButton("Kill All (Murderer Only)", "Herkesi anında keser", function()
+    local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
+    if k then
         for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                knife.Parent = LocalPlayer.Character
-                LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1)
-                task.wait(0.12)
-                knife:Activate()
-                firetouchinterest(v.Character.HumanoidRootPart, knife.Handle, 0)
-                firetouchinterest(v.Character.HumanoidRootPart, knife.Handle, 1)
+            if v ~= LocalPlayer and v.Character then
+                k.Parent = LocalPlayer.Character
+                LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,1)
+                task.wait(0.1); k:Activate()
+                firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
+                firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
             end
         end
     end
 end)
 
--- [[ 2. VISUALS SEKTÖRÜ (TEMİZ ESP) ]] --
-local EspSec = Visuals:NewSection("Vision Settings")
-EspSec:NewToggle("MASTER ESP ACTIVE", "Temiz İsim ve Rol Görünümü", function(state) _G.MasterESP = state end)
+-- [[ 2. VISUALS SEKTÖRÜ (GELİŞMİŞ ESP) ]] --
+local EspSec = Visuals:NewSection("Minimalist Vision")
+EspSec:NewToggle("MASTER ESP ACTIVE", "İsimleri ve Rolleri Göster", function(state) _G.MasterESP = state end)
 
--- [[ 3. FARM & MAGNET SEKTÖRÜ ]] --
+-- [[ 3. FARM SEKTÖRÜ ]] --
 local FarmSec = Farm:NewSection("Item Collection")
-FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Düşen Silahı Ayaklarına Çeker", function(state) _G.GrabGun = state end)
-FarmSec:NewToggle("STEALTH FARM", "Güvenli Coin/Candy Toplama", function(state) _G.StealthFarm = state end)
+FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Düşen silahı çeker", function(state) _G.GrabGun = state end)
+FarmSec:NewToggle("STEALTH FARM", "Coin/Candy toplar", function(state) _G.StealthFarm = state end)
 
--- [[ 4. MOVEMENT SEKTÖRÜ (HIZ & ZIPLAMA) ]] --
+-- [[ 4. MOVEMENT SEKTÖRÜ ]] --
 local MoveSec = Movement:NewSection("Physics Control")
-MoveSec:NewTextBox("WalkSpeed", "Hız (Default 16)", function(txt) _G.SpeedValue = tonumber(txt) or 16 end)
-MoveSec:NewTextBox("JumpPower", "Zıplama (Default 50)", function(txt) _G.JumpValue = tonumber(txt) or 50 end)
-MoveSec:NewToggle("NoClip", "Duvarlardan Geçme", function(state) _G.NoClip = state end)
+MoveSec:NewTextBox("WalkSpeed", "Hız Ayarı", function(txt) _G.SpeedValue = tonumber(txt) or 16 end)
+MoveSec:NewTextBox("JumpPower", "Zıplama Ayarı", function(txt) _G.JumpValue = tonumber(txt) or 50 end)
+MoveSec:NewToggle("NoClip", "Duvarlardan geç", function(state) _G.NoClip = state end)
 
--- [[ 5. AVATAR & PRO (GAMEPASS) ]] --
-local ProSec = Pro:NewSection("Support Layroxc")
-ProSec:NewButton("Get Korblox (80 Robux)", "Prompt Açılır + Link Kopyalanır", function()
+-- [[ 5. PRO SEKTÖRÜ (GAMEPASS & LINK) ]] --
+local ProSec = Pro:NewSection("Support & Korblox")
+ProSec:NewButton("Get Korblox (80 Robux)", "Satın al ve linki kopyala", function()
     pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, MyGamepassID) end)
     if setclipboard then setclipboard(MyGamepassLink) end
 end)
 
--- [[ DÖNGÜSEL SİSTEMLER (LOOPS) ]] --
-
--- Hız, Zıplama, NoClip ve Aimbot Döngüsü
+-- [[ ANA SİSTEM DÖNGÜLERİ ]] --
 RunService.Stepped:Connect(function()
     pcall(function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedValue
             LocalPlayer.Character.Humanoid.JumpPower = _G.JumpValue
-            
             if _G.NoClip then
                 for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
                     if v:IsA("BasePart") then v.CanCollide = false end
                 end
             end
         end
-        if _G.Aimbot then
-            for _, v in pairs(Players:GetPlayers()) do
-                if GetRole(v) == "MURDERER" and v.Character then
-                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, v.Character.HumanoidRootPart.Position)
-                end
-            end
-        end
     end)
 end)
 
--- Farm ve Aura Döngüsü
 task.spawn(function()
     while task.wait(0.1) do
         pcall(function()
@@ -154,26 +139,34 @@ task.spawn(function()
     end
 end)
 
--- TEMİZ ESP DÖNGÜSÜ
+-- [[ ESP RENDER DÖNGÜSÜ ]] --
 RunService.RenderStepped:Connect(function()
     if _G.MasterESP then
         for _, v in pairs(Players:GetPlayers()) do
             pcall(function()
                 if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
                     local role = GetRole(v)
-                    local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.5,1) or Color3.new(0,1,0))
+                    local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.6,1) or Color3.new(0,1,0))
                     
                     local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
-                    hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.85
+                    hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.8; hl.OutlineTransparency = 0.5
                     
                     local bg = v.Character.Head:FindFirstChild("LayName") or Instance.new("BillboardGui", v.Character.Head)
-                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0,50,0,10); bg.ExtentsOffset = Vector3.new(0,1.5,0)
+                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0,100,0,20); bg.ExtentsOffset = Vector3.new(0,2.5,0)
                     
                     local lb = bg:FindFirstChild("TL") or Instance.new("TextLabel", bg); lb.Name = "TL"
                     lb.Size = UDim2.new(1,0,1,0); lb.BackgroundTransparency = 1; lb.TextColor3 = color; 
-                    lb.TextSize = 8; lb.Font = Enum.Font.SourceSansBold; lb.Text = role
+                    lb.TextSize = 10; lb.Font = Enum.Font.SourceSansBold; lb.TextStrokeTransparency = 0.5
+                    lb.Text = "[" .. role .. "] " .. v.DisplayName
                 end
             end)
+        end
+    else
+        for _, v in pairs(Players:GetPlayers()) do
+            if v.Character then
+                if v.Character:FindFirstChild("LayHL") then v.Character.LayHL:Destroy() end
+                if v.Character.Head:FindFirstChild("LayName") then v.Character.Head.LayName:Destroy() end
+            end
         end
     end
 end)
