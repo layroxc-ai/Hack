@@ -96,22 +96,6 @@ RageSec:NewToggle("Kill Aura (25m)", "Çevrendekileri Doğrar", function(state)
     end
 end)
 
-RageSec:NewButton("Katil TP Tuşu (Gitmeyen)", "Ekrana Buton Getirir", function()
-    if game.CoreGui:FindFirstChild("TpGui") then game.CoreGui.TpGui:Destroy() end
-    local TpGui = Instance.new("ScreenGui", game.CoreGui); TpGui.Name = "TpGui"
-    local TpButton = Instance.new("TextButton", TpGui)
-    TpButton.Size = UDim2.new(0, 120, 0, 40); TpButton.Position = UDim2.new(0.5, -60, 0.8, 0)
-    TpButton.Text = "KATİLE UÇ (TP)"; TpButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    TpButton.TextColor3 = Color3.new(1, 1, 1); TpButton.Draggable = true; Instance.new("UICorner", TpButton)
-    TpButton.MouseButton1Click:Connect(function()
-        for _, v in pairs(Players:GetPlayers()) do
-            if GetPlayerRole(v) == "KATİL" and v.Character then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2)
-            end
-        end
-    end)
-end)
-
 -- [[ 2. VISUALS - FULL BOX ESP ]] --
 local EspSec = Visuals:NewSection("Görüş Ayarları")
 _G.MasterESP = false
@@ -161,30 +145,14 @@ FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Silahı Asla Kaçırmaz", function(stat
     end
 end)
 
-_G.StealthFarm = false
-FarmSec:NewToggle("STEALTH FARM (NO KICK)", "Güvenli Para Toplama", function(state)
-    _G.StealthFarm = state
-    while _G.StealthFarm do
-        pcall(function()
-            for _, v in pairs(workspace:GetDescendants()) do
-                if (v.Name == "Coin" or v.Name == "Candy") and _G.StealthFarm then
-                    local tween = TweenService:Create(LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(0.4, Enum.EasingStyle.Linear), {CFrame = v.CFrame})
-                    tween:Play(); tween.Completed:Wait()
-                end
-            end
-        end)
-        task.wait(0.1)
-    end
-end)
-
 -- [[ 4. PRO / AVATAR ]] --
-local ProSec = Pro:NewSection("Destek")
+local ProSec = Pro:NewSection("Satın Alımlar")
 
-ProSec:NewButton("Korblox", "Bağış Linkini Gösterir", function()
-    -- Eğer kopyalama çalışırsa diye yine de kopyalamayı deniyoruz
+ProSec:NewButton("Korblox (80 robux)", "Tıkla ve Bağış Yap!", function()
+    -- Kopyalama denemesi
     if setclipboard then setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE") end
     
-    -- EKRANDA ÖZEL PENCERE AÇMA --
+    -- Bilgi penceresi açma
     if game.CoreGui:FindFirstChild("DonateGui") then game.CoreGui.DonateGui:Destroy() end
     local DonateGui = Instance.new("ScreenGui", game.CoreGui); DonateGui.Name = "DonateGui"
     local Frame = Instance.new("Frame", DonateGui)
@@ -194,13 +162,13 @@ ProSec:NewButton("Korblox", "Bağış Linkini Gösterir", function()
     
     local Title = Instance.new("TextLabel", Frame)
     Title.Text = "KORBLOX BAĞIŞ LİNKİ"; Title.Size = UDim2.new(1, 0, 0, 30)
-    Title.TextColor3 = Color3.new(1, 0, 0); Title.BackgroundTransparency = 1; Title.TextSize = 18
+    Title.TextColor3 = Color3.fromRGB(200, 0, 0); Title.BackgroundTransparency = 1; Title.TextSize = 18
     
     local LinkBox = Instance.new("TextBox", Frame)
     LinkBox.Text = "roblox.com/tr/game-pass/1812606767"; LinkBox.Size = UDim2.new(0.9, 0, 0, 40)
-    LinkBox.Position = UDim2.new(0.05, 0, 0.3, 0); LinkBox.ClearTextOnFocus = false
-    LinkBox.TextEditable = false; LinkBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    LinkBox.TextColor3 = Color3.new(1, 1, 1); LinkBox.TextScaled = true; Instance.new("UICorner", LinkBox)
+    LinkBox.Position = UDim2.new(0.05, 0, 0.3, 0); LinkBox.TextEditable = false
+    LinkBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50); LinkBox.TextColor3 = Color3.new(1, 1, 1)
+    LinkBox.TextScaled = true; Instance.new("UICorner", LinkBox)
     
     local CloseBtn = Instance.new("TextButton", Frame)
     CloseBtn.Text = "Kapat"; CloseBtn.Size = UDim2.new(0.4, 0, 0, 30); CloseBtn.Position = UDim2.new(0.3, 0, 0.7, 0)
@@ -208,6 +176,6 @@ ProSec:NewButton("Korblox", "Bağış Linkini Gösterir", function()
     Instance.new("UICorner", CloseBtn)
     CloseBtn.MouseButton1Click:Connect(function() DonateGui:Destroy() end)
     
-    -- Satın alma ekranını da tetiklemeyi deniyoruz
+    -- Resmi satın alma ekranı tetikleme
     pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767) end)
 end)
