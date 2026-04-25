@@ -1,17 +1,18 @@
--- [[ LAYROXC HUB v60 - THE ULTIMATE ENGINE (MM2 FULL VERSION) ]] --
+-- [[ LAYROXC HUB v60 - THE ULTIMATE ENGINE (FULL & CENTERED) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
 -- MENÜYÜ OLUŞTUR
-local Window = Library.CreateLib("Layroxc Hub - v60 FINAL", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - dc_Layroxc", "DarkTheme")
 
--- [[ MENÜYÜ EKRANIN TAM ORTASINA SABİTLEME (ZORUNLU) ]] --
+-- [[ MOBİL İÇİN MENÜYÜ TAM ORTAYA SABİTLEME (ZORLA) ]] --
 local CoreGui = game:GetService("CoreGui")
 task.spawn(function()
-    local LibraryGui = CoreGui:WaitForChild("Library", 5)
+    local LibraryGui = CoreGui:WaitForChild("Library", 10)
     if LibraryGui then
         local MainFrame = LibraryGui:FindFirstChild("Main")
         if MainFrame then
-            MainFrame.Position = UDim2.new(0.5, -262, 0.5, -175) -- Ekranın ortası
+            MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+            MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
         end
     end
 end)
@@ -22,7 +23,7 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local MarketplaceService = game:GetService("MarketplaceService")
 
--- GLOBAL AYARLAR (Ölünce gitmez)
+-- GLOBAL AYARLAR (Ölünce karakter yenilense bile bu değerler silinmez)
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.Aimbot = false
@@ -38,9 +39,13 @@ local MyGamepassLink = "https://www.roblox.com/tr/game-pass/1812606767/Korblox-F
 -- [[ MOBİL AÇ/KAPAT BUTONU ]] --
 local OpenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenButton = Instance.new("TextButton", OpenGui)
-OpenButton.Size = UDim2.new(0, 50, 0, 50); OpenButton.Position = UDim2.new(0, 20, 0.5, -25)
-OpenButton.Text = "L"; OpenButton.Draggable = true; Instance.new("UICorner", OpenButton)
-OpenButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0); OpenButton.TextColor3 = Color3.new(1,1,1)
+OpenButton.Size = UDim2.new(0, 50, 0, 50)
+OpenButton.Position = UDim2.new(0, 20, 0.5, -25)
+OpenButton.Text = "L"
+OpenButton.Draggable = true
+Instance.new("UICorner", OpenButton)
+OpenButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+OpenButton.TextColor3 = Color3.new(1,1,1)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
 -- [[ ROL TESPİT SİSTEMİ ]] --
@@ -84,9 +89,9 @@ RageSec:NewButton("TP Behind Murderer", "Katilin arkasına ışınlan", function
     end
 end)
 
--- [[ 2. VISUALS (ESP) ]] --
+-- [[ 2. VISUALS (ESP - ÖZEL RENKLER) ]] --
 local EspSec = Visuals:NewSection("Clean Vision")
-EspSec:NewToggle("MASTER ESP ACTIVE", "Nick, Rol ve Mesafe", function(state) _G.MasterESP = state end)
+EspSec:NewToggle("MASTER ESP ACTIVE", "Yeşil:Masum, Kırmızı:Katil, Mavi:Sheriff", function(state) _G.MasterESP = state end)
 
 -- [[ 3. MAGNET & FARM ]] --
 local FarmSec = Farm:NewSection("Item Collection")
@@ -95,7 +100,7 @@ FarmSec:NewToggle("STEALTH FARM", "Otomatik Coin/Candy toplar", function(state) 
 
 -- [[ 4. MOVEMENT ]] --
 local MoveSec = Movement:NewSection("Physics Control")
-MoveSec:NewTextBox("WalkSpeed", "Hızınızı yazın", function(t) _G.SpeedValue = tonumber(t) or 16 end)
+MoveSec:NewTextBox("WalkSpeed", "Hızınızı buraya yazın", function(t) _G.SpeedValue = tonumber(t) or 16 end)
 MoveSec:NewTextBox("JumpPower", "Zıplama gücünü yazın", function(t) _G.JumpValue = tonumber(t) or 50 end)
 MoveSec:NewToggle("NoClip", "Duvarlardan geç", function(state) _G.NoClip = state end)
 
@@ -109,7 +114,7 @@ AvaSec:NewButton("Get Korblox (80 Robux)", "Al ve linki kopyala", function()
     task.wait(4); Hint:Destroy()
 end)
 
--- [[ ANA RENDER DÖNGÜSÜ ]] --
+-- [[ ANA RENDER DÖNGÜSÜ (Aimbot & ESP) ]] --
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         for _, v in pairs(Players:GetPlayers()) do
@@ -118,18 +123,25 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
+
     if _G.MasterESP then
         for _, v in pairs(Players:GetPlayers()) do
             pcall(function()
                 if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
                     local role = GetRole(v)
-                    local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.5,1) or Color3.new(1,1,1))
+                    local color = role == "MURDERER" and Color3.new(1, 0, 0) 
+                                 or (role == "SHERIFF" and Color3.new(0, 0, 1) 
+                                 or Color3.new(0, 1, 0))
+                    
                     local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
-                    hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.8; hl.OutlineTransparency = 0.5
+                    hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.7; hl.OutlineTransparency = 0.3
+                    
                     local bg = v.Character.Head:FindFirstChild("LayName") or Instance.new("BillboardGui", v.Character.Head)
-                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0,120,0,40); bg.ExtentsOffset = Vector3.new(0,3,0)
+                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 120, 0, 40); bg.ExtentsOffset = Vector3.new(0, 3, 0)
+                    
                     local lb = bg:FindFirstChild("TL") or Instance.new("TextLabel", bg)
-                    lb.Name = "TL"; lb.Size = UDim2.new(1,0,1,0); lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 13; lb.Font = Enum.Font.GothamBold; lb.TextStrokeTransparency = 0
+                    lb.Name = "TL"; lb.Size = UDim2.new(1, 0, 1, 0); lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 14; lb.Font = Enum.Font.GothamBold; lb.TextStrokeTransparency = 0
+                    
                     local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude)
                     lb.Text = v.DisplayName .. "\n[" .. role .. "] " .. dist .. "m"
                 end
@@ -145,7 +157,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- [[ FİZİKSEL DÖNGÜ ]] --
+-- [[ FİZİKSEL DÖNGÜ (Ölünce karakter hızını korur) ]] --
 RunService.Stepped:Connect(function()
     pcall(function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -160,7 +172,7 @@ RunService.Stepped:Connect(function()
     end)
 end)
 
--- [[ OTOMASYONLAR ]] --
+-- [[ ARKA PLAN OTOMASYONLARI ]] --
 task.spawn(function()
     while task.wait(0.1) do
         pcall(function()
@@ -170,8 +182,7 @@ task.spawn(function()
                     for _, v in pairs(Players:GetPlayers()) do
                         if v ~= LocalPlayer and v.Character and (LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude < 25 then
                             k.Parent = LocalPlayer.Character; k:Activate()
-                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
-                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
+                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0); firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
                         end
                     end
                 end
