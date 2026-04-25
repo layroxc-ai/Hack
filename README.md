@@ -1,15 +1,18 @@
--- [[ LAYROXC HUB v60 - THE ULTIMATE ENGINE (EKSİKSİZ TAM SÜRÜM) ]] --
+-- [[ LAYROXC HUB v60 - THE ULTIMATE ENGINE (MM2 FULL VERSION) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
 -- MENÜYÜ OLUŞTUR
-local Window = Library.CreateLib("Layroxc Hub🌌 - ⚠️BETA⚠️", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - v60 FINAL", "DarkTheme")
 
--- [[ MENÜYÜ EKRANIN ORTASINA ZORLA SABİTLEME ]] --
+-- [[ MENÜYÜ EKRANIN TAM ORTASINA SABİTLEME (ZORUNLU) ]] --
 local CoreGui = game:GetService("CoreGui")
 task.spawn(function()
-    local MainFrame = CoreGui:WaitForChild("Library"):FindFirstChild("Main")
-    if MainFrame then
-        MainFrame.Position = UDim2.new(0.5, -262, 0.5, -175) -- Ekranın tam ortasına çeker
+    local LibraryGui = CoreGui:WaitForChild("Library", 5)
+    if LibraryGui then
+        local MainFrame = LibraryGui:FindFirstChild("Main")
+        if MainFrame then
+            MainFrame.Position = UDim2.new(0.5, -262, 0.5, -175) -- Ekranın ortası
+        end
     end
 end)
 
@@ -19,7 +22,7 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local MarketplaceService = game:GetService("MarketplaceService")
 
--- GLOBAL AYARLAR
+-- GLOBAL AYARLAR (Ölünce gitmez)
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.Aimbot = false
