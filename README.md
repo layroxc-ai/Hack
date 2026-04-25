@@ -1,6 +1,6 @@
--- [[ LAYROXC HUB v50 - TACTICAL TELEPORT (TOUCH TO TP) ]] --
+-- [[ LAYROXC HUB v52 - PERMANENT TP BUTTON & FULL FIX ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Hub - v50", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - v52", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -19,21 +19,20 @@ Instance.new("UICorner", OpenButton)
 OpenButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
--- [[ ROL TESPİT MOTORU ]] --
-local function GetKiller()
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
-                return v.Character.HumanoidRootPart
-            end
-            pcall(function()
-                if v.PlayerGui.MainGui.Game.RoleDesc.Text:lower():find("murderer") then
-                    return v.Character.HumanoidRootPart
-                end
-            end)
-        end
-    end
-    return nil
+-- [[ GELİŞMİŞ ROL TESPİT MOTORU ]] --
+local function GetPlayerRole(v)
+    if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "KATİL" end
+    if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then return "ŞERİF" end
+    
+    local roleText = ""
+    pcall(function()
+        roleText = v.PlayerGui.MainGui.Game.RoleDesc.Text:lower()
+    end)
+    
+    if roleText:find("murderer") or roleText:find("katil") then return "KATİL" end
+    if roleText:find("sheriff") or roleText:find("şerif") or roleText:find("hero") then return "ŞERİF" end
+    
+    return "Masum"
 end
 
 -- SEKMELER
@@ -42,11 +41,11 @@ local Visuals = Window:NewTab("Visuals (ESP)")
 local Farm = Window:NewTab("Farm & Magnet")
 local Pro = Window:NewTab("Avatar & Fix")
 
--- [[ 1. SALDIRI MOTORU - TUŞLU IŞINLANMA ]] --
+-- [[ 1. SALDIRI MOTORU - GİTMEYEN TP BUTONU ]] --
 local RageSec = Main:NewSection("İnfaz Ayarları")
 
-RageSec:NewButton("Katilin Arkasına Işınlanma Tuşu", "Ekrana Tuş Getirir", function()
-    if game.CoreGui:FindFirstChild("TpGui") then game.CoreGui.TpGui:Destroy() end
+RageSec:NewButton("Katil Işınlanma Tuşunu Aç", "Buton Ekranda Sabit Kalır", function()
+    if game.CoreGui:FindFirstChild("TpGui") then return end -- Zaten varsa açma
     
     local TpGui = Instance.new("ScreenGui", game.CoreGui)
     TpGui.Name = "TpGui"
@@ -57,34 +56,32 @@ RageSec:NewButton("Katilin Arkasına Işınlanma Tuşu", "Ekrana Tuş Getirir", 
     TpButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
     TpButton.TextColor3 = Color3.new(1, 1, 1)
     TpButton.Font = Enum.Font.GothamBold
+    TpButton.Draggable = true
     Instance.new("UICorner", TpButton)
     
     TpButton.MouseButton1Click:Connect(function()
-        local target = GetKiller()
-        if target then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = target.CFrame * CFrame.new(0, 0, 2)
+        for _, v in pairs(Players:GetPlayers()) do
+            if GetPlayerRole(v) == "KATİL" and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2)
+            end
         end
     end)
     
-    -- 10 saniye sonra tuş kaybolsun (ekran kirlenmesin)
-    task.wait(10)
-    if TpGui then TpGui:Destroy() end
+    -- Kapatma butonu ekle (Küçük çarpı)
+    local CloseX = Instance.new("TextButton", TpButton)
+    CloseX.Size = UDim2.new(0, 20, 0, 20)
+    CloseX.Position = UDim2.new(1, -20, 0, 0)
+    CloseX.Text = "X"
+    CloseX.BackgroundColor3 = Color3.new(0,0,0)
+    CloseX.TextColor3 = Color3.new(1,1,1)
+    CloseX.MouseButton1Click:Connect(function() TpGui:Destroy() end)
 end)
 
 _G.Aimbot = false
 RageSec:NewToggle("Smart Aimbot", "Katile Kilitlenir", function(state) _G.Aimbot = state end)
 
-RunService.RenderStepped:Connect(function()
-    if _G.Aimbot then
-        local target = GetKiller()
-        if target then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
-        end
-    end
-end)
-
 _G.KillAura = false
-RageSec:NewToggle("Kill Aura", "Otomatik Keser", function(state)
+RageSec:NewToggle("Kill Aura", "Yakındakileri Keser", function(state)
     _G.KillAura = state
     while _G.KillAura do
         pcall(function()
@@ -107,26 +104,28 @@ RageSec:NewToggle("Kill Aura", "Otomatik Keser", function(state)
     end
 end)
 
--- [[ 2. NITRO ESP (KÜÇÜK İSİM) ]] --
-local EspSec = Visuals:NewSection("İfşa")
+-- [[ 2. NITRO ESP (BOX + NAME + SHERIFF) ]] --
+local EspSec = Visuals:NewSection("ESP Ayarları")
 _G.MasterESP = false
-EspSec:NewToggle("ESP Aktif", "Küçük İsimler", function(state) _G.MasterESP = state end)
+EspSec:NewToggle("FULL ESP AKTİF", "Kutu ve İsimler", function(state) _G.MasterESP = state end)
 
 RunService.RenderStepped:Connect(function()
     if _G.MasterESP then
         for _, v in pairs(Players:GetPlayers()) do
             pcall(function()
                 if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
+                    local role = GetPlayerRole(v)
                     local color = Color3.fromRGB(0, 255, 0)
-                    if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then color = Color3.fromRGB(255, 0, 0) end
+                    if role == "KATİL" then color = Color3.fromRGB(255, 0, 0)
+                    elseif role == "ŞERİF" then color = Color3.fromRGB(0, 150, 255) end
                     
                     local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
-                    hl.OutlineColor = color; hl.FillTransparency = 1
+                    hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.8; hl.OutlineColor = color
                     
                     local bg = v.Character.Head:FindFirstChild("LayName") or Instance.new("BillboardGui", v.Character.Head)
-                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 80, 0, 20); bg.ExtentsOffset = Vector3.new(0, 2.5, 0)
+                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 80, 0, 20); bg.ExtentsOffset = Vector3.new(0, 3, 0)
                     local lb = bg:FindFirstChild("TextLabel") or Instance.new("TextLabel", bg)
-                    lb.Size = UDim2.new(1, 0, 1, 0); lb.BackgroundTransparency = 1; lb.TextSize = 10; lb.Font = Enum.Font.GothamBold; lb.TextColor3 = color; lb.Text = v.Name
+                    lb.Size = UDim2.new(1, 0, 1, 0); lb.BackgroundTransparency = 1; lb.TextSize = 10; lb.Font = Enum.Font.GothamBold; lb.TextColor3 = color; lb.Text = "["..role.."] "..v.Name
                 end
             end)
         end
@@ -136,7 +135,7 @@ end)
 -- [[ 3. FARM & MAGNET ]] --
 local FarmSec = Farm:NewSection("Toplama")
 _G.GrabGun = false
-FarmSec:NewToggle("Magnet Grab Gun", "Silahı Çeker", function(state)
+FarmSec:NewToggle("Magnet Grab Gun", "Silahı Sana Getirir", function(state)
     _G.GrabGun = state
     while _G.GrabGun do
         for _, v in pairs(workspace:GetDescendants()) do
