@@ -178,7 +178,13 @@ FarmSec:NewToggle("STEALTH FARM (NO KICK)", "Güvenli Para Toplama", function(st
 end)
 
 -- [[ 4. PRO / AVATAR ]] --
-local ProSec = Pro:NewSection("Avatar")
-ProSec:NewButton("Korblox (80 Robux)", "Bedava Korblox Bacağı", function()
-    MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767)
+local ProSec = Pro:NewSection("Ekstralar")
+
+ProSec:NewButton("Korblox", "Korblox FE Menüsü", function()
+    local success, err = pcall(function()
+        MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767)
+    end)
+    if not success then
+        warn("Satın alma ekranı açılamadı: " .. tostring(err))
+    end
 end)
