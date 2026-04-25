@@ -178,13 +178,16 @@ FarmSec:NewToggle("STEALTH FARM (NO KICK)", "Güvenli Para Toplama", function(st
 end)
 
 -- [[ 4. PRO / AVATAR ]] --
-local ProSec = Pro:NewSection("Ekstralar")
+local ProSec = Pro:NewSection("Satın Alımlar")
 
-ProSec:NewButton("Korblox", "Korblox FE Menüsü", function()
-    local success, err = pcall(function()
-        MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767)
-    end)
-    if not success then
-        warn("Satın alma ekranı açılamadı: " .. tostring(err))
-    end
+ProSec:NewButton("Korblox", "Tıkla ve Korblox Satın Al!", function()
+    -- Yöntem 1: Doğrudan İstek
+    MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767)
+    
+    -- Yöntem 2: Bildirim ve Link (Garanti olsun diye)
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Korblox Menüsü",
+        Text = "Eğer pencere açılmadıysa oyun sayfasından kontrol edin!",
+        Duration = 5
+    })
 end)
