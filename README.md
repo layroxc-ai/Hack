@@ -1,6 +1,6 @@
--- [[ LAYROXC HUB v42 - SMALL NAMES & FULL GOD MODE ]] --
+-- [[ LAYROXC HUB v44 - FULL STEALTH & POWER (NO RAINBOW) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Hub - v42", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - v44", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -8,12 +8,7 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local MarketplaceService = game:GetService("MarketplaceService")
 
--- [[ RAINBOW MOTORU ]] --
-local function GetRainbowColor()
-    return Color3.fromHSV(tick() % 5 / 5, 1, 1)
-end
-
--- [[ MOBİL BUTON ]] --
+-- [[ MOBİL BUTON (SABİT RENK) ]] --
 local OpenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenButton = Instance.new("TextButton", OpenGui)
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
@@ -21,7 +16,7 @@ OpenButton.Position = UDim2.new(0, 10, 0.5, 0)
 OpenButton.Text = "L"
 OpenButton.Draggable = true 
 Instance.new("UICorner", OpenButton)
-RunService.RenderStepped:Connect(function() OpenButton.BackgroundColor3 = GetRainbowColor() end)
+OpenButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
 -- SEKMELER
@@ -55,10 +50,9 @@ MainSec:NewButton("Katilin Arkasına Işınlan", "Hızlı Kill", function()
     end
 end)
 
--- [[ 2. FULL ESP (KÜÇÜK İSİM & SKELETON) ]] --
+-- [[ 2. FULL ESP (KÜÇÜK İSİM & SKELETON - NO RAINBOW) ]] --
 local EspSec = Visuals:NewSection("Görünürlük Ayarları")
 _G.MasterESP = false
-
 EspSec:NewToggle("FULL NITRO ESP", "Küçük İsim ve Skeleton", function(state) _G.MasterESP = state end)
 
 RunService.RenderStepped:Connect(function()
@@ -66,31 +60,38 @@ RunService.RenderStepped:Connect(function()
         for _, v in pairs(Players:GetPlayers()) do
             pcall(function()
                 if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
-                    -- Rainbow Skeleton (Highlight)
+                    -- Rol Tespit ve Renk Belirleme
+                    local roleColor = Color3.fromRGB(0, 255, 0) -- Masum (Yeşil)
+                    local roleName = "Masum"
+                    
+                    if v.Character:FindFirstChild("Knife") or v.Backpack:FindFirstChild("Knife") then
+                        roleColor = Color3.fromRGB(255, 0, 0) -- Katil (Kırmızı)
+                        roleName = "KATİL"
+                    elseif v.Character:FindFirstChild("Gun") or v.Backpack:FindFirstChild("Gun") then
+                        roleColor = Color3.fromRGB(0, 150, 255) -- Şerif (Mavi)
+                        roleName = "ŞERİF"
+                    end
+
+                    -- Skeleton Highlight
                     local hl = v.Character:FindFirstChild("LayroxcHL") or Instance.new("Highlight", v.Character)
                     hl.Name = "LayroxcHL"
                     hl.FillTransparency = 1
-                    hl.OutlineColor = GetRainbowColor()
+                    hl.OutlineColor = roleColor
 
-                    -- Billboard Name ESP (KÜÇÜLTÜLMÜŞ)
+                    -- Billboard Name ESP (KÜÇÜK)
                     local bgui = v.Character.Head:FindFirstChild("LayroxcName") or Instance.new("BillboardGui", v.Character.Head)
                     bgui.Name = "LayroxcName"
                     bgui.AlwaysOnTop = true
-                    bgui.Size = UDim2.new(0, 100, 0, 20) -- Boyut küçültüldü
+                    bgui.Size = UDim2.new(0, 100, 0, 20)
                     bgui.ExtentsOffset = Vector3.new(0, 2.5, 0)
                     
                     local lbl = bgui:FindFirstChild("TextLabel") or Instance.new("TextLabel", bgui)
                     lbl.Size = UDim2.new(1, 0, 1, 0)
                     lbl.BackgroundTransparency = 1
-                    lbl.TextScaled = false -- Otomatik büyütme kapatıldı
-                    lbl.TextSize = 12 -- İSİM KÜÇÜK YAPILDI
+                    lbl.TextSize = 12 
                     lbl.Font = Enum.Font.GothamBold
-                    lbl.TextColor3 = GetRainbowColor()
-                    
-                    local role = "Masum"
-                    if v.Character:FindFirstChild("Knife") or v.Backpack:FindFirstChild("Knife") then role = "KATİL"
-                    elseif v.Character:FindFirstChild("Gun") or v.Backpack:FindFirstChild("Gun") then role = "ŞERİF" end
-                    lbl.Text = "[" .. role .. "] " .. v.Name
+                    lbl.TextColor3 = roleColor
+                    lbl.Text = "[" .. roleName .. "] " .. v.Name
                 end
             end)
         end
@@ -104,8 +105,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- [[ 3. FARM & MAGNET ]] --
+-- [[ 3. FARM & MAGNET (EKSİKSİZ) ]] --
 local FarmSec = Farm:NewSection("Otomatik Toplama")
+
 _G.GrabGun = false
 FarmSec:NewToggle("Magnet Grab Gun", "Silahı Çeker", function(state)
     _G.GrabGun = state
@@ -133,11 +135,11 @@ FarmSec:NewToggle("Auto Coin Farm", "Paraları Toplar", function(state)
     end
 end)
 
--- [[ 4. PRO AVATAR (80 ROBUX) ]] --
+-- [[ 4. PRO AVATAR (80 ROBUX GAMEPASS) ]] --
 local ProSec = Pro:NewSection("Avatar & Bağış")
 
-ProSec:NewButton("Korblox Al (80 Robux)", "ID: 1812606767", function()
-    MarketplaceService:PromptProductPurchase(LocalPlayer, 1812606767)
+ProSec:NewButton("Korblox FE (80 Robux)", "ID: 1812606767", function()
+    MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767)
 end)
 
 ProSec:NewButton("Headless (FE)", "Kafanı Yok Et", function() 
