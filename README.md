@@ -1,145 +1,126 @@
--- [[ LAYROXC HUB v28 - TACTICAL ESP & NITRO SPEED ]] --
+-- [[ LAYROXC HUB v30 - RAINBOW SKELETON & BOX ESP ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Hub MM2 - TACTICAL", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - Rainbow Edition", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 
--- [[ MOBİL SÜRÜKLENEBİLİR BUTON ]] --
+-- [[ RAINBOW RENDER ]] --
+local function GetRainbowColor()
+    return Color3.fromHSV(tick() % 5 / 5, 1, 1)
+end
+
+-- [[ MOBİL BUTON ]] --
 local OpenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenButton = Instance.new("TextButton", OpenGui)
-OpenButton.Size = UDim2.new(0, 50, 0, 50)
+OpenButton.Size = UDim2.new(0, 45, 0, 45)
 OpenButton.Position = UDim2.new(0, 10, 0.5, 0)
 OpenButton.Text = "L"
 OpenButton.Draggable = true 
 Instance.new("UICorner", OpenButton)
+RunService.RenderStepped:Connect(function() OpenButton.BackgroundColor3 = GetRainbowColor() end)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
--- TABLAR
-local Main = Window:NewTab("Saldırı")
-local Farm = Window:NewTab("Farm & Magnet")
-local Visuals = Window:NewTab("Tactical ESP")
-local Pro = Window:NewTab("Avatar")
+local AimTab = Window:NewTab("Aimbot")
+local EspTab = Window:NewTab("Visuals (ESP)")
 
--- [[ 1. TACTICAL NAME & HIGHLIGHT ESP ]] --
-local VisSec = Visuals:NewSection("İsim ve Rol ESP")
+-- [[ 1. AIMBOT AYARLARI ]] --
+local AimSec = AimTab:NewSection("Aimbot & FOV")
+local FOVring = Drawing.new("Circle")
+FOVring.Visible = true
+FOVring.Thickness = 1.5
+FOVring.Radius = 150
+FOVring.Filled = false
 
-_G.MasterESP = false
-VisSec:NewToggle("Nitro Full ESP", "İsim + Rol + Uzaklık (0ms)", function(state)
-    _G.MasterESP = state
-end)
+_G.AimbotEnabled = false
+AimSec:NewToggle("Aimbot Aktif", "Katili hedefler", function(state) _G.AimbotEnabled = state end)
+AimSec:NewSlider("Çember Genişliği", "FOV Ayarı", 500, 50, function(s) FOVring.Radius = s end)
+AimSec:NewToggle("Çemberi Göster", "Halkayı aç/kapat", function(state) FOVring.Visible = state end)
 
--- ESP FONKSİYONU (İsim Etiketi Oluşturma)
-local function CreateESP(player)
-    local bgui = Instance.new("BillboardGui", game.CoreGui)
-    bgui.Name = player.Name .. "_ESP"
-    bgui.Adornee = player.Character:WaitForChild("Head")
-    bgui.Size = UDim2.new(0, 200, 0, 50)
-    bgui.AlwaysOnTop = true
-    bgui.ExtentsOffset = Vector3.new(0, 3, 0)
+-- [[ 2. BOX & SKELETON & NAME ESP ]] --
+local EspSec = EspTab:NewSection("Görünürlük Ayarları")
+_G.EspMaster = false
+EspSec:NewToggle("ESP Aktif", "Box, Skeleton ve İsim açar", function(state) _G.EspMaster = state end)
 
-    local nametag = Instance.new("TextLabel", bgui)
-    nametag.Size = UDim2.new(1, 0, 1, 0)
-    nametag.BackgroundTransparency = 1
-    nametag.TextStrokeTransparency = 0
-    nametag.TextScaled = true
-    nametag.Font = Enum.Font.SpecialElite
-    return bgui, nametag
+-- Skeleton & Box Çizim Fonksiyonu
+local function DrawESP(plr)
+    local Box = Drawing.new("Square")
+    Box.Visible = false
+    Box.Thickness = 1
+    Box.Filled = false
+
+    local Name = Drawing.new("Text")
+    Name.Visible = false
+    Name.Size = 16
+    Name.Center = true
+    Name.Outline = true
+
+    RunService.RenderStepped:Connect(function()
+        if _G.EspMaster and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr ~= LocalPlayer then
+            local RootPart = plr.Character.HumanoidRootPart
+            local Head = plr.Character:FindFirstChild("Head")
+            local Pos, OnScreen = Camera:WorldToViewportPoint(RootPart.Position)
+
+            if OnScreen then
+                local Color = GetRainbowColor()
+                
+                -- Box ESP
+                local SizeX = 2000 / Pos.Z
+                local SizeY = 3000 / Pos.Z
+                Box.Size = Vector2.new(SizeX, SizeY)
+                Box.Position = Vector2.new(Pos.X - SizeX / 2, Pos.Y - SizeY / 2)
+                Box.Color = Color
+                Box.Visible = true
+
+                -- Name ESP
+                Name.Position = Vector2.new(Pos.X, Pos.Y - SizeY / 2 - 20)
+                Name.Color = Color
+                local role = "Masum"
+                if plr.Backpack:FindFirstChild("Knife") or plr.Character:FindFirstChild("Knife") then role = "KATİL"
+                elseif plr.Backpack:FindFirstChild("Gun") or plr.Character:FindFirstChild("Gun") then role = "ŞERİF" end
+                Name.Text = "[" .. role .. "] " .. plr.Name
+                Name.Visible = true
+
+                -- Skeleton (Highlight Sürümü - Mobil Stabilite İçin)
+                local hl = plr.Character:FindFirstChild("EspHL") or Instance.new("Highlight", plr.Character)
+                hl.Name = "EspHL"
+                hl.FillTransparency = 1
+                hl.OutlineColor = Color
+                hl.Visible = true
+            else
+                Box.Visible = false
+                Name.Visible = false
+                if plr.Character:FindFirstChild("EspHL") then plr.Character.EspHL.Visible = false end
+            end
+        else
+            Box.Visible = false
+            Name.Visible = false
+            if plr.Character and plr.Character:FindFirstChild("EspHL") then plr.Character.EspHL:Destroy() end
+        end
+    end)
 end
 
-RunService.RenderStepped:Connect(function()
-    if _G.MasterESP then
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
-                -- Highlight (Vücut Parlaması)
-                local hl = v.Character:FindFirstChild("Highlight") or Instance.new("Highlight", v.Character)
-                hl.Name = "Highlight"
-                
-                -- İsim Etiketi (Name ESP)
-                local guiName = v.Name .. "_ESP"
-                local bgui = game.CoreGui:FindFirstChild(guiName)
-                if not bgui then bgui, _ = CreateESP(v) end
-                local nametag = bgui.TextLabel
-                
-                local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude)
-                
-                -- ROL KONTROLÜ VE RENKLENDİRME
-                if v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife") then
-                    hl.FillColor = Color3.fromRGB(255, 0, 0)
-                    nametag.TextColor3 = Color3.fromRGB(255, 0, 0)
-                    nametag.Text = "[KATİL] " .. v.Name .. " [" .. dist .. "m]"
-                elseif v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun") then
-                    hl.FillColor = Color3.fromRGB(0, 0, 255)
-                    nametag.TextColor3 = Color3.fromRGB(0, 0, 255)
-                    nametag.Text = "[ŞERİF] " .. v.Name .. " [" .. dist .. "m]"
-                else
-                    hl.FillColor = Color3.fromRGB(0, 255, 0)
-                    nametag.TextColor3 = Color3.fromRGB(0, 255, 0)
-                    nametag.Text = "[MASUM] " .. v.Name .. " [" .. dist .. "m]"
-                end
-            end
-        end
-    else
-        -- Temizlik
-        for _, v in pairs(Players:GetPlayers()) do
-            if v.Character and v.Character:FindFirstChild("Highlight") then v.Character.Highlight:Destroy() end
-            local bgui = game.CoreGui:FindFirstChild(v.Name .. "_ESP")
-            if bgui then bgui:Destroy() end
-        end
-    end
-end)
+-- Tüm oyunculara uygula
+for _, v in pairs(Players:GetPlayers()) do DrawESP(v) end
+Players.PlayerAdded:Connect(DrawESP)
 
--- [[ 2. SALDIRI & AIMBOT ]] --
-local MainSec = Main:NewSection("Aimbot & Silent")
-_G.Aimbot = false
-MainSec:NewToggle("Ultra Aimbot", "Katile Kilitlen", function(state) _G.Aimbot = state end)
-
+-- Aimbot Loop
 RunService.RenderStepped:Connect(function()
-    if _G.Aimbot then
+    FOVring.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    FOVring.Color = GetRainbowColor()
+    if _G.AimbotEnabled then
         for _, v in pairs(Players:GetPlayers()) do
             if v ~= LocalPlayer and v.Character and (v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")) then
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, v.Character.HumanoidRootPart.Position)
-            end
-        end
-    end
-end)
-
-_G.SilentAim = false
-MainSec:NewToggle("Murder Silent", "Silent Aim Aktif", function(state) _G.SilentAim = state end)
-
--- [[ 3. FARM & MAGNET ]] --
-local FarmSec = Farm:NewSection("Hızlı Toplama")
-_G.AutoFarm = false
-FarmSec:NewToggle("Smart Coin Farm", "Paralara Işınlan", function(state)
-    _G.AutoFarm = state
-    while _G.AutoFarm do
-        for _, v in pairs(workspace:GetDescendants()) do
-            if (v.Name == "Coin" or v.Name == "Candy" or v.Name == "CoinVisual") and v:IsA("BasePart") then
-                if _G.AutoFarm and LocalPlayer.Character then
-                    LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
-                    task.wait(0.12)
+                local VPos, OnScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+                if OnScreen then
+                    local MouseDist = (Vector2.new(VPos.X, VPos.Y) - FOVring.Position).Magnitude
+                    if MouseDist < FOVring.Radius then
+                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, v.Character.HumanoidRootPart.Position)
+                    end
                 end
             end
         end
-        task.wait()
     end
 end)
-
-FarmSec:NewToggle("Magnet Grab Gun", "Silahı Çek", function(state)
-    _G.GrabGun = state
-    while _G.GrabGun do
-        for _, v in pairs(workspace:GetDescendants()) do
-            if (v.Name == "GunDrop" or (v:IsA("Part") and v:FindFirstChild("TouchTransmitter") and not v.Parent:FindFirstChild("Knife"))) then
-                if LocalPlayer.Character then v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end
-            end
-        end
-        task.wait(0.05)
-    end
-end)
-
--- [[ 4. AVATAR ]] --
-local AvaSec = Pro:NewSection("Avatar")
-AvaSec:NewButton("FE Headless", "Kafasız", function() LocalPlayer.Character.Head.Transparency = 1 end)
-AvaSec:NewButton("FE Korblox", "Bacak Hilesi", function() if LocalPlayer.Character:FindFirstChild("RightUpperLeg") then LocalPlayer.Character.RightUpperLeg:Destroy() end end)
