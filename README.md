@@ -2,7 +2,7 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
 -- MENÜYÜ OLUŞTUR
-local Window = Library.CreateLib("Layroxc Hub - ⚠️BETA⚠️", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub🌌 - ⚠️BETA⚠️", "DarkTheme")
 
 -- [[ MENÜYÜ EKRANIN ORTASINA ZORLA SABİTLEME ]] --
 local CoreGui = game:GetService("CoreGui")
@@ -99,8 +99,8 @@ MoveSec:NewToggle("NoClip", "Duvarlardan geç", function(state) _G.NoClip = stat
 -- [[ 5. AVATAR & FIX ]] --
 local AvaSec = Avatar:NewSection("Support & Korblox")
 AvaSec:NewButton("Get Korblox (80 Robux)", "Al ve linki kopyala", function()
-    pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767) end)
-    if setclipboard then setclipboard(https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE) end
+    pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, MyGamepassID) end)
+    if setclipboard then setclipboard(MyGamepassLink) end
     local Hint = Instance.new("Hint", game.CoreGui)
     Hint.Text = "PLEASE OPEN THE COPIED LINK IN YOUR BROWSER TO GET KORBLOX"
     task.wait(4); Hint:Destroy()
