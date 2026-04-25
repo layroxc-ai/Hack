@@ -44,6 +44,15 @@ local Pro = Window:NewTab("Avatar & Fix")
 -- [[ 1. COMBAT - KILL ALL / AIMBOT / TP ]] --
 local RageSec = Main:NewSection("Execution Engine")
 
+RageSec:NewButton("TP Behind Murderer", "Teleports you right behind the Murderer", function()
+    for _, v in pairs(Players:GetPlayers()) do
+        if GetPlayerRole(v) == "MURDERER" and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            -- Katilin 3 birim arkasına ışınlar
+            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+        end
+    end
+end)
+
 RageSec:NewButton("KILL ALL (CLEANUP)", "Instantly kills everyone if you are Murderer", function()
     local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
     if knife then
@@ -149,10 +158,8 @@ end)
 local ProSec = Pro:NewSection("Support")
 
 ProSec:NewButton("Korblox (80 robux)", "Click to Purchase!", function()
-    -- Copy attempt
     if setclipboard then setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE") end
     
-    -- INFO WINDOW
     if game.CoreGui:FindFirstChild("DonateGui") then game.CoreGui.DonateGui:Destroy() end
     local DonateGui = Instance.new("ScreenGui", game.CoreGui); DonateGui.Name = "DonateGui"
     local Frame = Instance.new("Frame", DonateGui)
@@ -176,6 +183,5 @@ ProSec:NewButton("Korblox (80 robux)", "Click to Purchase!", function()
     Instance.new("UICorner", CloseBtn)
     CloseBtn.MouseButton1Click:Connect(function() DonateGui:Destroy() end)
     
-    -- Official Purchase Prompt
     pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767) end)
 end)
