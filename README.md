@@ -180,14 +180,21 @@ end)
 -- [[ 4. PRO / AVATAR ]] --
 local ProSec = Pro:NewSection("Satın Alımlar")
 
-ProSec:NewButton("Korblox", "Tıkla ve Korblox Satın Al!", function()
-    -- Yöntem 1: Doğrudan İstek
-    MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767)
+ProSec:NewButton("Korblox", "Tıkla Linki Kopyala!", function()
+    -- Linki panoya kopyalar (Bazı executorlar setclipboard destekler)
+    if setclipboard then
+        setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE")
+    end
     
-    -- Yöntem 2: Bildirim ve Link (Garanti olsun diye)
+    -- Ekranda bildirim gösterir
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Korblox Menüsü",
-        Text = "Eğer pencere açılmadıysa oyun sayfasından kontrol edin!",
+        Title = "Layroxc Hub",
+        Text = "Korblox Linki Kopyalandı! Tarayıcıya yapıştırıp alabilirsiniz.",
         Duration = 5
     })
+    
+    -- Satın alma ekranını tekrar deniyoruz (Belki bu sefer tutar)
+    pcall(function()
+        MarketplaceService:PromptGamePassPurchase(LocalPlayer, 1812606767)
+    end)
 end)
