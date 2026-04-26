@@ -1,8 +1,8 @@
--- [[ LAYROXC HUB - dc_Layroxc (FULL & STABLE MM2) ]] --
+-- [[ LAYROXC HUB - dc_Layroxc (FULL ALL-IN-ONE VERSION) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("dc_Layroxc", "DarkTheme")
 
--- [[ MOBİL MERKEZLEME AYARI ]] --
+-- [[ MENÜYÜ EKRANIN TAM ORTASINA SABİTLEME ]] --
 local CoreGui = game:GetService("CoreGui")
 task.spawn(function()
     local LibraryGui = CoreGui:WaitForChild("Library", 10)
@@ -19,9 +19,11 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
+local MarketplaceService = game:GetService("MarketplaceService")
 
--- GLOBAL DEĞİŞKENLER
+-- GLOBAL DEĞİŞKENLER (Eskiler Dahil)
 _G.SpeedValue = 16
+_G.JumpValue = 50
 _G.Aimbot = false
 _G.KillAura = false
 _G.MasterESP = false
@@ -29,6 +31,9 @@ _G.GrabGun = false
 _G.StealthFarm = false
 _G.NoClip = false
 _G.AntiFling = false
+
+local MyGamepassID = 1812606767
+local MyGamepassLink = "https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE"
 
 -- [[ ROL TESPİT SİSTEMİ ]] --
 local function GetRole(v)
@@ -42,10 +47,11 @@ end
 local Main = Window:NewTab("Combat (Rage)")
 local Visuals = Window:NewTab("Visuals (ESP)")
 local Farm = Window:NewTab("Magnet & Farm")
-local Movement = Window:NewTab("Movement")
+local Movement = Window:NewTab("Movement & Prot")
 local Teleport = Window:NewTab("Teleport & UI")
+local Avatar = Window:NewTab("Avatar & Fix")
 
--- [[ 1. COMBAT & INVISIBLE ]] --
+-- [[ 1. COMBAT ]] --
 local RageSec = Main:NewSection("Execution Engine")
 RageSec:NewToggle("Ultra Smart Aimbot", "Katile kilitlenir", function(state) _G.Aimbot = state end)
 RageSec:NewButton("KILL ALL", "Herkesi anında keser", function()
@@ -62,7 +68,8 @@ RageSec:NewButton("KILL ALL", "Herkesi anında keser", function()
         end
     end
 end)
-RageSec:NewButton("Invisible", "Görünmez yapar", function()
+RageSec:NewToggle("Kill Aura (25m)", "Yakındakileri keser", function(state) _G.KillAura = state end)
+RageSec:NewButton("Invisible", "Görünmezlik modunu açar", function()
     local char = LocalPlayer.Character
     if char then
         for _, v in pairs(char:GetDescendants()) do
@@ -71,18 +78,19 @@ RageSec:NewButton("Invisible", "Görünmez yapar", function()
     end
 end)
 
--- [[ 2. VISUALS (ESP) ]] --
+-- [[ 2. VISUALS (ESP RENKLERİ KORUNDU) ]] --
 local EspSec = Visuals:NewSection("Clean Vision")
 EspSec:NewToggle("MASTER ESP ACTIVE", "Yeşil:Masum, Kırmızı:Katil, Mavi:Sheriff", function(state) _G.MasterESP = state end)
 
--- [[ 3. MAGNET & FARM (Yavaşlatılmış) ]] --
+-- [[ 3. MAGNET & FARM (GÜÇLENDİRİLDİ) ]] --
 local FarmSec = Farm:NewSection("Item Collection")
-FarmSec:NewToggle("MAGNET GUN", "Düşen silahı ışınlar", function(state) _G.GrabGun = state end)
-FarmSec:NewToggle("STEALTH COIN FARM", "Güvenli ve yavaş toplama", function(state) _G.StealthFarm = state end)
+FarmSec:NewToggle("MAGNET GUN", "Düşen silahı çeker", function(state) _G.GrabGun = state end)
+FarmSec:NewToggle("STEALTH COIN FARM", "Algılamalı yavaş toplama", function(state) _G.StealthFarm = state end)
 
--- [[ 4. MOVEMENT & ANTI-FLING ]] --
-local MoveSec = Movement:NewSection("Physics & Protection")
-MoveSec:NewTextBox("WalkSpeed", "Hızınızı yazın", function(t) _G.SpeedValue = tonumber(t) or 16 end)
+-- [[ 4. MOVEMENT & PROTECT ]] --
+local MoveSec = Movement:NewSection("Physics Control")
+MoveSec:NewTextBox("WalkSpeed", "Hız", function(t) _G.SpeedValue = tonumber(t) or 16 end)
+MoveSec:NewTextBox("JumpPower", "Zıplama", function(t) _G.JumpValue = tonumber(t) or 50 end)
 MoveSec:NewToggle("NoClip", "Duvarlardan Geç", function(state) _G.NoClip = state end)
 MoveSec:NewToggle("Anti-Fling", "Fırlatılmayı engeller", function(state) _G.AntiFling = state end)
 
@@ -118,9 +126,16 @@ CreateTPBtn("TP Sheriff", 50, function()
 end)
 CreateTPBtn("TP Lobby", 90, function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-108, 138, 15) end)
 
-TPSec:NewButton("Toggle TP UI", "Paneli aç/kapat", function() TPFrame.Visible = not TPFrame.Visible end)
+TPSec:NewButton("Toggle TP UI", "Işınlanma tuş panelini açar", function() TPFrame.Visible = not TPFrame.Visible end)
 
--- [[ MOBİL BUTON ]] --
+-- [[ 6. AVATAR & FIX ]] --
+local AvaSec = Avatar:NewSection("Support & Korblox")
+AvaSec:NewButton("Get Korblox (80 Robux)", "Satın al ve linki kopyala", function()
+    pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, MyGamepassID) end)
+    if setclipboard then setclipboard(MyGamepassLink) end
+end)
+
+-- [[ MOBİL AÇ/KAPAT BUTONU ]] --
 local OpenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenButton = Instance.new("TextButton", OpenGui)
 OpenButton.Size = UDim2.new(0, 50, 0, 50); OpenButton.Position = UDim2.new(0, 20, 0.5, -25)
@@ -128,7 +143,7 @@ OpenButton.Text = "L"; OpenButton.Draggable = true; Instance.new("UICorner", Ope
 OpenButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0); OpenButton.TextColor3 = Color3.new(1,1,1)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
--- [[ DÖNGÜLER ]] --
+-- [[ DÖNGÜLER - RENDER & STEPPED ]] --
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         for _, v in pairs(Players:GetPlayers()) do
@@ -161,6 +176,7 @@ RunService.Stepped:Connect(function()
     pcall(function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedValue
+            LocalPlayer.Character.Humanoid.JumpPower = _G.JumpValue
             for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
                 if v:IsA("BasePart") then
                     if _G.NoClip then v.CanCollide = false
@@ -171,9 +187,21 @@ RunService.Stepped:Connect(function()
     end)
 end)
 
+-- [[ ARKA PLAN OTOMASYONLARI ]] --
 task.spawn(function()
     while task.wait(0.7) do
         pcall(function()
+            if _G.KillAura then
+                local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
+                if k then
+                    for _, v in pairs(Players:GetPlayers()) do
+                        if v ~= LocalPlayer and v.Character and (LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude < 25 then
+                            k.Parent = LocalPlayer.Character; k:Activate()
+                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0); firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
+                        end
+                    end
+                end
+            end
             if _G.GrabGun then
                 for _, v in pairs(workspace:GetDescendants()) do
                     if v.Name == "GunDrop" then v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end
