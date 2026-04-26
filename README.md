@@ -1,6 +1,6 @@
 -- [[ LAYROXC HUB v59 - THE OMNIPOTENT ENGINE (FULL SOURCE) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - v59⚠️", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
