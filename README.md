@@ -1,13 +1,12 @@
--- [[ LAYROXC HUB - dc_Layroxc (THE DEFINITIVE VERSION) ]] --
+-- [[ LAYROXC HUB - dc_Layroxc (THE ABSOLUTE COMPLETE VERSION) ]] --
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local MarketplaceService = game:GetService("MarketplaceService")
 
--- [[ ANA DEĞİŞKENLER ]] --
+-- [[ GLOBAL DEĞİŞKENLER ]] --
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.Aimbot = false
@@ -19,12 +18,12 @@ _G.AntiFling = false
 _G.GrabGun = false
 _G.InfJump = false
 
--- [[ MODERN MERKEZİ MENÜ SİSTEMİ ]] --
+-- [[ ANA MENÜ TASARIMI (ORTA BOY) ]] --
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "LayroxcMain"
-MainFrame.Size = UDim2.new(0, 380, 0, 350)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -175) -- Tam Orta
+MainFrame.Size = UDim2.new(0, 460, 0, 400) -- Orta Boyut
+MainFrame.Position = UDim2.new(0.5, -230, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
@@ -32,22 +31,22 @@ Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
 -- Üst Bar (Sürükleme Alanı)
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 45)
-TopBar.BackgroundColor3 = Color3.fromRGB(30, 0, 0) -- Kırmızı/Siyah tema
+TopBar.BackgroundColor3 = Color3.fromRGB(40, 0, 0) -- Koyu Kırmızı
 Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 15)
 
 local Title = Instance.new("TextLabel", TopBar)
-Title.Text = "  dc_Layroxc HUB - MM2 FULL"
+Title.Text = "  LAYROXC HUB v3.0 - PREMIUM"
 Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1
-Title.TextColor3 = Color3.new(1,1,1); Title.Font = Enum.Font.GothamBold; Title.TextSize = 15; Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextColor3 = Color3.new(1,1,1); Title.Font = Enum.Font.GothamBold; Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- İçerik Kaydırma Alanı
+-- Kaydırma Alanı
 local Content = Instance.new("ScrollingFrame", MainFrame)
-Content.Size = UDim2.new(1, -10, 1, -55); Content.Position = UDim2.new(0, 5, 0, 50)
-Content.BackgroundTransparency = 1; Content.CanvasSize = UDim2.new(0, 0, 3, 0); Content.ScrollBarThickness = 2
-local UIList = Instance.new("UIListLayout", Content); UIList.Padding = UDim.new(0, 8); UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+Content.Size = UDim2.new(1, -20, 1, -65); Content.Position = UDim2.new(0, 10, 0, 55)
+Content.BackgroundTransparency = 1; Content.CanvasSize = UDim2.new(0, 0, 5, 0); Content.ScrollBarThickness = 2
+local UIList = Instance.new("UIListLayout", Content); UIList.Padding = UDim.new(0, 10); UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- [[ MOBİL SÜRÜKLEME SİSTEMİ ]] --
-local dragging, dragInput, dragStart, startPos
+-- [[ MOBİL SÜRÜKLEME ]] --
+local dragging, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true; dragStart = input.Position; startPos = MainFrame.Position
@@ -59,46 +58,49 @@ UserInputService.InputChanged:Connect(function(input)
         MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
-UserInputService.InputEnded:Connect(function(input) dragging = false end)
+UserInputService.InputEnded:Connect(function() dragging = false end)
 
--- [[ FONKSİYONLAR ]] --
-local function GetRole(v)
-    if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
-    if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
-    if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then return "SHERIFF" end
-    return "Innocent"
+-- [[ UI BİLEŞENLERİ ]] --
+local function CreateCategory(name)
+    local label = Instance.new("TextLabel", Content)
+    label.Size = UDim2.new(0.95, 0, 0, 35); label.BackgroundTransparency = 1
+    label.Text = "[" .. name:upper() .. "]"; label.TextColor3 = Color3.fromRGB(200, 0, 0); label.Font = Enum.Font.GothamBold; label.TextSize = 14
 end
 
 local function CreateButton(txt, callback)
     local btn = Instance.new("TextButton", Content)
-    btn.Size = UDim2.new(0.9, 0, 0, 40); btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.Size = UDim2.new(0.9, 0, 0, 40); btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     btn.Text = txt; btn.TextColor3 = Color3.new(1,1,1); btn.Font = Enum.Font.Gotham; btn.TextSize = 14
     Instance.new("UICorner", btn); btn.MouseButton1Click:Connect(callback)
 end
 
 local function CreateToggle(txt, var_name)
     local btn = Instance.new("TextButton", Content)
-    btn.Size = UDim2.new(0.9, 0, 0, 40); btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    btn.Text = txt .. ": OFF"; btn.TextColor3 = Color3.new(1,1,1)
+    btn.Size = UDim2.new(0.9, 0, 0, 40); btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Text = txt .. ": KAPALI"; btn.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", btn)
     btn.MouseButton1Click:Connect(function()
         _G[var_name] = not _G[var_name]
-        btn.Text = txt .. ": " .. (_G[var_name] and "ON" or "OFF")
-        btn.TextColor3 = _G[var_name] and Color3.fromRGB(255, 0, 0) or Color3.new(1, 1, 1)
+        btn.Text = txt .. ": " .. (_G[var_name] and "AÇIK" or "KAPALI")
+        btn.TextColor3 = _G[var_name] and Color3.new(1, 0, 0) or Color3.new(1, 1, 1)
     end)
 end
 
 local function CreateTextBox(txt, placeholder, callback)
-    local box = Instance.new("TextBox", Content)
-    box.Size = UDim2.new(0.9, 0, 0, 40); box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    box.PlaceholderText = placeholder; box.Text = ""; box.TextColor3 = Color3.new(1,1,1)
+    local frame = Instance.new("Frame", Content)
+    frame.Size = UDim2.new(0.9, 0, 0, 40); frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Instance.new("UICorner", frame)
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(0.4, 0, 1, 0); label.Text = " " .. txt; label.BackgroundTransparency = 1; label.TextColor3 = Color3.new(1,1,1); label.TextXAlignment = Enum.TextXAlignment.Left
+    local box = Instance.new("TextBox", frame)
+    box.Size = UDim2.new(0.55, 0, 0.8, 0); box.Position = UDim2.new(0.4, 0, 0.1, 0); box.BackgroundColor3 = Color3.fromRGB(45, 45, 45); box.PlaceholderText = placeholder; box.Text = ""; box.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", box); box.FocusLost:Connect(function() callback(box.Text) end)
 end
 
--- [[ MENÜ İÇERİĞİ (TÜM EKSİKLER EKLENDİ) ]] --
-CreateToggle("Aimbot (Murderer Focus)", "Aimbot")
-CreateToggle("Kill Aura (25m)", "KillAura")
-CreateButton("KILL ALL (Knife Required)", function()
+-- [[ KATEGORİ: SAVAŞ ]] --
+CreateCategory("Savaş & Rage")
+CreateToggle("Otomatik Aimbot", "Aimbot")
+CreateToggle("Kill Aura (Vurma)", "KillAura")
+CreateButton("HERKESİ ÖLDÜR (Bıçak Gerekli)", function()
     local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
     if k then
         for _, v in pairs(Players:GetPlayers()) do
@@ -109,38 +111,65 @@ CreateButton("KILL ALL (Knife Required)", function()
         end
     end
 end)
-CreateToggle("ESP Master", "MasterESP")
-CreateToggle("Magnet Gun", "GrabGun")
-CreateToggle("Auto Coin Farm", "StealthFarm")
-CreateToggle("NoClip (Walk Through Walls)", "NoClip")
-CreateToggle("Anti-Fling", "AntiFling")
-CreateToggle("Infinite Jump", "InfJump")
-CreateTextBox("WalkSpeed", "Hızınızı Yazın", function(val) _G.SpeedValue = tonumber(val) or 16 end)
-CreateTextBox("JumpPower", "Zıplama Gücü", function(val) _G.JumpValue = tonumber(val) or 50 end)
-CreateButton("TP Murderer", function()
-    for _, v in pairs(Players:GetPlayers()) do if GetRole(v) == "MURDERER" and v.Character then LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame end end
-end)
-CreateButton("TP Sheriff", function()
-    for _, v in pairs(Players:GetPlayers()) do if GetRole(v) == "SHERIFF" and v.Character then LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame end end
-end)
-CreateButton("Invisible Mode", function()
+
+-- [[ KATEGORİ: GÖRÜNÜM ]] --
+CreateCategory("Görünüm (ESP)")
+CreateToggle("Renkli Highlight ESP", "MasterESP")
+CreateButton("Görünmezlik (Invisible)", function()
     local c = LocalPlayer.Character
-    if c then for _, v in pairs(c:GetDescendants()) do if v:IsA("BasePart") then v.Transparency = 1 end end end
-end)
-CreateButton("Get Korblox (80 Robux)", function()
-    setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE")
-    local h = Instance.new("Hint", game.CoreGui)
-    h.Text = "PLEASE RUN THE COPIED LINK IN YOUR BROWSER TO GET KORBLOX"
-    task.wait(5); h:Destroy()
+    if c then for _, v in pairs(c:GetDescendants()) do if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 1 end end end
 end)
 
--- [[ MOBİL AÇ/KAPAT BUTONU (L) ]] --
+-- [[ KATEGORİ: FARM ]] --
+CreateCategory("Farm & Magnet")
+CreateToggle("Otomatik Coin/Candy Farm", "StealthFarm")
+CreateToggle("Silah Mıknatısı (Grab Gun)", "GrabGun")
+
+-- [[ KATEGORİ: HAREKET ]] --
+CreateCategory("Hareket & Fizik")
+CreateTextBox("Hız (Walkspeed)", "16-100", function(t) _G.SpeedValue = tonumber(t) or 16 end)
+CreateTextBox("Zıplama (Power)", "50-200", function(t) _G.JumpValue = tonumber(t) or 50 end)
+CreateToggle("Duvar Geçme (NoClip)", "NoClip")
+CreateToggle("Anti-Fling", "AntiFling")
+CreateToggle("Sonsuz Zıplama", "InfJump")
+
+-- [[ KATEGORİ: IŞINLANMA ]] --
+CreateCategory("Işınlanma")
+CreateButton("Katilin Yanına Git", function()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+        end
+    end
+end)
+CreateButton("Şerifin Yanına Git", function()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+        end
+    end
+end)
+
+-- [[ KATEGORİ: HESAPLARIN ]] --
+CreateCategory("Hesaplarım & İletişim")
+CreateButton("ROBLOX: dc_Layroxc", function() setclipboard("dc_Layroxc") end)
+CreateButton("Instagram: Layroxc", function() setclipboard("Layroxc") end)
+CreateButton("TikTok: layroxcderler", function() setclipboard("layroxcderler") end)
+
+-- [[ MOBİL AÇ/KAPAT ]] --
 local LBtn = Instance.new("TextButton", ScreenGui); LBtn.Size = UDim2.new(0, 50, 0, 50); LBtn.Position = UDim2.new(0, 15, 0.5, -25)
 LBtn.Text = "L"; LBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0); LBtn.TextColor3 = Color3.new(1,1,1); LBtn.Draggable = true
 Instance.new("UICorner", LBtn).CornerRadius = UDim.new(1, 0)
 LBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
 
--- [[ SİSTEM DÖNGÜLERİ ]] --
+-- [[ DÖNGÜLER VE SİSTEM ]] --
+local function GetRole(v)
+    if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
+    if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
+    if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then return "SHERIFF" end
+    return "Innocent"
+end
+
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         for _, v in pairs(Players:GetPlayers()) do
