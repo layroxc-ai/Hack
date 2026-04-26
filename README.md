@@ -1,12 +1,24 @@
--- [[ LAYROXC HUB - dc_Layroxc (THE ABSOLUTE COMPLETE VERSION) ]] --
+-- [[ RAYFIELD LIBRARY - PROFESYONEL MENÜ ]] --
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "LAYROXC HUB v3.0 | PREMIUM",
+   LoadingTitle = "Layroxc Sistemleri Yükleniyor...",
+   LoadingSubtitle = "by dc_Layroxc",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "LayroxcConfigs",
+      FileName = "MM2_Master"
+   }
+})
+
+-- [[ SERVİSLER VE DEĞİŞKENLER ]] --
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
--- [[ GLOBAL DEĞİŞKENLER ]] --
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.Aimbot = false
@@ -14,155 +26,10 @@ _G.KillAura = false
 _G.MasterESP = false
 _G.StealthFarm = false
 _G.NoClip = false
-_G.AntiFling = false
 _G.GrabGun = false
 _G.InfJump = false
 
--- [[ ANA MENÜ TASARIMI (ORTA BOY) ]] --
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Name = "LayroxcMain"
-MainFrame.Size = UDim2.new(0, 460, 0, 400) -- Orta Boyut
-MainFrame.Position = UDim2.new(0.5, -230, 0.5, -200)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MainFrame.BorderSizePixel = 0
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
-
--- Üst Bar (Sürükleme Alanı)
-local TopBar = Instance.new("Frame", MainFrame)
-TopBar.Size = UDim2.new(1, 0, 0, 45)
-TopBar.BackgroundColor3 = Color3.fromRGB(40, 0, 0) -- Koyu Kırmızı
-Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 15)
-
-local Title = Instance.new("TextLabel", TopBar)
-Title.Text = "  LAYROXC HUB v3.0 - PREMIUM"
-Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1
-Title.TextColor3 = Color3.new(1,1,1); Title.Font = Enum.Font.GothamBold; Title.TextSize = 16; Title.TextXAlignment = Enum.TextXAlignment.Left
-
--- Kaydırma Alanı
-local Content = Instance.new("ScrollingFrame", MainFrame)
-Content.Size = UDim2.new(1, -20, 1, -65); Content.Position = UDim2.new(0, 10, 0, 55)
-Content.BackgroundTransparency = 1; Content.CanvasSize = UDim2.new(0, 0, 5, 0); Content.ScrollBarThickness = 2
-local UIList = Instance.new("UIListLayout", Content); UIList.Padding = UDim.new(0, 10); UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
--- [[ MOBİL SÜRÜKLEME ]] --
-local dragging, dragStart, startPos
-TopBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true; dragStart = input.Position; startPos = MainFrame.Position
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function() dragging = false end)
-
--- [[ UI BİLEŞENLERİ ]] --
-local function CreateCategory(name)
-    local label = Instance.new("TextLabel", Content)
-    label.Size = UDim2.new(0.95, 0, 0, 35); label.BackgroundTransparency = 1
-    label.Text = "[" .. name:upper() .. "]"; label.TextColor3 = Color3.fromRGB(200, 0, 0); label.Font = Enum.Font.GothamBold; label.TextSize = 14
-end
-
-local function CreateButton(txt, callback)
-    local btn = Instance.new("TextButton", Content)
-    btn.Size = UDim2.new(0.9, 0, 0, 40); btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.Text = txt; btn.TextColor3 = Color3.new(1,1,1); btn.Font = Enum.Font.Gotham; btn.TextSize = 14
-    Instance.new("UICorner", btn); btn.MouseButton1Click:Connect(callback)
-end
-
-local function CreateToggle(txt, var_name)
-    local btn = Instance.new("TextButton", Content)
-    btn.Size = UDim2.new(0.9, 0, 0, 40); btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.Text = txt .. ": KAPALI"; btn.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", btn)
-    btn.MouseButton1Click:Connect(function()
-        _G[var_name] = not _G[var_name]
-        btn.Text = txt .. ": " .. (_G[var_name] and "AÇIK" or "KAPALI")
-        btn.TextColor3 = _G[var_name] and Color3.new(1, 0, 0) or Color3.new(1, 1, 1)
-    end)
-end
-
-local function CreateTextBox(txt, placeholder, callback)
-    local frame = Instance.new("Frame", Content)
-    frame.Size = UDim2.new(0.9, 0, 0, 40); frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Instance.new("UICorner", frame)
-    local label = Instance.new("TextLabel", frame)
-    label.Size = UDim2.new(0.4, 0, 1, 0); label.Text = " " .. txt; label.BackgroundTransparency = 1; label.TextColor3 = Color3.new(1,1,1); label.TextXAlignment = Enum.TextXAlignment.Left
-    local box = Instance.new("TextBox", frame)
-    box.Size = UDim2.new(0.55, 0, 0.8, 0); box.Position = UDim2.new(0.4, 0, 0.1, 0); box.BackgroundColor3 = Color3.fromRGB(45, 45, 45); box.PlaceholderText = placeholder; box.Text = ""; box.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", box); box.FocusLost:Connect(function() callback(box.Text) end)
-end
-
--- [[ KATEGORİ: SAVAŞ ]] --
-CreateCategory("Savaş & Rage")
-CreateToggle("Otomatik Aimbot", "Aimbot")
-CreateToggle("Kill Aura (Vurma)", "KillAura")
-CreateButton("HERKESİ ÖLDÜR (Bıçak Gerekli)", function()
-    local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
-    if k then
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                k.Parent = LocalPlayer.Character; LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame; task.wait(0.1); k:Activate()
-                firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0); firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
-            end
-        end
-    end
-end)
-
--- [[ KATEGORİ: GÖRÜNÜM ]] --
-CreateCategory("Görünüm (ESP)")
-CreateToggle("Renkli Highlight ESP", "MasterESP")
-CreateButton("Görünmezlik (Invisible)", function()
-    local c = LocalPlayer.Character
-    if c then for _, v in pairs(c:GetDescendants()) do if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 1 end end end
-end)
-
--- [[ KATEGORİ: FARM ]] --
-CreateCategory("Farm & Magnet")
-CreateToggle("Otomatik Coin/Candy Farm", "StealthFarm")
-CreateToggle("Silah Mıknatısı (Grab Gun)", "GrabGun")
-
--- [[ KATEGORİ: HAREKET ]] --
-CreateCategory("Hareket & Fizik")
-CreateTextBox("Hız (Walkspeed)", "16-100", function(t) _G.SpeedValue = tonumber(t) or 16 end)
-CreateTextBox("Zıplama (Power)", "50-200", function(t) _G.JumpValue = tonumber(t) or 50 end)
-CreateToggle("Duvar Geçme (NoClip)", "NoClip")
-CreateToggle("Anti-Fling", "AntiFling")
-CreateToggle("Sonsuz Zıplama", "InfJump")
-
--- [[ KATEGORİ: IŞINLANMA ]] --
-CreateCategory("Işınlanma")
-CreateButton("Katilin Yanına Git", function()
-    for _, v in pairs(Players:GetPlayers()) do
-        if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
-        end
-    end
-end)
-CreateButton("Şerifin Yanına Git", function()
-    for _, v in pairs(Players:GetPlayers()) do
-        if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
-        end
-    end
-end)
-
--- [[ KATEGORİ: HESAPLARIN ]] --
-CreateCategory("Hesaplarım & İletişim")
-CreateButton("ROBLOX: dc_Layroxc", function() setclipboard("dc_Layroxc") end)
-CreateButton("Instagram: Layroxc", function() setclipboard("Layroxc") end)
-CreateButton("TikTok: layroxcderler", function() setclipboard("layroxcderler") end)
-
--- [[ MOBİL AÇ/KAPAT ]] --
-local LBtn = Instance.new("TextButton", ScreenGui); LBtn.Size = UDim2.new(0, 50, 0, 50); LBtn.Position = UDim2.new(0, 15, 0.5, -25)
-LBtn.Text = "L"; LBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0); LBtn.TextColor3 = Color3.new(1,1,1); LBtn.Draggable = true
-Instance.new("UICorner", LBtn).CornerRadius = UDim.new(1, 0)
-LBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
-
--- [[ DÖNGÜLER VE SİSTEM ]] --
+-- [[ YARDIMCI FONKSİYONLAR ]] --
 local function GetRole(v)
     if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
     if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
@@ -170,7 +37,107 @@ local function GetRole(v)
     return "Innocent"
 end
 
+-- [[ SAVAŞ (COMBAT) SEKME ]] --
+local CombatTab = Window:CreateTab("Combat", 4483362458)
+
+CombatTab:CreateToggle({
+   Name = "Aimbot (Katile Kilitlen)",
+   CurrentValue = false,
+   Callback = function(Value) _G.Aimbot = Value end,
+})
+
+CombatTab:CreateToggle({
+   Name = "Kill Aura (Otomatik Vuruş)",
+   CurrentValue = false,
+   Callback = function(Value) _G.KillAura = Value end,
+})
+
+CombatTab:CreateButton({
+   Name = "Herkesi Öldür (Kill All)",
+   Callback = function()
+      local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
+      if k then
+         k.Parent = LocalPlayer.Character
+         for _, v in pairs(Players:GetPlayers()) do
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+               pcall(function()
+                  LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+                  task.wait(0.1)
+                  k:Activate()
+                  firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
+                  firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
+               end)
+            end
+         end
+      end
+   end,
+})
+
+-- [[ GÖRÜNÜM (VISUALS) SEKME ]] --
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+
+VisualsTab:CreateToggle({
+   Name = "Highlight ESP (Rolleri Göster)",
+   CurrentValue = false,
+   Callback = function(Value) 
+       _G.MasterESP = Value 
+       if not Value then
+           for _, v in pairs(Players:GetPlayers()) do
+               if v.Character and v.Character:FindFirstChild("LayHL") then v.Character.LayHL:Destroy() end
+           end
+       end
+   end,
+})
+
+VisualsTab:CreateButton({
+   Name = "Karakteri Görünmez Yap",
+   Callback = function()
+      local c = LocalPlayer.Character
+      if c then for _, v in pairs(c:GetDescendants()) do if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 1 end end end
+   end,
+})
+
+-- [[ FARM SEKME ]] --
+local FarmTab = Window:CreateTab("Farm", 4483362458)
+
+FarmTab:CreateToggle({
+   Name = "Otomatik Coin/Candy Topla",
+   CurrentValue = false,
+   Callback = function(Value) _G.StealthFarm = Value end,
+})
+
+FarmTab:CreateToggle({
+   Name = "Mıknatıs (Grab Gun)",
+   CurrentValue = false,
+   Callback = function(Value) _G.GrabGun = Value end,
+})
+
+-- [[ HAREKET (MOVEMENT) SEKME ]] --
+local MoveTab = Window:CreateTab("Movement", 4483362458)
+
+MoveTab:CreateSlider({
+   Name = "Yürüme Hızı",
+   Range = {16, 200},
+   Increment = 1,
+   CurrentValue = 16,
+   Callback = function(Value) _G.SpeedValue = Value end,
+})
+
+MoveTab:CreateToggle({
+   Name = "Duvar Geçme (NoClip)",
+   CurrentValue = false,
+   Callback = function(Value) _G.NoClip = Value end,
+})
+
+MoveTab:CreateToggle({
+   Name = "Sonsuz Zıplama",
+   CurrentValue = false,
+   Callback = function(Value) _G.InfJump = Value end,
+})
+
+-- [[ DÖNGÜSEL SİSTEMLER (ARKA PLAN) ]] --
 RunService.RenderStepped:Connect(function()
+    -- Aimbot Sistemi
     if _G.Aimbot then
         for _, v in pairs(Players:GetPlayers()) do
             if GetRole(v) == "MURDERER" and v.Character and v.Character:FindFirstChild("Head") then
@@ -178,57 +145,66 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
+    -- ESP Sistemi
     if _G.MasterESP then
         for _, v in pairs(Players:GetPlayers()) do
             if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
                 local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
-                hl.Name = "LayHL"; hl.FillColor = GetRole(v) == "MURDERER" and Color3.new(1,0,0) or (GetRole(v) == "SHERIFF" and Color3.new(0,0,1) or Color3.new(0,1,0))
+                hl.Name = "LayHL"
+                hl.FillColor = GetRole(v) == "MURDERER" and Color3.new(1,0,0) or (GetRole(v) == "SHERIFF" and Color3.new(0,0,1) or Color3.new(0,1,0))
                 hl.FillTransparency = 0.5
             end
         end
     end
 end)
 
+-- Fizik Döngüsü
 RunService.Stepped:Connect(function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedValue
-        LocalPlayer.Character.Humanoid.JumpPower = _G.JumpValue
-        LocalPlayer.Character.Humanoid.UseJumpPower = true
-        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") then
-                if _G.NoClip then v.CanCollide = false
-                elseif _G.AntiFling then v.CanTouch = false end
+    pcall(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedValue
+            for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+                if v:IsA("BasePart") and _G.NoClip then v.CanCollide = false end
             end
         end
-    end
+    end)
 end)
 
+-- Sonsuz Zıplama
 UserInputService.JumpRequest:Connect(function()
     if _G.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
 end)
 
+-- Farm ve Aura Döngüsü
 task.spawn(function()
-    while task.wait(0.5) do
+    while task.wait(0.3) do
         pcall(function()
+            -- Farm
             if _G.StealthFarm then
                 for _, v in pairs(workspace:GetDescendants()) do
-                    if (v.Name == "Coin" or v.Name == "Candy" or v.Parent.Name == "CoinContainer") and v:IsA("BasePart") then
-                        if _G.StealthFarm then LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame task.wait(1.5) end
+                    if (v.Name == "Coin" or v.Name == "Candy") and v:IsA("BasePart") then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+                        task.wait(0.5)
                     end
                 end
             end
+            -- Grab Gun
             if _G.GrabGun then
-                for _, v in pairs(workspace:GetDescendants()) do if v.Name == "GunDrop" then v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end end
+                local gun = workspace:FindFirstChild("GunDrop") or workspace:FindFirstChild("Gun")
+                if gun then gun.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end
             end
+            -- Kill Aura
             if _G.KillAura then
                 local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
                 if k then
                     for _, v in pairs(Players:GetPlayers()) do
-                        if v ~= LocalPlayer and v.Character and (LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude < 25 then
-                            k.Parent = LocalPlayer.Character; k:Activate()
-                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0); firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
+                        if v ~= LocalPlayer and v.Character and (LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude < 20 then
+                            k.Parent = LocalPlayer.Character
+                            k:Activate()
+                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
+                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
                         end
                     end
                 end
@@ -236,3 +212,5 @@ task.spawn(function()
         end)
     end
 end)
+
+Rayfield:LoadConfiguration()
