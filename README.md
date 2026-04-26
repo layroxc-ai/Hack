@@ -1,4 +1,4 @@
--- [[ LAYROXC HUB v59 - THE OMNIPOTENT ENGINE (KORBLOX & LINK FIX) ]] --
+-- [[ LAYROXC HUB v59 - THE OMNIPOTENT ENGINE (ULTRA GRAB GUN) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
 
@@ -18,7 +18,6 @@ _G.NoClip = false
 _G.GrabGun = false
 _G.StealthFarm = false
 
--- SENİN LİNKİN VE GAMEPASS ID
 local MyGamepassID = 1812606767
 local MyGamepassLink = "https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE"
 
@@ -105,7 +104,7 @@ EspSec:NewToggle("MASTER ESP ACTIVE", "Herkesi gösterir", function(state) _G.Ma
 
 -- [[ 3. MAGNET & FARM ]] --
 local FarmSec = Farm:NewSection("Automation")
-FarmSec:NewToggle("MAGNET GUN", "Yerdeki silahı çeker", function(s) _G.GrabGun = s end)
+FarmSec:NewToggle("MAGNET GUN (Fix)", "Silahı sürekli üstüne çeker", function(s) _G.GrabGun = s end)
 FarmSec:NewToggle("STEALTH FARM", "Otomatik para toplar", function(s) _G.StealthFarm = s end)
 
 -- [[ 4. MOVEMENT ]] --
@@ -117,15 +116,10 @@ MoveSec:NewToggle("NoClip", "Duvar Geçme", function(s) _G.NoClip = s end)
 local ProSec = Pro:NewSection("Support Layroxc")
 
 ProSec:NewButton("Get Korblox (80 Robux)", "OPEN BROWSER", function()
-    -- Ekranda bildirim göster
     Library:Notify("BİLGİ", "OPEN BROWSER - Link kopyalandı ve mağaza açıldı!", 5)
-    
-    -- Linki panoya kopyala
     if setclipboard then
         setclipboard(MyGamepassLink)
     end
-    
-    -- Roblox içi satın alma penceresini tetikle
     pcall(function()
         MarketplaceService:PromptGamePassPurchase(LocalPlayer, MyGamepassID)
     end)
@@ -139,13 +133,10 @@ RunService.RenderStepped:Connect(function()
                 if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
                     local role = GetRole(v)
                     local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.5,1) or Color3.new(0,1,0))
-                    
                     local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
                     hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.7
-                    
                     local bg = v.Character.Head:FindFirstChild("LayName") or Instance.new("BillboardGui", v.Character.Head)
                     bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0,150,0,35); bg.ExtentsOffset = Vector3.new(0,3,0)
-                    
                     local lb = bg:FindFirstChild("TL") or Instance.new("TextLabel", bg)
                     lb.Name = "TL"; lb.Size = UDim2.new(1,0,1,0); lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 14; lb.Font = Enum.Font.SourceSansBold; lb.Text = "["..role.."] "..v.DisplayName
                 end
@@ -169,17 +160,24 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
+-- ULTRA GRAB GUN VE PARA TOPLAMA MOTORU
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait() do -- Maksimum hızda kontrol eder
         if _G.GrabGun then
             for _, v in pairs(workspace:GetDescendants()) do
-                if v.Name == "GunDrop" then v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end
+                if v.Name == "GunDrop" and v:IsA("BasePart") then
+                    v.CanCollide = false
+                    v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+                end
             end
         end
         if _G.StealthFarm then
             for _, v in pairs(workspace:GetDescendants()) do
-                if v.Name == "Coin" or v.Name == "Candy" then LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame end
+                if (v.Name == "Coin" or v.Name == "Candy") and v:IsA("BasePart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+                end
             end
         end
     end
 end)
+
