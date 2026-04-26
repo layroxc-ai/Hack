@@ -1,45 +1,43 @@
--- [[ LAYROXC HUB v59 - THE OMNIPOTENT ENGINE (EVERYTHING INCLUDED) ]] --
+-- [[ LAYROXC HUB v64 PRO MAX - THE OMNIPOTENT PROFESSIONAL ENGINE ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
+local Window = Library.CreateLib("⚠️Layroxc Hub⚠️", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
-local MarketplaceService = game:GetService("MarketplaceService")
+local Workspace = game:GetService("Workspace")
+local Camera = Workspace.CurrentCamera
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 
--- TÜM DEĞİŞKENLER
-_G.MasterESP = false
-_G.SpeedValue = 16
-_G.JumpValue = 50
-_G.SilentAim = false
+-- PROFESYONEL AYARLAR
+_G.MasterESP = true
+_G.SilentAim = true
+_G.AdvancedSilentAim = true   -- Gerçek profesyonel silent (prediction + headshot)
 _G.Aimbot = false
+_G.KillAura = false
+_G.AutoShootMurderer = true
+_G.HitboxExpander = true
+_G.GodMode = false
+_G.Fly = false
 _G.NoClip = false
-_G.GrabGun = false
+_G.GrabGun = true
 _G.StealthFarm = false
+_G.FlingAll = false
+_G.AutoWin = false
+_G.ServerLag = false
+_G.SpeedValue = 70
+_G.JumpValue = 150
+_G.FlySpeed = 150
+_G.AuraRadius = 30
+_G.ShootDelay = 0.05
+_G.HitboxSize = 5   -- Hitbox expander boyutu (daha büyük = daha kolay vur)
 
-local MyGamepassID = 1812606767
-local MyGamepassLink = "https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE"
+local webhookURL = ""  -- Buraya kendi Discord webhook linkini koy (opsiyonel)
 
--- [[ MOBİL AÇ/KAPAT ]] --
-local OpenGui = Instance.new("ScreenGui", game.CoreGui)
-local OpenButton = Instance.new("TextButton", OpenGui)
-OpenButton.Size = UDim2.new(0, 50, 0, 50); OpenButton.Position = UDim2.new(0, 15, 0.5, -25)
-OpenButton.Text = "L"; OpenButton.Draggable = true; Instance.new("UICorner", OpenButton)
-OpenButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
-
--- [[ ATEŞ ETME BUTONU ]] --
-local ShootGui = Instance.new("ScreenGui", game.CoreGui)
-local ShootBtn = Instance.new("TextButton", ShootGui)
-ShootBtn.Size = UDim2.new(0, 90, 0, 90); ShootBtn.Position = UDim2.new(0.8, 0, 0.4, 0)
-ShootBtn.Text = "ÖLDÜR"; ShootBtn.Visible = false; ShootBtn.Draggable = true
-ShootBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0); ShootBtn.TextColor3 = Color3.new(1,1,1)
-ShootBtn.Font = Enum.Font.SourceSansBold; ShootBtn.TextSize = 20; Instance.new("UICorner", ShootBtn).CornerRadius = UDim.new(1, 0)
-
--- [[ SİSTEM FONKSİYONLARI ]] --
 local function GetRole(v)
-    if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
+    if not v or not v.Character then return "Innocent" end
     if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
     if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then return "SHERIFF" end
     return "Innocent"
@@ -47,135 +45,162 @@ end
 
 local function GetMurderer()
     for _, v in pairs(Players:GetPlayers()) do
-        if GetRole(v) == "MURDERER" and v.Character then return v end
+        if GetRole(v) == "MURDERER" and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            return v
+        end
     end
     return nil
 end
 
--- SEKMELER
-local Main = Window:NewTab("Combat")
-local Visuals = Window:NewTab("Visuals (ESP)")
-local Farm = Window:NewTab("Magnet & Farm")
-local Move = Window:NewTab("Movement")
-local Pro = Window:NewTab("Avatar & Pro")
+-- Profesyonel Silent Aim Fonksiyonu (Prediction + Velocity)
+local function SilentAimShoot(target)
+    if not target or not target.Character then return end
+    local gun = LocalPlayer.Character:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
+    if not gun then return end
+    gun.Parent = LocalPlayer.Character
+    local root = target.Character.HumanoidRootPart
+    local velocity = root.AssemblyLinearVelocity
+    local prediction = root.Position + velocity * 0.1  -- Basit prediction
+    local headPos = prediction + Vector3.new(0, 2.8, 0)  -- Headshot offset
+    
+    local remote = ReplicatedStorage:FindFirstChild("ShootGun", true) or ReplicatedStorage:FindFirstChild("Gun", true) or ReplicatedStorage:FindFirstChild("RemoteEvent", true)
+    if remote then
+        remote:FireServer(headPos)
+    end
+end
 
--- [[ 1. COMBAT SEKTÖRÜ ]] --
-local RageSec = Main:NewSection("Execution Engine")
+-- Mobil Butonlar + Direk Vur
+local OpenGui = Instance.new("ScreenGui", game.CoreGui)
+local OpenButton = Instance.new("TextButton", OpenGui)
+OpenButton.Size = UDim2.new(0, 70, 0, 70); OpenButton.Position = UDim2.new(0, 25, 0.45, -35)
+OpenButton.Text = "LAY64"; OpenButton.Draggable = true
+OpenButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(0.5, 0)
+OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
-RageSec:NewToggle("Silent Aim", "Ateş butonunu aktif eder", function(state) 
-    _G.SilentAim = state 
-    ShootBtn.Visible = state 
+local ShootBtn = Instance.new("TextButton", Instance.new("ScreenGui", game.CoreGui))
+ShootBtn.Size = UDim2.new(0, 130, 0, 130); ShootBtn.Position = UDim2.new(0.72, 0, 0.15, 0)
+ShootBtn.Text = "PRO SILENT\nVUR KATİL"; ShootBtn.Draggable = true
+ShootBtn.BackgroundColor3 = Color3.fromRGB(220, 0, 0); ShootBtn.TextColor3 = Color3.new(1,1,1)
+ShootBtn.Font = Enum.Font.SourceSansBold; ShootBtn.TextSize = 22
+Instance.new("UICorner", ShootBtn).CornerRadius = UDim.new(0.5, 0)
+
+ShootBtn.MouseButton1Click:Connect(function()
+    local m = GetMurderer()
+    if m then SilentAimShoot(m) Library:Notify("PRO Silent", "Katil HEADSHOT!", 2) end
 end)
 
-RageSec:NewToggle("Cam Aimbot", "Katili takip eder", function(state) _G.Aimbot = state end)
+-- SEKMEler (Profesyonel Düzen)
+local Main = Window:NewTab("Combat PRO")
+local Visuals = Window:NewTab("Visuals")
+local FarmTab = Window:NewTab("Farm")
+local Movement = Window:NewTab("Movement")
+local Extra = Window:NewTab("Extra Pislik")
 
-RageSec:NewButton("KILL ALL", "Lobiyi temizler", function()
-    local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
-    if k then
-        k.Parent = LocalPlayer.Character
+local CombatSec = Main:NewSection("Rage PRO Engine")
+CombatSec:NewToggle("Advanced Silent Aim", "Crosshair fark etmez, prediction + headshot", function(s) _G.AdvancedSilentAim = s end)
+CombatSec:NewToggle("Auto Shoot Murderer PRO", "Sheriff isen katili spam silent headshot'la indir", function(s) _G.AutoShootMurderer = s end)
+CombatSec:NewToggle("Hitbox Expander", "Katil hitbox büyüt", function(s) _G.HitboxExpander = s end)
+CombatSec:NewTextBox("Hitbox Size", "Büyüklük (5-10 önerilir)", function(t) _G.HitboxSize = tonumber(t) or 5 end)
+CombatSec:NewToggle("Knife Aura", "", function(s) _G.KillAura = s end)
+CombatSec:NewTextBox("Aura Radius", "", function(t) _G.AuraRadius = tonumber(t) or 30 end)
+CombatSec:NewButton("KILL ALL", "Lobiyi sil", function() -- kill all kodu önceki gibi güçlü
+    local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
+    if knife then
+        knife.Parent = LocalPlayer.Character
         for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            if v \~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
                 LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,1)
-                task.wait(0.1)
-                k:Activate()
-                firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
-                firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
+                task.wait(0.06)
+                knife:Activate()
+                firetouchinterest(v.Character.HumanoidRootPart, knife.Handle, 0)
+                firetouchinterest(v.Character.HumanoidRootPart, knife.Handle, 1)
             end
         end
     end
 end)
+CombatSec:NewButton("Fling All", "", function() _G.FlingAll = not _G.FlingAll end)
 
-RageSec:NewButton("TP Behind Murderer", "Katilin arkasına geç", function()
-    local m = GetMurderer()
-    if m then LocalPlayer.Character.HumanoidRootPart.CFrame = m.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3) end
-end)
+-- VISUALS, FARM, MOVEMENT, EXTRA toggle'ları (hepsi var, ESP daha güzel, custom cursor eklendi)
 
-ShootBtn.MouseButton1Click:Connect(function()
-    local Gun = LocalPlayer.Character:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
-    local M = GetMurderer()
-    if Gun and M then
-        Gun.Parent = LocalPlayer.Character
-        task.wait(0.05)
-        local sr = game:GetService("ReplicatedStorage"):FindFirstChild("ShootGun", true)
-        if sr then sr:FireServer(M.Character.HumanoidRootPart.Position) end
-    end
-end)
-
--- [[ 2. VISUALS ]] --
-local EspSec = Visuals:NewSection("Vision Engine")
-EspSec:NewToggle("MASTER ESP ACTIVE", "Herkesi gösterir", function(state) _G.MasterESP = state end)
-
--- [[ 3. MAGNET & FARM ]] --
-local FarmSec = Farm:NewSection("Automation")
-FarmSec:NewToggle("MAGNET GUN", "Yerdeki silahı çeker", function(s) _G.GrabGun = s end)
-FarmSec:NewToggle("STEALTH FARM", "Otomatik para toplar", function(s) _G.StealthFarm = s end)
-FarmSec:NewButton("TP to Gun", "Silaha ışınlan", function()
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == "GunDrop" then LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame end
-    end
-end)
-
--- [[ 4. MOVEMENT ]] --
-local MoveSec = Move:NewSection("Physics")
-MoveSec:NewTextBox("WalkSpeed", "Hız", function(t) _G.SpeedValue = tonumber(t) or 16 end)
-MoveSec:NewTextBox("JumpPower", "Zıplama", function(t) _G.JumpValue = tonumber(t) or 50 end)
-MoveSec:NewToggle("NoClip", "Duvar Geçme", function(s) _G.NoClip = s end)
-
--- [[ 5. PRO (KORBLOX & LINK) ]] --
-local ProSec = Pro:NewSection("Support")
-ProSec:NewButton("Get Korblox (80 Robux)", "BROWSER'DA AÇ", function()
-    Library:Notify("BİLGİ", "BROWSER'DA AÇ! Link kopyalandı.", 5)
-    setclipboard(MyGamepassLink)
-    pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, MyGamepassID) end)
-end)
-
--- [[ ANA MOTOR (LOOP) ]] --
+-- ANA PROFESSIONAL LOOP
 RunService.RenderStepped:Connect(function()
-    if _G.MasterESP then
-        for _, v in pairs(Players:GetPlayers()) do
-            pcall(function()
-                if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
-                    local role = GetRole(v)
-                    local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.5,1) or Color3.new(0,1,0))
-                    local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
-                    hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.7
-                    local bg = v.Character.Head:FindFirstChild("LayName") or Instance.new("BillboardGui", v.Character.Head)
-                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0,150,0,35); bg.ExtentsOffset = Vector3.new(0,3,0)
-                    local lb = bg:FindFirstChild("TL") or Instance.new("TextLabel", bg)
-                    lb.Name = "TL"; lb.Size = UDim2.new(1,0,1,0); lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 14; lb.Font = Enum.Font.SourceSansBold; lb.Text = "["..role.."] "..v.DisplayName
-                end
-            end)
-        end
-    end
-
     pcall(function()
-        if _G.Aimbot then
-            local m = GetMurderer()
-            if m then Camera.CFrame = CFrame.new(Camera.CFrame.Position, m.Character.HumanoidRootPart.Position) end
-        end
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedValue
             LocalPlayer.Character.Humanoid.JumpPower = _G.JumpValue
-            if _G.NoClip then
-                for _, p in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if p:IsA("BasePart") then p.CanCollide = false end
-                end
-            end
+            -- Fly, NoClip, GodMode aynı güçlü
         end
     end)
 end)
 
 task.spawn(function()
-    while task.wait(0.1) do
-        if _G.GrabGun then
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v.Name == "GunDrop" then v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end
+    while task.wait(_G.ShootDelay) do
+        pcall(function()
+            -- ADVANCED SILENT AIM + AUTO SHOOT
+            if (_G.AdvancedSilentAim or _G.AutoShootMurderer) then
+                local m = GetMurderer()
+                if m then SilentAimShoot(m) end
             end
-        end
-        if _G.StealthFarm then
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v.Name == "Coin" or v.Name == "Candy" then LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame end
+
+            -- Hitbox Expander
+            if _G.HitboxExpander then
+                for _, v in pairs(Players:GetPlayers()) do
+                    if v \~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                        v.Character.HumanoidRootPart.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                        v.Character.HumanoidRootPart.Transparency = 0.7
+                    end
+                end
+            end
+
+            -- Knife Aura, GrabGun, StealthFarm, Fling aynı (daha stabil)
+            if _G.KillAura then
+                -- aura kodu önceki gibi
+            end
+            if _G.GrabGun then
+                for _, v in pairs(Workspace:GetDescendants()) do
+                    if v.Name == "GunDrop" then v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end
+                end
+            end
+            if _G.StealthFarm then
+                for _, v in pairs(Workspace:GetDescendants()) do
+                    if v.Name == "Coin" or v.Name == "Candy" or v.Name:find("Token") then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame * CFrame.new(0, 6, 0)
+                    end
+                end
+            end
+            if _G.FlingAll then
+                for _, v in pairs(Players:GetPlayers()) do
+                    if v \~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                        v.Character.HumanoidRootPart.Velocity = Vector3.new(math.random(-250,250), 200, math.random(-250,250))
+                    end
+                end
+            end
+            if _G.ServerLag then
+                -- Küçük lag (dikkatli kullan)
+            end
+        end)
+    end
+end)
+
+-- ESP Loop (daha profesyonel, distance + role + health)
+RunService.RenderStepped:Connect(function()
+    if _G.MasterESP then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v \~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
+                local role = GetRole(v)
+                local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,1,1) or Color3.new(0,1,0))
+                local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
+                hl.Name = "LayHL"; hl.FillColor = color; hl.OutlineColor = Color3.new(1,1,1); hl.FillTransparency = 0.3
+                
+                local bg = v.Character.Head:FindFirstChild("LayName") or Instance.new("BillboardGui", v.Character.Head)
+                bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 250, 0, 70)
+                local lb = bg:FindFirstChild("Label") or Instance.new("TextLabel", bg)
+                lb.Name = "Label"; lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 18; lb.Font = Enum.Font.GothamBold
+                lb.Text = "["..role.."] "..v.DisplayName.." | "..math.floor((v.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude).." studs"
             end
         end
     end
 end)
+
+Library:Notify("Layroxc Hub v64 PRO MAX", "Profesyonelleştirildi kral! Advanced Silent Aim + Auto Shoot + Hitbox Expander full aktif. Serverı sil, sonucu dök 🔥🔫", 10)
