@@ -198,9 +198,7 @@ RunService.RenderStepped:Connect(function()
                 local lb = bg:FindFirstChild("Label") or Instance.new("TextLabel", bg)
                 lb.Name = "Label"; lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 18; lb.Font = Enum.Font.GothamBold
                 lb.Text = "["..role.."] "..v.DisplayName.." | "..math.floor((v.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude).." studs"
-            end
-        end
-    end
+            end)
+        end)
+    end)
 end)
-
-Library:Notify("Layroxc Hub v64 PRO MAX", "Profesyonelleştirildi kral! Advanced Silent Aim + Auto Shoot + Hitbox Expander full aktif. Serverı sil, sonucu dök 🔥🔫", 10)
