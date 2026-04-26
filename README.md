@@ -1,35 +1,35 @@
--- [[ RAYFIELD LIBRARY - PROFESYONEL MENÜ ]] --
+-- [[ LAYROXC HUB v13.0 - FULL & LONG VERSION ]] --
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "LAYROXC HUB v3.0 | PREMIUM",
-   LoadingTitle = "Layroxc Sistemleri Yükleniyor...",
+   Name = "LAYROXC HUB v13.0 | 250+ LINES",
+   LoadingTitle = "Layroxc Ultimate Sistemler Yükleniyor...",
    LoadingSubtitle = "by dc_Layroxc",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "LayroxcConfigs",
-      FileName = "MM2_Master"
-   }
+   ConfigurationSaving = { Enabled = true, FolderName = "Layroxc13", FileName = "MasterConfig" }
 })
 
--- [[ SERVİSLER VE DEĞİŞKENLER ]] --
+-- [[ SERVİSLER ]] --
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local LP = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
+local TS = game:GetService("TeleportService")
 
-_G.SpeedValue = 16
-_G.JumpValue = 50
+-- [[ DEĞİŞKENLER ]] --
+_G.Speed = 16
+_G.Jump = 50
 _G.Aimbot = false
 _G.KillAura = false
-_G.MasterESP = false
-_G.StealthFarm = false
-_G.NoClip = false
+_G.ESP = false
+_G.Farm = false
 _G.GrabGun = false
+_G.NoClip = false
+_G.Fly = false
 _G.InfJump = false
+_G.AntiAFK = true
 
--- [[ YARDIMCI FONKSİYONLAR ]] --
+-- [[ ROL BULUCU FONKSİYON ]] --
 local function GetRole(v)
     if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
     if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
@@ -37,107 +37,98 @@ local function GetRole(v)
     return "Innocent"
 end
 
--- [[ SAVAŞ (COMBAT) SEKME ]] --
+-- [[ ANTI-AFK SİSTEMİ ]] --
+if _G.AntiAFK then
+    local VirtualUser = game:GetService("VirtualUser")
+    LP.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+end
+
+-- [[ SOSYAL HESAPLAR ]] --
+local SocialTab = Window:CreateTab("Socials", 4483362458)
+SocialTab:CreateSection("Beni Takip Et")
+SocialTab:CreateButton({Name = "Roblox: dc_Layroxc", Callback = function() setclipboard("dc_Layroxc") end})
+SocialTab:CreateButton({Name = "TikTok: @layroxcderler", Callback = function() setclipboard("layroxcderler") end})
+SocialTab:CreateButton({Name = "Instagram: @Layroxc", Callback = function() setclipboard("Layroxc") end})
+
+-- [[ COMBAT SEKME ]] --
 local CombatTab = Window:CreateTab("Combat", 4483362458)
-
-CombatTab:CreateToggle({
-   Name = "Aimbot (Katile Kilitlen)",
-   CurrentValue = false,
-   Callback = function(Value) _G.Aimbot = Value end,
-})
-
-CombatTab:CreateToggle({
-   Name = "Kill Aura (Otomatik Vuruş)",
-   CurrentValue = false,
-   Callback = function(Value) _G.KillAura = Value end,
-})
-
+CombatTab:CreateToggle({Name = "Aimbot (Lock Killer)", CurrentValue = false, Callback = function(v) _G.Aimbot = v end})
+CombatTab:CreateToggle({Name = "Kill Aura (Reach 25)", CurrentValue = false, Callback = function(v) _G.KillAura = v end})
 CombatTab:CreateButton({
-   Name = "Herkesi Öldür (Kill All)",
+   Name = "Kill All Players (Instant)",
    Callback = function()
-      local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
-      if k then
-         k.Parent = LocalPlayer.Character
+      local kn = LP.Character:FindFirstChild("Knife") or LP.Backpack:FindFirstChild("Knife")
+      if kn then
          for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-               pcall(function()
-                  LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
-                  task.wait(0.1)
-                  k:Activate()
-                  firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
-                  firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
-               end)
+            if v ~= LP and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+               LP.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+               task.wait(0.05)
+               kn.Parent = LP.Character; kn:Activate()
             end
          end
       end
    end,
 })
 
--- [[ GÖRÜNÜM (VISUALS) SEKME ]] --
-local VisualsTab = Window:CreateTab("Visuals", 4483362458)
-
-VisualsTab:CreateToggle({
-   Name = "Highlight ESP (Rolleri Göster)",
-   CurrentValue = false,
-   Callback = function(Value) 
-       _G.MasterESP = Value 
-       if not Value then
-           for _, v in pairs(Players:GetPlayers()) do
-               if v.Character and v.Character:FindFirstChild("LayHL") then v.Character.LayHL:Destroy() end
-           end
-       end
-   end,
-})
-
-VisualsTab:CreateButton({
-   Name = "Karakteri Görünmez Yap",
-   Callback = function()
-      local c = LocalPlayer.Character
-      if c then for _, v in pairs(c:GetDescendants()) do if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 1 end end end
-   end,
-})
-
 -- [[ FARM SEKME ]] --
 local FarmTab = Window:CreateTab("Farm", 4483362458)
+FarmTab:CreateToggle({Name = "Auto Coin/Candy Farm", CurrentValue = false, Callback = function(v) _G.Farm = v end})
+FarmTab:CreateToggle({Name = "Grab Gun (Mıknatıs)", CurrentValue = false, Callback = function(v) _G.GrabGun = v end})
 
-FarmTab:CreateToggle({
-   Name = "Otomatik Coin/Candy Topla",
-   CurrentValue = false,
-   Callback = function(Value) _G.StealthFarm = Value end,
+-- [[ VISUALS SEKME ]] --
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+VisualsTab:CreateToggle({Name = "Master ESP (Highlights)", CurrentValue = false, Callback = function(v) _G.ESP = v end})
+VisualsTab:CreateButton({
+   Name = "Reveal Roles in Chat",
+   Callback = function()
+      for _, v in pairs(Players:GetPlayers()) do
+         local role = GetRole(v)
+         if role ~= "Innocent" then
+            game.StarterGui:SetCore("ChatMakeSystemMessage", {Text = "[LAYROXC]: " .. v.Name .. " is " .. role, Color = Color3.new(1,0,0)})
+         end
+      end
+   end,
+})
+VisualsTab:CreateButton({
+   Name = "KORBLOX SATIN AL",
+   Callback = function()
+      setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE")
+      Rayfield:Notify({Title = "LINK COPIED!", Content = "OPEN IN BROWSER", Duration = 5})
+   end,
 })
 
-FarmTab:CreateToggle({
-   Name = "Mıknatıs (Grab Gun)",
-   CurrentValue = false,
-   Callback = function(Value) _G.GrabGun = Value end,
-})
-
--- [[ HAREKET (MOVEMENT) SEKME ]] --
+-- [[ MOVEMENT SEKME ]] --
 local MoveTab = Window:CreateTab("Movement", 4483362458)
+MoveTab:CreateSlider({Name = "WalkSpeed", Range = {16, 300}, Increment = 1, CurrentValue = 16, Callback = function(v) _G.Speed = v end})
+MoveTab:CreateToggle({Name = "Fly Mode", CurrentValue = false, Callback = function(v) _G.Fly = v end})
+MoveTab:CreateToggle({Name = "NoClip", CurrentValue = false, Callback = function(v) _G.NoClip = v end})
+MoveTab:CreateToggle({Name = "Infinite Jump", CurrentValue = false, Callback = function(v) _G.InfJump = v end})
 
-MoveTab:CreateSlider({
-   Name = "Yürüme Hızı",
-   Range = {16, 200},
-   Increment = 1,
-   CurrentValue = 16,
-   Callback = function(Value) _G.SpeedValue = Value end,
+-- [[ TELEPORTS SEKME ]] --
+local TPTab = Window:CreateTab("Teleports", 4483362458)
+TPTab:CreateButton({
+   Name = "Katile Işınlanma Butonu (Aç)",
+   Callback = function()
+      local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+      local Btn = Instance.new("TextButton", ScreenGui)
+      Btn.Size = UDim2.new(0, 130, 0, 45); Btn.Position = UDim2.new(0.5, 0, 0.2, 0)
+      Btn.Text = "TP TO MURD"; Btn.BackgroundColor3 = Color3.fromRGB(150,0,0); Btn.Draggable = true
+      Instance.new("UICorner", Btn)
+      Btn.MouseButton1Click:Connect(function()
+         for _, p in pairs(Players:GetPlayers()) do
+            if GetRole(p) == "MURDERER" and p.Character then
+               LP.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+            end
+         end
+      end)
+   end,
 })
 
-MoveTab:CreateToggle({
-   Name = "Duvar Geçme (NoClip)",
-   CurrentValue = false,
-   Callback = function(Value) _G.NoClip = Value end,
-})
-
-MoveTab:CreateToggle({
-   Name = "Sonsuz Zıplama",
-   CurrentValue = false,
-   Callback = function(Value) _G.InfJump = Value end,
-})
-
--- [[ DÖNGÜSEL SİSTEMLER (ARKA PLAN) ]] --
+-- [[ ANA DÖNGÜLER ]] --
 RunService.RenderStepped:Connect(function()
-    -- Aimbot Sistemi
     if _G.Aimbot then
         for _, v in pairs(Players:GetPlayers()) do
             if GetRole(v) == "MURDERER" and v.Character and v.Character:FindFirstChild("Head") then
@@ -145,66 +136,60 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
-    -- ESP Sistemi
-    if _G.MasterESP then
+    if _G.ESP then
         for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            if v ~= LP and v.Character then
                 local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
                 hl.Name = "LayHL"
                 hl.FillColor = GetRole(v) == "MURDERER" and Color3.new(1,0,0) or (GetRole(v) == "SHERIFF" and Color3.new(0,0,1) or Color3.new(0,1,0))
-                hl.FillTransparency = 0.5
             end
         end
     end
 end)
 
--- Fizik Döngüsü
 RunService.Stepped:Connect(function()
     pcall(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = _G.SpeedValue
-            for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-                if v:IsA("BasePart") and _G.NoClip then v.CanCollide = false end
+        if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+            LP.Character.Humanoid.WalkSpeed = _G.Speed
+            if _G.NoClip then
+                for _, part in pairs(LP.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = false end
+                end
             end
+            if _G.Fly then LP.Character.HumanoidRootPart.Velocity = Vector3.new(0, 3, 0) end
         end
     end)
 end)
 
--- Sonsuz Zıplama
-UserInputService.JumpRequest:Connect(function()
-    if _G.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+UIS.JumpRequest:Connect(function()
+    if _G.InfJump and LP.Character:FindFirstChildOfClass("Humanoid") then
+        LP.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
 end)
 
--- Farm ve Aura Döngüsü
+-- FARM & KILL AURA MOTORU
 task.spawn(function()
-    while task.wait(0.3) do
+    while task.wait(0.15) do
         pcall(function()
-            -- Farm
-            if _G.StealthFarm then
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if (v.Name == "Coin" or v.Name == "Candy") and v:IsA("BasePart") then
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
-                        task.wait(0.5)
+            if _G.GrabGun then
+                local gun = workspace:FindFirstChild("GunDrop") or workspace:FindFirstChild("Gun", true)
+                if gun then LP.Character.HumanoidRootPart.CFrame = gun.CFrame end
+            end
+            if _G.Farm then
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if (obj.Name == "Coin" or obj.Name == "Candy") and obj:IsA("BasePart") then
+                        LP.Character.HumanoidRootPart.CFrame = obj.CFrame; task.wait(0.35)
                     end
                 end
             end
-            -- Grab Gun
-            if _G.GrabGun then
-                local gun = workspace:FindFirstChild("GunDrop") or workspace:FindFirstChild("Gun")
-                if gun then gun.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame end
-            end
-            -- Kill Aura
             if _G.KillAura then
-                local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
-                if k then
-                    for _, v in pairs(Players:GetPlayers()) do
-                        if v ~= LocalPlayer and v.Character and (LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude < 20 then
-                            k.Parent = LocalPlayer.Character
-                            k:Activate()
-                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
-                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
+                local kn = LP.Character:FindFirstChild("Knife") or LP.Backpack:FindFirstChild("Knife")
+                if kn then
+                    for _, p in pairs(Players:GetPlayers()) do
+                        if p ~= LP and p.Character and (LP.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude < 25 then
+                            kn.Parent = LP.Character; kn:Activate()
+                            firetouchinterest(p.Character.HumanoidRootPart, kn.Handle, 0)
+                            firetouchinterest(p.Character.HumanoidRootPart, kn.Handle, 1)
                         end
                     end
                 end
