@@ -1,12 +1,11 @@
--- [[ LAYROXC HUB v59 - THE OMNIPOTENT ENGINE (FULL SOURCE) ]] --
+-- [[ LAYROXC HUB v59 - THE OMNIPOTENT ENGINE (FULL & OPTIMIZED) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc Hub - v59⚠️", "DarkTheme")
+local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
-local MarketplaceService = game:GetService("MarketplaceService")
 
 -- TÜM DEĞİŞKENLER
 _G.MasterESP = false
@@ -49,6 +48,40 @@ local function GetMurderer()
     return nil
 end
 
+-- [[ STABİL ESP FONKSİYONU ]] --
+local function ApplyESP(v)
+    if v == LocalPlayer then return end
+    local function CreateElements()
+        if not v.Character or not v.Character:FindFirstChild("Head") then return end
+        if v.Character.Head:FindFirstChild("LayName") then v.Character.Head.LayName:Destroy() end
+        if v.Character:FindFirstChild("LayHighlight") then v.Character.LayHighlight:Destroy() end
+
+        local hl = Instance.new("Highlight", v.Character)
+        hl.Name = "LayHighlight"; hl.FillTransparency = 0.5; hl.OutlineTransparency = 0
+
+        local bg = Instance.new("BillboardGui", v.Character.Head)
+        bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 100, 0, 30); bg.ExtentsOffset = Vector3.new(0, 2.5, 0)
+
+        local lb = Instance.new("TextLabel", bg)
+        lb.Size = UDim2.new(1, 0, 1, 0); lb.BackgroundTransparency = 1; lb.TextSize = 11; lb.Font = Enum.Font.SourceSansBold
+        
+        local connection
+        connection = RunService.RenderStepped:Connect(function()
+            if not v.Character or not v.Character:FindFirstChild("HumanoidRootPart") or not _G.MasterESP then
+                hl.Enabled = false; bg.Enabled = false
+                if not _G.MasterESP then connection:Disconnect() end
+                return
+            end
+            local role = GetRole(v)
+            local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.5,1) or Color3.new(0,1,0))
+            hl.Enabled = true; hl.FillColor = color; hl.OutlineColor = color
+            bg.Enabled = true; lb.TextColor3 = color; lb.Text = "["..role.."]\n"..v.DisplayName
+        end)
+    end
+    v.CharacterAdded:Connect(CreateElements)
+    if v.Character then CreateElements() end
+end
+
 -- SEKMELER
 local Main = Window:NewTab("Combat")
 local Visuals = Window:NewTab("Visuals (ESP)")
@@ -89,9 +122,12 @@ ShootBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- [[ 2. VISUALS (GELİŞMİŞ ESP) ]] --
+-- [[ 2. VISUALS ]] --
 local EspSec = Visuals:NewSection("Vision Engine")
-EspSec:NewToggle("MASTER ESP ACTIVE", "Box, Skeleton ve Rol Gösterir", function(state) _G.MasterESP = state end)
+EspSec:NewToggle("MASTER ESP ACTIVE", "Box + Skeleton + Role", function(state) 
+    _G.MasterESP = state 
+    if state then for _, v in pairs(Players:GetPlayers()) do ApplyESP(v) end end
+end)
 
 -- [[ 3. MAGNET & FARM ]] --
 local FarmSec = Farm:NewSection("Automation")
@@ -103,36 +139,19 @@ local MoveSec = Move:NewSection("Physics")
 MoveSec:NewTextBox("WalkSpeed", "Hız", function(t) _G.SpeedValue = tonumber(t) or 16 end)
 MoveSec:NewToggle("NoClip", "Duvar Geçme", function(s) _G.NoClip = s end)
 
--- [[ 5. PRO (KORBLOX & SATIN ALMA) ]] --
+-- [[ 5. PRO ]] --
 local ProSec = Pro:NewSection("Korblox System")
-ProSec:NewButton("Get Korblox (80 Robux)", "Resmi Satın Alma Ekranı", function()
-    local passID = 1812606767
-    MarketplaceService:PromptGamePassPurchase(LocalPlayer, passID)
-    if setclipboard then setclipboard("https://www.roblox.com/tr/game-pass/1812606767/") end
-    Library:Notify("MARKET", "Ekran açıldı ve link kopyalandı!", 5)
+ProSec:NewButton("Get Korblox (80 Robux)", "Linki Kopyala", function()
+    if setclipboard then
+        setclipboard("https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE")
+        Library:Notify("BAŞARILI", "Link kopyalandı!", 5)
+    end
 end)
 
--- [[ ANA MOTOR (RENDER LOOP) ]] --
-RunService.RenderStepped:Connect(function()
-    -- ESP VE ROL SİSTEMİ
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character then
-            local highlight = v.Character:FindFirstChild("LayHighlight") or Instance.new("Highlight", v.Character)
-            highlight.Name = "LayHighlight"
-            
-            if _G.MasterESP then
-                local role = GetRole(v)
-                local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.5,1) or Color3.new(0,1,0))
-                highlight.Enabled = true
-                highlight.FillColor = color
-                highlight.OutlineColor = color
-            else
-                highlight.Enabled = false
-            end
-        end
-    end
+-- [[ ANA DÖNGÜLER ]] --
+Players.PlayerAdded:Connect(function(v) if _G.MasterESP then ApplyESP(v) end end)
 
-    -- AIMBOT VE HAREKET
+RunService.RenderStepped:Connect(function()
     pcall(function()
         if _G.Aimbot then
             local m = GetMurderer()
@@ -149,7 +168,6 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
--- [[ MAGNET & FARM DÖNGÜSÜ ]] --
 task.spawn(function()
     while task.wait() do
         pcall(function()
