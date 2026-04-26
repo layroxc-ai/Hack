@@ -1,4 +1,4 @@
--- [[ LAYROXC HUB v59 - THE OMNIPOTENT ENGINE (FULL & OPTIMIZED) ]] --
+-- [[ LAYROXC HUB v59 - THE OMNIPOTENT ENGINE (FULL & PERMANENT) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
 
@@ -33,7 +33,7 @@ ShootBtn.Text = "ÖLDÜR"; ShootBtn.Visible = false; ShootBtn.Draggable = true
 ShootBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0); ShootBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", ShootBtn).CornerRadius = UDim.new(1, 0)
 
--- [[ TEMEL MOTORLAR ]] --
+-- [[ MOTOR FONKSİYONLARI ]] --
 local function GetRole(v)
     if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
     if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
@@ -48,38 +48,42 @@ local function GetMurderer()
     return nil
 end
 
--- [[ STABİL ESP FONKSİYONU ]] --
-local function ApplyESP(v)
+-- [[ KALICI VE KÜÇÜK İSİMLİ ESP ]] --
+local function ApplyPermanentESP(v)
     if v == LocalPlayer then return end
-    local function CreateElements()
-        if not v.Character or not v.Character:FindFirstChild("Head") then return end
-        if v.Character.Head:FindFirstChild("LayName") then v.Character.Head.LayName:Destroy() end
-        if v.Character:FindFirstChild("LayHighlight") then v.Character.LayHighlight:Destroy() end
+    local function CreateESP()
+        local char = v.Character or v.CharacterAdded:Wait()
+        local head = char:WaitForChild("Head", 5)
+        if not head then return end
 
-        local hl = Instance.new("Highlight", v.Character)
+        if char:FindFirstChild("LayHighlight") then char.LayHighlight:Destroy() end
+        if head:FindFirstChild("LayName") then head.LayName:Destroy() end
+
+        local hl = Instance.new("Highlight", char)
         hl.Name = "LayHighlight"; hl.FillTransparency = 0.5; hl.OutlineTransparency = 0
 
-        local bg = Instance.new("BillboardGui", v.Character.Head)
+        local bg = Instance.new("BillboardGui", head)
         bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 100, 0, 30); bg.ExtentsOffset = Vector3.new(0, 2.5, 0)
 
         local lb = Instance.new("TextLabel", bg)
         lb.Size = UDim2.new(1, 0, 1, 0); lb.BackgroundTransparency = 1; lb.TextSize = 11; lb.Font = Enum.Font.SourceSansBold
-        
-        local connection
-        connection = RunService.RenderStepped:Connect(function()
-            if not v.Character or not v.Character:FindFirstChild("HumanoidRootPart") or not _G.MasterESP then
-                hl.Enabled = false; bg.Enabled = false
-                if not _G.MasterESP then connection:Disconnect() end
-                return
+
+        spawn(function()
+            while char.Parent ~= nil and hl.Parent ~= nil do
+                if _G.MasterESP then
+                    local role = GetRole(v)
+                    local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.5,1) or Color3.new(0,1,0))
+                    hl.Enabled = true; hl.FillColor = color; hl.OutlineColor = color
+                    bg.Enabled = true; lb.TextColor3 = color; lb.Text = "["..role.."]\n"..v.DisplayName
+                else
+                    hl.Enabled = false; bg.Enabled = false
+                end
+                task.wait(0.3)
             end
-            local role = GetRole(v)
-            local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.5,1) or Color3.new(0,1,0))
-            hl.Enabled = true; hl.FillColor = color; hl.OutlineColor = color
-            bg.Enabled = true; lb.TextColor3 = color; lb.Text = "["..role.."]\n"..v.DisplayName
         end)
     end
-    v.CharacterAdded:Connect(CreateElements)
-    if v.Character then CreateElements() end
+    v.CharacterAdded:Connect(CreateESP)
+    if v.Character then CreateESP() end
 end
 
 -- SEKMELER
@@ -124,9 +128,9 @@ end)
 
 -- [[ 2. VISUALS ]] --
 local EspSec = Visuals:NewSection("Vision Engine")
-EspSec:NewToggle("MASTER ESP ACTIVE", "Box + Skeleton + Role", function(state) 
+EspSec:NewToggle("MASTER ESP ACTIVE", "Kalıcı Kutu/İskelet/Rol", function(state) 
     _G.MasterESP = state 
-    if state then for _, v in pairs(Players:GetPlayers()) do ApplyESP(v) end end
+    if state then for _, v in pairs(Players:GetPlayers()) do ApplyPermanentESP(v) end end
 end)
 
 -- [[ 3. MAGNET & FARM ]] --
@@ -149,7 +153,7 @@ ProSec:NewButton("Get Korblox (80 Robux)", "Linki Kopyala", function()
 end)
 
 -- [[ ANA DÖNGÜLER ]] --
-Players.PlayerAdded:Connect(function(v) if _G.MasterESP then ApplyESP(v) end end)
+Players.PlayerAdded:Connect(function(v) ApplyPermanentESP(v) end)
 
 RunService.RenderStepped:Connect(function()
     pcall(function()
@@ -177,7 +181,7 @@ task.spawn(function()
             end
             if _G.GrabGun then
                 for _, v in pairs(workspace:GetDescendants()) do
-                    if v.Name == "GunDrop" and v:IsA("BasePart") then
+                    if v.Name == "GunDrop" then
                         v.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
                     end
                 end
