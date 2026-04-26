@@ -1,4 +1,4 @@
--- [[ LAYROXC HUB v59 - THE ABSOLUTE ENGINE (NO MISSING CODE) ]] --
+-- [[ LAYROXC HUB v59 - SILENT AIM BUTTON & FULL ENGINE ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Layroxc Hub - v59 FINAL", "DarkTheme")
 
@@ -8,10 +8,11 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local MarketplaceService = game:GetService("MarketplaceService")
 
--- TÜM AYARLAR (Ölünce Sıfırlanmaz)
+-- AYARLAR
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.SilentAim = false
+_G.Aimbot = false
 _G.KillAura = false
 _G.MasterESP = false
 _G.GrabGun = false
@@ -29,12 +30,22 @@ OpenButton.Text = "L"; OpenButton.Draggable = true; Instance.new("UICorner", Ope
 OpenButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
+-- [[ ATEŞ ETME BUTONU (SILENT AIM İÇİN) ]] --
+local ShootGui = Instance.new("ScreenGui", game.CoreGui)
+local ShootBtn = Instance.new("TextButton", ShootGui)
+ShootBtn.Size = UDim2.new(0, 70, 0, 70); ShootBtn.Position = UDim2.new(0.8, 0, 0.5, 0)
+ShootBtn.Text = "ATEŞ"; ShootBtn.Visible = false; ShootBtn.Draggable = true
+ShootBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0); ShootBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", ShootBtn).CornerRadius = UDim.new(1, 0)
+
 -- [[ ROL TESPİT SİSTEMİ ]] --
-local function GetRole(v)
-    if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
-    if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
-    if v.Backpack:FindFirstChild("Gun") or (v.Character and v.Character:FindFirstChild("Gun")) then return "SHERIFF" end
-    return "Innocent"
+local function GetMurderer()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then
+            return v
+        end
+    end
+    return nil
 end
 
 -- TABS
@@ -44,76 +55,54 @@ local Farm = Window:NewTab("Magnet & Farm")
 local Movement = Window:NewTab("Movement")
 local Pro = Window:NewTab("Avatar & Pro")
 
--- [[ 1. COMBAT - SILENT AIM DAHİL ]] --
+-- [[ 1. COMBAT - SILENT AIM & AIMBOT ]] --
 local RageSec = Main:NewSection("Execution Engine")
 
-RageSec:NewToggle("Silent Aim (Tiktok)", "Nereye sıkarsan sık katili vurur", function(state) _G.SilentAim = state end)
+RageSec:NewToggle("Silent Aim (Tiktok)", "Açınca ekrana tuş gelir", function(state) 
+    _G.SilentAim = state 
+    ShootBtn.Visible = state -- Tuşu aç/kapat
+end)
+
+RageSec:NewToggle("Cam Aimbot", "Kamerayı katile kilitler", function(state) _G.Aimbot = state end)
 RageSec:NewToggle("Kill Aura (25m)", "Otomatik bıçak sallar", function(state) _G.KillAura = state end)
 
-RageSec:NewButton("TP Behind Murderer", "Katilin arkasına ışınlar", function()
-    for _, v in pairs(Players:GetPlayers()) do
-        if GetRole(v) == "MURDERER" and v.Character then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+-- Ateş Butonu Mantığı
+ShootBtn.MouseButton1Click:Connect(function()
+    local Gun = LocalPlayer.Character:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun")
+    if Gun then
+        Gun.Parent = LocalPlayer.Character
+        local M = GetMurderer()
+        if M and M.Character and M.Character:FindFirstChild("HumanoidRootPart") then
+            game:GetService("ReplicatedStorage").Entity.Gun.ShootGun:FireServer(M.Character.HumanoidRootPart.Position)
         end
     end
 end)
 
-RageSec:NewButton("KILL ALL (Murderer)", "Herkesi anında yok eder", function()
-    local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
-    if k then
-        k.Parent = LocalPlayer.Character
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,1)
-                task.wait(0.12); k:Activate()
-                firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
-                firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
-            end
-        end
-    end
-end)
-
--- [[ 2. VISUALS - TEMİZ ESP ]] --
+-- [[ 2. VISUALS - ESP ]] --
 local EspSec = Visuals:NewSection("Minimalist Vision")
-EspSec:NewToggle("MASTER ESP ACTIVE", "İsim ve Rolleri gösterir", function(state) _G.MasterESP = state end)
+EspSec:NewToggle("MASTER ESP ACTIVE", "İsim & Rolleri Göster", function(state) _G.MasterESP = state end)
 
 -- [[ 3. FARM & MAGNET ]] --
 local FarmSec = Farm:NewSection("Item Collection")
-FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Düşen silahı çeker", function(state) _G.GrabGun = state end)
-FarmSec:NewToggle("STEALTH FARM", "Otomatik coin toplar", function(state) _G.StealthFarm = state end)
+FarmSec:NewToggle("MAGNET GUN (ULTRA)", "Silahı çeker", function(state) _G.GrabGun = state end)
+FarmSec:NewToggle("STEALTH FARM", "Coin toplar", function(state) _G.StealthFarm = state end)
 
 -- [[ 4. MOVEMENT ]] --
 local MoveSec = Movement:NewSection("Physics Control")
 MoveSec:NewTextBox("WalkSpeed", "Hız", function(txt) _G.SpeedValue = tonumber(txt) or 16 end)
 MoveSec:NewTextBox("JumpPower", "Zıplama", function(txt) _G.JumpValue = tonumber(txt) or 50 end)
-MoveSec:NewToggle("NoClip", "Duvarlardan geç", function(state) _G.NoClip = state end)
+MoveSec:NewToggle("NoClip", "Duvar Geçme", function(state) _G.NoClip = state end)
 
--- [[ 5. PRO SEKTÖRÜ (GAMEPASS & LINK) ]] --
+-- [[ 5. PRO SEKTÖRÜ (GAMEPASS) ]] --
 local ProSec = Pro:NewSection("Support & Korblox")
-ProSec:NewButton("Get Korblox (80 Robux)", "Satın al ve linki kopyala", function()
+ProSec:NewButton("Get Korblox (80 Robux)", "Prompt + Link", function()
     pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, MyGamepassID) end)
     if setclipboard then setclipboard(MyGamepassLink) end
 end)
 
--- [[ SİSTEM DÖNGÜLERİ - TÜM ÖZELLİKLER BURADA ]] --
+-- [[ SİSTEM DÖNGÜLERİ ]] --
 
--- Silent Aim (Metamethod Hook)
-local OldNamecall
-OldNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
-    local Args = {...}
-    local Method = getnamecallmethod()
-    if _G.SilentAim and Method == "FireServer" and Self.Name == "ShootGun" then
-        for _, v in pairs(Players:GetPlayers()) do
-            if GetRole(v) == "MURDERER" and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                Args[2] = v.Character.HumanoidRootPart.Position
-                return OldNamecall(Self, unpack(Args))
-            end
-        end
-    end
-    return OldNamecall(Self, ...)
-end)
-
--- Fizik ve NoClip Döngüsü
+-- Fizik, NoClip ve Camera Aimbot
 RunService.Stepped:Connect(function()
     pcall(function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -125,23 +114,26 @@ RunService.Stepped:Connect(function()
                 end
             end
         end
+        if _G.Aimbot then
+            local M = GetMurderer()
+            if M and M.Character and M.Character:FindFirstChild("HumanoidRootPart") then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, M.Character.HumanoidRootPart.Position)
+            end
+        end
     end)
 end)
 
--- Farm ve Kill Aura Döngüsü
+-- Farm ve Kill Aura
 task.spawn(function()
     while task.wait(0.1) do
         pcall(function()
             if _G.KillAura then
                 local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
-                if k then
-                    for _, v in pairs(Players:GetPlayers()) do
-                        if v ~= LocalPlayer and v.Character and (LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude < 25 then
-                            k.Parent = LocalPlayer.Character; k:Activate()
-                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 0)
-                            firetouchinterest(v.Character.HumanoidRootPart, k.Handle, 1)
-                        end
-                    end
+                local m = GetMurderer()
+                if k and m and m.Character and (LocalPlayer.Character.HumanoidRootPart.Position - m.Character.HumanoidRootPart.Position).Magnitude < 25 then
+                    k.Parent = LocalPlayer.Character; k:Activate()
+                    firetouchinterest(m.Character.HumanoidRootPart, k.Handle, 0)
+                    firetouchinterest(m.Character.HumanoidRootPart, k.Handle, 1)
                 end
             end
             if _G.GrabGun then
@@ -160,20 +152,20 @@ task.spawn(function()
     end
 end)
 
--- ESP Rendering (Rahatsız Etmeyen)
+-- ESP Rendering
 RunService.RenderStepped:Connect(function()
     if _G.MasterESP then
         for _, v in pairs(Players:GetPlayers()) do
             pcall(function()
                 if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
-                    local role = GetRole(v)
-                    local color = role == "MURDERER" and Color3.new(1,0,0) or (role == "SHERIFF" and Color3.new(0,0.6,1) or Color3.new(0,1,0))
+                    local isM = v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")
+                    local color = isM and Color3.new(1,0,0) or Color3.new(0,1,0)
                     local hl = v.Character:FindFirstChild("LayHL") or Instance.new("Highlight", v.Character)
                     hl.Name = "LayHL"; hl.FillColor = color; hl.FillTransparency = 0.8
                     local bg = v.Character.Head:FindFirstChild("LayName") or Instance.new("BillboardGui", v.Character.Head)
-                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0,100,0,20); bg.ExtentsOffset = Vector3.new(0,2.5,0)
+                    bg.Name = "LayName"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0,100,0,20); bg.ExtentsOffset = Vector3.new(0,2,0)
                     local lb = bg:FindFirstChild("TL") or Instance.new("TextLabel", bg); lb.Name = "TL"
-                    lb.Size = UDim2.new(1,0,1,0); lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 10; lb.Font = Enum.Font.SourceSansBold; lb.Text = "["..role.."] "..v.DisplayName
+                    lb.Size = UDim2.new(1,0,1,0); lb.BackgroundTransparency = 1; lb.TextColor3 = color; lb.TextSize = 10; lb.Font = Enum.Font.SourceSansBold; lb.Text = v.DisplayName
                 end
             end)
         end
