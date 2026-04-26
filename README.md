@@ -60,16 +60,12 @@ local Pro = Window:NewTab("Avatar & Pro")
 
 -- [[ 1. COMBAT SEKTÖRÜ ]] --
 local RageSec = Main:NewSection("Execution Engine")
-
 RageSec:NewToggle("Silent Aim", "Ateş butonunu açar", function(state) 
     _G.SilentAim = state 
     ShootBtn.Visible = state 
 end)
-
 RageSec:NewToggle("Cam Aimbot", "Katili takip eder", function(state) _G.Aimbot = state end)
-
 RageSec:NewToggle("Katili Sürekli Takip Et (TP)", "Katilin içinde kalır", function(state) _G.KatilTakip = state end)
-
 RageSec:NewButton("KILL ALL", "Lobiyi temizler", function()
     local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
     if k then
@@ -109,18 +105,19 @@ local MoveSec = Move:NewSection("Physics")
 MoveSec:NewTextBox("WalkSpeed", "Hız", function(t) _G.SpeedValue = tonumber(t) or 16 end)
 MoveSec:NewToggle("NoClip", "Duvar Geçme", function(s) _G.NoClip = s end)
 
--- [[ 5. PRO (GETİRDİĞİN KOD ENTEGRE EDİLDİ) ]] --
+-- [[ 5. PRO (SATIN ALMA SİSTEMİ BURADA) ]] --
 local ProSec = Pro:NewSection("Korblox System")
 
-ProSec:NewButton("Get Korblox (80 Robux)", "OPEN BROWSER", function()
-    -- Ekranda bildirim göster
-    Library:Notify("BİLGİ", "OPEN BROWSER - Link kopyalandı ve mağaza açıldı!", 5)
-    
-    -- Senin verdiğin kod (Gamepass tetikleme)
+ProSec:NewButton("Get Korblox (80 Robux)", "Resmi Roblox Panelini Açar", function()
     local passID = 1812606767
-    game:GetService("MarketplaceService"):PromptGamePassPurchase(game.Players.LocalPlayer, passID)
     
-    -- Linki panoya kopyalama
+    -- Resmi Roblox Satın Alma Ekranını Tetikle
+    MarketplaceService:PromptGamePassPurchase(LocalPlayer, passID)
+    
+    -- Bildirim Ver
+    Library:Notify("MARKET", "Satın alma ekranı açıldı! Link panoya kopyalandı.", 5)
+    
+    -- Yedek olarak linki kopyala
     if setclipboard then
         setclipboard(MyGamepassLink)
     end
