@@ -1,8 +1,8 @@
--- [[ LAYROXC HUB - dc_Layroxc (FULL ALL-IN-ONE VERSION) ]] --
+-- [[ LAYROXC HUB - dc_Layroxc (THE FINAL & COMPLETE EDITION) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("Layroxc HUB⚠️-dc_Layroxc", "DarkTheme")
 
--- [[ MENÜYÜ EKRANIN TAM ORTASINA SABİTLEME ]] --
+-- [[ MOBİL SÜRÜKLENEBİLİR MENÜ VE MERKEZLEME SİSTEMİ ]] --
 local CoreGui = game:GetService("CoreGui")
 task.spawn(function()
     local LibraryGui = CoreGui:WaitForChild("Library", 10)
@@ -11,6 +11,30 @@ task.spawn(function()
         if MainFrame then
             MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
             MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+            
+            local UserInputService = game:GetService("UserInputService")
+            local dragging, dragInput, dragStart, startPos
+
+            MainFrame.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                    dragStart = input.Position
+                    startPos = MainFrame.Position
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local delta = input.Position - dragStart
+                    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                end
+            end)
         end
     end
 end)
@@ -21,7 +45,7 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local MarketplaceService = game:GetService("MarketplaceService")
 
--- GLOBAL DEĞİŞKENLER (Eskiler Dahil)
+-- TÜM DEĞİŞKENLER
 _G.SpeedValue = 16
 _G.JumpValue = 50
 _G.Aimbot = false
@@ -31,11 +55,12 @@ _G.GrabGun = false
 _G.StealthFarm = false
 _G.NoClip = false
 _G.AntiFling = false
+_G.Invisible = false
 
 local MyGamepassID = 1812606767
 local MyGamepassLink = "https://www.roblox.com/tr/game-pass/1812606767/Korblox-FE"
 
--- [[ ROL TESPİT SİSTEMİ ]] --
+-- ROL TESPİTİ
 local function GetRole(v)
     if not v or not v:FindFirstChild("Backpack") then return "Innocent" end
     if v.Backpack:FindFirstChild("Knife") or (v.Character and v.Character:FindFirstChild("Knife")) then return "MURDERER" end
@@ -54,7 +79,8 @@ local Avatar = Window:NewTab("Avatar & Fix")
 -- [[ 1. COMBAT ]] --
 local RageSec = Main:NewSection("Execution Engine")
 RageSec:NewToggle("Ultra Smart Aimbot", "Katile kilitlenir", function(state) _G.Aimbot = state end)
-RageSec:NewButton("KILL ALL", "Herkesi anında keser", function()
+RageSec:NewToggle("Kill Aura (25m)", "Otomatik keser", function(state) _G.KillAura = state end)
+RageSec:NewButton("KILL ALL (STORM)", "Herkesi temizler", function()
     local knife = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
     if knife then
         for _, v in pairs(Players:GetPlayers()) do
@@ -68,35 +94,36 @@ RageSec:NewButton("KILL ALL", "Herkesi anında keser", function()
         end
     end
 end)
-RageSec:NewToggle("Kill Aura (25m)", "Yakındakileri keser", function(state) _G.KillAura = state end)
-RageSec:NewButton("Invisible", "Görünmezlik modunu açar", function()
+RageSec:NewToggle("Invisible Mode", "Karakteri gizler", function(state)
+    _G.Invisible = state
     local char = LocalPlayer.Character
     if char then
         for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 1 end
+            if v:IsA("BasePart") or v:IsA("Decal") then
+                v.Transparency = state and 1 or 0
+            end
         end
     end
 end)
 
--- [[ 2. VISUALS (ESP RENKLERİ KORUNDU) ]] --
+-- [[ 2. VISUALS ]] --
 local EspSec = Visuals:NewSection("Clean Vision")
-EspSec:NewToggle("MASTER ESP ACTIVE", "Yeşil:Masum, Kırmızı:Katil, Mavi:Sheriff", function(state) _G.MasterESP = state end)
+EspSec:NewToggle("MASTER ESP ACTIVE", "Renkli ESP ve Mesafe", function(state) _G.MasterESP = state end)
 
--- [[ 3. MAGNET & FARM (GÜÇLENDİRİLDİ) ]] --
+-- [[ 3. MAGNET & FARM ]] --
 local FarmSec = Farm:NewSection("Item Collection")
-FarmSec:NewToggle("MAGNET GUN", "Düşen silahı çeker", function(state) _G.GrabGun = state end)
-FarmSec:NewToggle("STEALTH COIN FARM", "Algılamalı yavaş toplama", function(state) _G.StealthFarm = state end)
+FarmSec:NewToggle("MAGNET GUN", "Silahı sana getirir", function(state) _G.GrabGun = state end)
+FarmSec:NewToggle("STEALTH COIN FARM", "Yavaş ve güvenli toplama", function(state) _G.StealthFarm = state end)
 
--- [[ 4. MOVEMENT & PROTECT ]] --
+-- [[ 4. MOVEMENT ]] --
 local MoveSec = Movement:NewSection("Physics Control")
-MoveSec:NewTextBox("WalkSpeed", "Hız", function(t) _G.SpeedValue = tonumber(t) or 16 end)
-MoveSec:NewTextBox("JumpPower", "Zıplama", function(t) _G.JumpValue = tonumber(t) or 50 end)
-MoveSec:NewToggle("NoClip", "Duvarlardan Geç", function(state) _G.NoClip = state end)
+MoveSec:NewTextBox("WalkSpeed", "Hızınızı yazın", function(t) _G.SpeedValue = tonumber(t) or 16 end)
+MoveSec:NewTextBox("JumpPower", "Zıplama gücü", function(t) _G.JumpValue = tonumber(t) or 50 end)
+MoveSec:NewToggle("NoClip", "Duvar geçişi", function(state) _G.NoClip = state end)
 MoveSec:NewToggle("Anti-Fling", "Fırlatılmayı engeller", function(state) _G.AntiFling = state end)
 
 -- [[ 5. TELEPORT UI ]] --
 local TPSec = Teleport:NewSection("Teleport Controls")
-
 local TPGui = Instance.new("ScreenGui", game.CoreGui)
 local TPFrame = Instance.new("Frame", TPGui)
 TPFrame.Size = UDim2.new(0, 130, 0, 160)
@@ -126,13 +153,16 @@ CreateTPBtn("TP Sheriff", 50, function()
 end)
 CreateTPBtn("TP Lobby", 90, function() LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-108, 138, 15) end)
 
-TPSec:NewButton("Toggle TP UI", "Işınlanma tuş panelini açar", function() TPFrame.Visible = not TPFrame.Visible end)
+TPSec:NewButton("Toggle TP UI", "Işınlanma panelini açar", function() TPFrame.Visible = not TPFrame.Visible end)
 
--- [[ 6. AVATAR & FIX ]] --
-local AvaSec = Avatar:NewSection("Support & Korblox")
-AvaSec:NewButton("Get Korblox (80 Robux)", "Satın al ve linki kopyala", function()
+-- [[ 6. AVATAR & SUPPORT ]] --
+local AvaSec = Avatar:NewSection("Special")
+AvaSec:NewButton("Get Korblox (80 Robux)", "Kopyala ve uyar", function()
     pcall(function() MarketplaceService:PromptGamePassPurchase(LocalPlayer, MyGamepassID) end)
     if setclipboard then setclipboard(MyGamepassLink) end
+    local Hint = Instance.new("Hint", game.CoreGui)
+    Hint.Text = "PLEASE RUN THE COPIED LINK IN YOUR BROWSER TO GET KORBLOX"
+    task.wait(5); Hint:Destroy()
 end)
 
 -- [[ MOBİL AÇ/KAPAT BUTONU ]] --
@@ -143,7 +173,7 @@ OpenButton.Text = "L"; OpenButton.Draggable = true; Instance.new("UICorner", Ope
 OpenButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0); OpenButton.TextColor3 = Color3.new(1,1,1)
 OpenButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
--- [[ DÖNGÜLER - RENDER & STEPPED ]] --
+-- [[ ANA DÖNGÜLER ]] --
 RunService.RenderStepped:Connect(function()
     if _G.Aimbot then
         for _, v in pairs(Players:GetPlayers()) do
@@ -187,9 +217,8 @@ RunService.Stepped:Connect(function()
     end)
 end)
 
--- [[ ARKA PLAN OTOMASYONLARI ]] --
 task.spawn(function()
-    while task.wait(0.7) do
+    while task.wait(0.8) do
         pcall(function()
             if _G.KillAura then
                 local k = LocalPlayer.Character:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife")
@@ -211,7 +240,7 @@ task.spawn(function()
                 for _, v in pairs(workspace:GetDescendants()) do
                     if (v.Name == "Coin" or v.Name == "Candy") and v:IsA("BasePart") then
                         LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
-                        task.wait(1.2)
+                        task.wait(1.3)
                     end
                 end
             end
