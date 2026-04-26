@@ -1,6 +1,6 @@
 -- [[ LAYROXC HUB - dc_Layroxc (FULL ALL-IN-ONE VERSION) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("dc_Layroxc", "DarkTheme")
+local Window = Library.CreateLib("Layroxc HUB⚠️-dc_Layroxc", "DarkTheme")
 
 -- [[ MENÜYÜ EKRANIN TAM ORTASINA SABİTLEME ]] --
 local CoreGui = game:GetService("CoreGui")
