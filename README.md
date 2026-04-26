@@ -1,6 +1,6 @@
 -- [[ LAYROXC HUB - dc_Layroxc (THE ABSOLUTE FINAL VERSION) ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc HUB⚠️-dc_Layroxc", "DarkTheme")
+local Window = Library.CreateLib("Layroxc HUB⚠️1-dc_Layroxc", "DarkTheme")
 
 -- [[ MOBİL HAREKET VE SÜRÜKLEME SİSTEMİ (FIXED) ]] --
 local CoreGui = game:GetService("CoreGui")
