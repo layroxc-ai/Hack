@@ -1,130 +1,98 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Layroxc HUB - Koray Kavukçuoğlu", "DarkTheme")
+-- LocalScript
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
 
--- --- MOBİL AÇ/KAPAT BUTONU ---
-local OpenBtn = Instance.new("ScreenGui")
-local MainButton = Instance.new("TextButton")
-OpenBtn.Parent = game.CoreGui
-MainButton.Parent = OpenBtn
-MainButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainButton.BorderColor3 = Color3.fromRGB(255, 0, 0)
-MainButton.BorderSizePixel = 2
-MainButton.Position = UDim2.new(0.05, 0, 0.1, 0)
-MainButton.Size = UDim2.new(0, 90, 0, 35)
-MainButton.Text = "Layroxc HUB"
-MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-MainButton.Draggable = true
-MainButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
+-- GUI Oluşturma
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlsDonateFakeSystem"
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- --- FONKSİYONLAR ---
-local function PlayEmote(id)
-    local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then
-        for _, v in pairs(hum:GetPlayingAnimationTracks()) do v:Stop() end
-        local anim = Instance.new("Animation")
-        anim.AnimationId = "rbxassetid://" .. id
-        hum:LoadAnimation(anim):Play()
-    end
+-- Satın Alma Başarılı Paneli
+local purchaseFrame = Instance.new("Frame")
+purchaseFrame.Size = UDim2.new(0, 400, 0, 250)
+purchaseFrame.Position = UDim2.new(0.5, -200, 0.4, -125)
+purchaseFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+purchaseFrame.BorderSizePixel = 0
+purchaseFrame.Visible = false
+purchaseFrame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 20)
+uiCorner.Parent = purchaseFrame
+
+local checkmark = Instance.new("TextLabel")
+checkmark.Size = UDim2.new(1, 0, 0.4, 0)
+checkmark.Text = "✔"
+checkmark.TextColor3 = Color3.fromRGB(0, 255, 100)
+checkmark.TextSize = 60
+checkmark.BackgroundTransparency = 1
+checkmark.Parent = purchaseFrame
+
+local successText = Instance.new("TextLabel")
+successText.Size = UDim2.new(1, 0, 0.3, 0)
+successText.Position = UDim2.new(0, 0, 0.5, 0)
+successText.Text = "PURCHASE SUCCESSFUL!"
+successText.TextColor3 = Color3.fromRGB(255, 255, 255)
+successText.Font = Enum.Font.GothamBold
+successText.TextSize = 24
+successText.BackgroundTransparency = 1
+successText.Parent = purchaseFrame
+
+local amountText = Instance.new("TextLabel")
+amountText.Size = UDim2.new(1, 0, 0.2, 0)
+amountText.Position = UDim2.new(0, 0, 0.75, 0)
+amountText.Text = "264,000 Robux has been sent"
+amountText.TextColor3 = Color3.fromRGB(200, 200, 200)
+amountText.Font = Enum.Font.Gotham
+amountText.TextSize = 16
+amountText.BackgroundTransparency = 1
+amountText.Parent = purchaseFrame
+
+-- Animasyon ve Hediye Kutusu Fonksiyonu
+local function playDonation()
+    -- 1. Animasyon: Karakterin kollarını havaya kaldırır (Sevinme)
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://507770239" -- Roblox Hazır Sevinme Animasyonu
+    local loadAnim = humanoid:LoadAnimation(anim)
+    loadAnim:Play()
+
+    -- 2. Satın Alma Ekranı
+    purchaseFrame.Visible = true
+    purchaseFrame.Size = UDim2.new(0, 10, 0, 10) -- Küçülterek başlat
+    TweenService:Create(purchaseFrame, TweenInfo.new(0.5, Enum.EasingStyle.BackOut), {Size = UDim2.new(0, 400, 0, 250)}):Play()
+
+    -- 3. Hediye Kutusu (Gift Box)
+    local box = Instance.new("Part")
+    box.Size = Vector3.new(3, 3, 3)
+    box.Color = Color3.fromRGB(255, 50, 50)
+    box.Material = Enum.Material.Neon
+    box.Position = character.HumanoidRootPart.Position + Vector3.new(0, 15, 0)
+    box.Parent = workspace
+
+    local attachment = Instance.new("Attachment", box)
+    local sparkle = Instance.new("Sparkles")
+    sparkle.SparkleColor = Color3.fromRGB(255, 255, 0)
+    sparkle.Parent = box
+
+    -- Kutuyu aşağı düşür
+    local dropTween = TweenService:Create(box, TweenInfo.new(1, Enum.EasingStyle.Bounce), {Position = character.HumanoidRootPart.Position + Vector3.new(4, -2, 2)})
+    dropTween:Play()
+
+    -- 4. Chat Bildirimi
+    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
+        Text = "[DONATION]: " .. player.Name .. " just donated 264,000 Robux!";
+        Color = Color3.fromRGB(0, 255, 127);
+        Font = Enum.Font.GothamBold;
+    })
+
+    -- Temizlik
+    task.wait(5)
+    purchaseFrame.Visible = false
+    box:Destroy()
 end
 
--- --- SEKMELER ---
-local Main = Window:NewTab("Ana Menü")
-local Emotes = Window:NewTab("Avatar Emotes")
-local Visuals = Window:NewTab("Görünüm")
-local Troll = Window:NewTab("Troll")
-local World = Window:NewTab("Dünya")
-
--- [ANA MENÜ]
-local CharSec = Main:NewSection("Karakter Ayarları")
-CharSec:NewSlider("Hız", "Hız", 500, 16, function(s) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s end)
-CharSec:NewSlider("Zıplama", "Zıplama", 500, 50, function(s) game.Players.LocalPlayer.Character.Humanoid.JumpPower = s end)
-CharSec:NewButton("Sonsuz Zıplama", "Havada Yürürsün", function()
-    game:GetService("UserInputService").JumpRequest:Connect(function()
-        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-    end)
-end)
-
--- [EMOTES - DEVA LİSTE]
-local DanceSec = Emotes:NewSection("Danslar")
-DanceSec:NewButton("Old Town Road", "Oynat", function() PlayEmote("3337926102") end)
-DanceSec:NewButton("Hype (Fortnite)", "Oynat", function() PlayEmote("3664923214") end)
-DanceSec:NewButton("Orange Justice", "Oynat", function() PlayEmote("2825723351") end)
-DanceSec:NewButton("Floss", "Oynat", function() PlayEmote("2155554101") end)
-DanceSec:NewButton("Take The L", "Oynat", function() PlayEmote("2155554101") end)
-
-local PoseSec = Emotes:NewSection("Pozlar ve Hareketler")
-PoseSec:NewButton("T-Pose", "Oynat", function() PlayEmote("2969374013") end)
-PoseSec:NewButton("Zombie", "Oynat", function() PlayEmote("616168409") end)
-PoseSec:NewButton("Astronot", "Oynat", function() PlayEmote("2825725015") end)
-PoseSec:NewButton("Ninja Run", "Oynat", function() PlayEmote("656118852") end)
-PoseSec:NewButton("Sert Duruş", "Oynat", function() PlayEmote("616111006") end)
-
-Emotes:NewSection("Kontrol"):NewButton("⛔ DURDUR", "Animasyonu kes", function()
-    for _, v in pairs(game.Players.LocalPlayer.Character.Humanoid:GetPlayingAnimationTracks()) do v:Stop() end
-end)
-
--- [GÖRÜNÜM]
-local AvSec = Visuals:NewSection("Özel Parçalar")
-AvSec:NewButton("Headless (Kafasızlık)", "Görsel", function()
-    game.Players.LocalPlayer.Character.Head.Transparency = 1
-    if game.Players.LocalPlayer.Character.Head:FindFirstChild("face") then
-        game.Players.LocalPlayer.Character.Head.face:Destroy()
-    end
-end)
-AvSec:NewButton("Korblox (Sağ Bacak)", "Görsel", function()
-    local c = game.Players.LocalPlayer.Character
-    if c:FindFirstChild("RightUpperLeg") then
-        c.RightUpperLeg:Destroy()
-        c.RightLowerLeg:Destroy()
-        c.RightFoot:Destroy()
-    end
-end)
-Visuals:NewSection("Avatar Kopyalayıcı"):NewTextBox("İsim Yaz", "Kopyala", function(t)
-    local target = game.Players:FindFirstChild(t)
-    if target then
-        local myChar = game.Players.LocalPlayer.Character
-        for _, v in pairs(myChar:GetChildren()) do if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") then v:Destroy() end end
-        for _, v in pairs(target.Character:GetChildren()) do if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") then v:Clone().Parent = myChar end end
-    end
-end)
-
--- [TROLL]
-local TrlSec = Troll:NewSection("Fırlatma Sistemleri")
-TrlSec:NewToggle("Süper Fling", "Değdiğini uçurur", function(state)
-    _G.fling = state
-    while _G.fling do
-        local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
-        hrp.Velocity = Vector3.new(0, 10000, 0)
-        hrp.RotVelocity = Vector3.new(0, 10000, 0)
-        task.wait(0.1)
-    end
-end)
-TrlSec:NewToggle("Anti-Fling", "Sarsılmazlık", function(state)
-    _G.af = state
-    game:GetService("RunService").Stepped:Connect(function()
-        if _G.af then
-            for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = false end
-            end
-        end
-    end)
-end)
-
--- [DÜNYA]
-local WorldSec = World:NewSection("Brookhaven Hack")
-WorldSec:NewButton("Banka Kasasına Işınlan", "Kasaya gider", function()
-    game.Players.LocalPlayer.Character:MoveTo(Vector3.new(-156, 12, 190))
-end)
-WorldSec:NewButton("Gizli Göl Evine Git", "Işınlan", function()
-    game.Players.LocalPlayer.Character:MoveTo(Vector3.new(-450, 50, -300))
-end)
-WorldSec:NewButton("Tüm Kilitli Kapıları Geç (Noclip)", "Aktif et", function()
-    _G.nc = true
-    game:GetService("RunService").Stepped:Connect(function()
-        if _G.nc then
-            for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = false end
-            end
-        end
-    end)
-end)
+-- Script başladığında tetikle
+playDonation()
