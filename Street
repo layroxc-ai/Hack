@@ -1,62 +1,76 @@
--- Layroxc Özel Script - v3
--- Özellikler: Farm Kapat, Tek Vuruş, Dev Hitbox, Saklanma, Sky-Teleport
+-- Layroxc Street Life - Açma/Kapama Butonlu Mod Menü
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/7Library/UI/main/Library.lua"))()
+local Window = Library:CreateWindow("Layroxc v5", "V")
 
+-- Değişkenler
 local Ayarlar = {
-    HitboxBoyutu = Vector3.new(20, 20, 20),
-    IsinlanmaYuksekligi = 45, -- Yukarı ışınlanma mesafesi
-    SaklanmaSeffafligi = 0.7, -- Karakterin gizliliği
-    TekVurus = true
+    HitboxAcik = false,
+    ESPAcik = false,
+    HitboxBoyutu = 15
 }
 
--- 1. FARM'I KAPAT
-_G.FarmAktif = false
-_G.AutoFarm = false -- Farklı scriptler için alternatif isimler
+-- ANTI-KICK BYPASS (Atılmayı Önler)
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local old = mt.__namecall
+mt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    if method == "Kick" or method == "kick" then return nil end
+    return old(self, unpack({...}))
+end)
+setreadonly(mt, true)
 
-local Player = game:GetService("Players").LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
+-- MENÜ SEKMESİ
+local Tab = Window:CreateTab("Ana Menü")
 
--- 2. YUKARI IŞINLAN VE SAKLAN (Hide)
-local function SaklanVeYukariIsinla()
-    if Character:FindFirstChild("HumanoidRootPart") then
-        -- Yukarı ışınlanma işlemi
-        Character.HumanoidRootPart.CFrame = Character.HumanoidRootPart.CFrame * CFrame.new(0, Ayarlar.IsinlanmaYuksekligi, 0)
-        
-        -- Karakteri şeffaf yaparak sakla
-        for _, obj in pairs(Character:GetDescendants()) do
-            if obj:IsA("BasePart") or obj:IsA("Decal") then
-                obj.Transparency = Ayarlar.SaklanmaSeffafligi
-            end
-        end
-        
-        -- Havada asılı kalmak (Düşmemek) için geçici bir platform oluşturur
-        local Floor = Instance.new("Part", Character)
-        Floor.Size = Vector3.new(10, 1, 10)
-        Floor.CFrame = Character.HumanoidRootPart.CFrame * CFrame.new(0, -3.5, 0)
-        Floor.Anchored = true
-        Floor.Transparency = 1 -- Görünmez platform
-    end
-end
+-- AÇMA KAPAMA TUŞLARI
+Tab:CreateToggle("Hitbox (Aç/Kapat)", function(state)
+    Ayarlar.HitboxAcik = state
+    print("Hitbox Durumu: ", state)
+end)
 
--- 3. HITBOX VE TEK VURUŞ DÖNGÜSÜ
+Tab:CreateToggle("ESP (Aç/Kapat)", function(state)
+    Ayarlar.ESPAcik = state
+    print("ESP Durumu: ", state)
+end)
+
+Tab:CreateSlider("Hitbox Boyutu", 5, 50, function(val)
+    Ayarlar.HitboxBoyutu = val
+end)
+
+-- ANA DÖNGÜ
 task.spawn(function()
-    while task.wait(1) do
-        for _, target in pairs(game:GetService("Players"):GetPlayers()) do
-            if target ~= Player and target.Character then
-                local hrp = target.Character:FindFirstChild("HumanoidRootPart")
-                local hum = target.Character:FindFirstChild("Humanoid")
+    while task.wait(0.5) do
+        for _, oyuncu in pairs(game:GetService("Players"):GetPlayers()) do
+            if oyuncu ~= game.Players.LocalPlayer and oyuncu.Character then
+                local hrp = oyuncu.Character:FindFirstChild("HumanoidRootPart")
                 
-                -- Hitbox Genişletme
+                -- Hitbox Kontrolü
                 if hrp then
-                    hrp.Size = Ayarlar.HitboxBoyutu
-                    hrp.Transparency = 0.6
-                    hrp.BrickColor = BrickColor.new("Bright blue")
-                    hrp.CanCollide = false
+                    if Ayarlar.HitboxAcik then
+                        hrp.Size = Vector3.new(Ayarlar.HitboxBoyutu, Ayarlar.HitboxBoyutu, Ayarlar.HitboxBoyutu)
+                        hrp.Transparency = 0.6
+                        hrp.BrickColor = BrickColor.new("Bright red")
+                        hrp.CanCollide = false
+                    else
+                        -- Kapatıldığında eski haline döndür
+                        hrp.Size = Vector3.new(2, 2, 1)
+                        hrp.Transparency = 1
+                    end
                 end
-                
-                -- Tek Vuruş/Mermi Mantığı (Hasar aldığı an öldürür)
-                if Ayarlar.TekVurus and hum then
-                    if hum.Health < hum.MaxHealth and hum.Health > 0 then
-                        hum.Health = 0
+
+                -- ESP Kontrolü
+                if Ayarlar.ESPAcik then
+                    if not oyuncu.Character:FindFirstChild("Layroxc_ESP") then
+                        local highlight = Instance.new("Highlight")
+                        highlight.Name = "Layroxc_ESP"
+                        highlight.Parent = oyuncu.Character
+                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                        highlight.FillTransparency = 0.5
+                    end
+                else
+                    if oyuncu.Character:FindFirstChild("Layroxc_ESP") then
+                        oyuncu.Character.Layroxc_ESP:Destroy()
                     end
                 end
             end
@@ -64,19 +78,4 @@ task.spawn(function()
     end
 end)
 
--- 4. OYUNDAN ATILMAYI ÖNLEME (Anti-Kick Bypass)
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-local old = mt.__namecall
-mt.__namecall = newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    if method == "Kick" or method == "kick" then
-        return nil
-    end
-    return old(self, unpack({...}))
-end)
-setreadonly(mt, true)
-
--- Başlat
-SaklanVeYukariIsinla()
-print("Kod tamamlandı. Layroxc için tüm özellikler aktif!")
+print("Layroxc v5 Yüklendi. Menü Tuşu: V")
