@@ -1,76 +1,67 @@
--- Layroxc Street Life - Açma/Kapama Butonlu Mod Menü
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/7Library/UI/main/Library.lua"))()
-local Window = Library:CreateWindow("Layroxc v5", "V")
+-- EKRAN BUTONLARI OLUŞTURMA (Menü açılmama sorununa kesin çözüm)
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+ScreenGui.Name = "LayroxcSimpleMenu"
 
--- Değişkenler
+local function CreateButton(name, pos, color, callback)
+    local btn = Instance.new("TextButton", ScreenGui)
+    btn.Name = name
+    btn.Size = UDim2.new(0, 150, 0, 40)
+    btn.Position = pos
+    btn.BackgroundColor3 = color
+    btn.Text = name .. ": KAPALI"
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 18
+    
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        btn.Text = name .. (active and ": AÇIK" or ": KAPALI")
+        btn.BackgroundColor3 = active and Color3.new(0, 0.7, 0) or color
+        callback(active)
+    end)
+end
+
+-- AYARLAR
 local Ayarlar = {
     HitboxAcik = false,
-    ESPAcik = false,
-    HitboxBoyutu = 15
+    TekAtmaAcik = false,
+    Boyut = 20
 }
 
--- ANTI-KICK BYPASS (Atılmayı Önler)
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-local old = mt.__namecall
-mt.__namecall = newcclosure(function(self, ...)
+-- BUTONLARI YERLEŞTİR
+CreateButton("HITBOX", UDim2.new(0, 10, 0, 50), Color3.new(0.2, 0.2, 0.2), function(s) Ayarlar.HitboxAcik = s end)
+CreateButton("TEK ATMA", UDim2.new(0, 10, 0, 100), Color3.new(0.2, 0.2, 0.2), function(s) Ayarlar.TekAtmaAcik = s end)
+
+-- ANTI-KICK (Atılmayı Engelleme)
+local old; old = hookmetamethod(game, "__namecall", function(self, ...)
     local method = getnamecallmethod()
     if method == "Kick" or method == "kick" then return nil end
-    return old(self, unpack({...}))
-end)
-setreadonly(mt, true)
-
--- MENÜ SEKMESİ
-local Tab = Window:CreateTab("Ana Menü")
-
--- AÇMA KAPAMA TUŞLARI
-Tab:CreateToggle("Hitbox (Aç/Kapat)", function(state)
-    Ayarlar.HitboxAcik = state
-    print("Hitbox Durumu: ", state)
+    return old(self, ...)
 end)
 
-Tab:CreateToggle("ESP (Aç/Kapat)", function(state)
-    Ayarlar.ESPAcik = state
-    print("ESP Durumu: ", state)
-end)
-
-Tab:CreateSlider("Hitbox Boyutu", 5, 50, function(val)
-    Ayarlar.HitboxBoyutu = val
-end)
-
--- ANA DÖNGÜ
+-- ANA DÖNGÜ (Hitbox ve Tek Atma)
 task.spawn(function()
     while task.wait(0.5) do
-        for _, oyuncu in pairs(game:GetService("Players"):GetPlayers()) do
-            if oyuncu ~= game.Players.LocalPlayer and oyuncu.Character then
-                local hrp = oyuncu.Character:FindFirstChild("HumanoidRootPart")
-                
-                -- Hitbox Kontrolü
-                if hrp then
-                    if Ayarlar.HitboxAcik then
-                        hrp.Size = Vector3.new(Ayarlar.HitboxBoyutu, Ayarlar.HitboxBoyutu, Ayarlar.HitboxBoyutu)
-                        hrp.Transparency = 0.6
-                        hrp.BrickColor = BrickColor.new("Bright red")
-                        hrp.CanCollide = false
-                    else
-                        -- Kapatıldığında eski haline döndür
-                        hrp.Size = Vector3.new(2, 2, 1)
-                        hrp.Transparency = 1
-                    end
+        for _, pl in pairs(game:GetService("Players"):GetPlayers()) do
+            if pl ~= game.Players.LocalPlayer and pl.Character then
+                local hrp = pl.Character:FindFirstChild("HumanoidRootPart")
+                local hum = pl.Character:FindFirstChild("Humanoid")
+
+                -- Hitbox Uygula
+                if hrp and Ayarlar.HitboxAcik then
+                    hrp.Size = Vector3.new(Ayarlar.Boyut, Ayarlar.Boyut, Ayarlar.Boyut)
+                    hrp.Transparency = 0.7
+                    hrp.CanCollide = false
+                elseif hrp then
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
                 end
 
-                -- ESP Kontrolü
-                if Ayarlar.ESPAcik then
-                    if not oyuncu.Character:FindFirstChild("Layroxc_ESP") then
-                        local highlight = Instance.new("Highlight")
-                        highlight.Name = "Layroxc_ESP"
-                        highlight.Parent = oyuncu.Character
-                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                        highlight.FillTransparency = 0.5
-                    end
-                else
-                    if oyuncu.Character:FindFirstChild("Layroxc_ESP") then
-                        oyuncu.Character.Layroxc_ESP:Destroy()
+                -- Tek Atma Uygula (Hasar Aldığı An Öldürür)
+                if hum and Ayarlar.TekAtmaAcik then
+                    if hum.Health < hum.MaxHealth and hum.Health > 0 then
+                        hum.Health = 0
                     end
                 end
             end
@@ -78,4 +69,76 @@ task.spawn(function()
     end
 end)
 
-print("Layroxc v5 Yüklendi. Menü Tuşu: V")
+print("Layroxc Butonlu Menü Yüklendi!")
+-- EKRAN BUTONLARI OLUŞTURMA (Menü açılmama sorununa kesin çözüm)
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+ScreenGui.Name = "LayroxcSimpleMenu"
+
+local function CreateButton(name, pos, color, callback)
+    local btn = Instance.new("TextButton", ScreenGui)
+    btn.Name = name
+    btn.Size = UDim2.new(0, 150, 0, 40)
+    btn.Position = pos
+    btn.BackgroundColor3 = color
+    btn.Text = name .. ": KAPALI"
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 18
+    
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        btn.Text = name .. (active and ": AÇIK" or ": KAPALI")
+        btn.BackgroundColor3 = active and Color3.new(0, 0.7, 0) or color
+        callback(active)
+    end)
+end
+
+-- AYARLAR
+local Ayarlar = {
+    HitboxAcik = false,
+    TekAtmaAcik = false,
+    Boyut = 20
+}
+
+-- BUTONLARI YERLEŞTİR
+CreateButton("HITBOX", UDim2.new(0, 10, 0, 50), Color3.new(0.2, 0.2, 0.2), function(s) Ayarlar.HitboxAcik = s end)
+CreateButton("TEK ATMA", UDim2.new(0, 10, 0, 100), Color3.new(0.2, 0.2, 0.2), function(s) Ayarlar.TekAtmaAcik = s end)
+
+-- ANTI-KICK (Atılmayı Engelleme)
+local old; old = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    if method == "Kick" or method == "kick" then return nil end
+    return old(self, ...)
+end)
+
+-- ANA DÖNGÜ (Hitbox ve Tek Atma)
+task.spawn(function()
+    while task.wait(0.5) do
+        for _, pl in pairs(game:GetService("Players"):GetPlayers()) do
+            if pl ~= game.Players.LocalPlayer and pl.Character then
+                local hrp = pl.Character:FindFirstChild("HumanoidRootPart")
+                local hum = pl.Character:FindFirstChild("Humanoid")
+
+                -- Hitbox Uygula
+                if hrp and Ayarlar.HitboxAcik then
+                    hrp.Size = Vector3.new(Ayarlar.Boyut, Ayarlar.Boyut, Ayarlar.Boyut)
+                    hrp.Transparency = 0.7
+                    hrp.CanCollide = false
+                elseif hrp then
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                end
+
+                -- Tek Atma Uygula (Hasar Aldığı An Öldürür)
+                if hum and Ayarlar.TekAtmaAcik then
+                    if hum.Health < hum.MaxHealth and hum.Health > 0 then
+                        hum.Health = 0
+                    end
+                end
+            end
+        end
+    end
+end)
+
+print("Layroxc Butonlu Menü Yüklendi!")
