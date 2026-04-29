@@ -1,97 +1,118 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- Önceki tüm UI'ları temizle (Çakışmaması için)
+local oldGui = game.CoreGui:FindFirstChild("LayroxcV4")
+if oldGui then oldGui:Destroy() end
 
-local Window = Rayfield:CreateWindow({
-   Name = "Layroxc Hub | Street Life",
-   LoadingTitle = "Street Life Remastered",
-   LoadingSubtitle = "by Layroxc",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "LayroxcScripts"
-   }
-})
+-- ANA MENÜ OLUŞTURMA
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "LayroxcV4"
+ScreenGui.Parent = game.CoreGui
 
--- Değişkenler
-local AutoFarm = false
-local HitboxEnabled = false
-local HitboxSize = 10
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Menüyü ekranda sürükleyebilirsin
+MainFrame.Visible = true
 
--- Anti-Kick Işınlanma Fonksiyonu (Tween)
-local function safeTeleport(targetCFrame)
-    local char = game.Players.LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local tweenService = game:GetService("TweenService")
-        local info = TweenInfo.new(1, Enum.EasingStyle.Linear) -- Hızı buradan ayarlayabilirsin
-        local tween = tweenService:Create(char.HumanoidRootPart, info, {CFrame = targetCFrame})
-        tween:Play()
-        tween.Completed:Wait()
-    end
+local Title = Instance.new("TextLabel")
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "STREET LIFE HUB"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+
+-- AÇ/KAPA BUTONU (Küçük Buton)
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.Position = UDim2.new(0, 10, 0, 10)
+ToggleBtn.Size = UDim2.new(0, 80, 0, 30)
+ToggleBtn.Text = "Menü Aç/Kapa"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- ÖZELLİKLER
+local function createFeature(name, pos, callback)
+    local btn = Instance.new("TextButton")
+    btn.Parent = MainFrame
+    btn.Position = UDim2.new(0, 10, 0, pos)
+    btn.Size = UDim2.new(0, 200, 0, 40)
+    btn.Text = name .. ": KAPALI"
+    btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local enabled = false
+    btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        btn.Text = name .. (enabled and ": AÇIK" or ": KAPALI")
+        btn.BackgroundColor3 = enabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(200, 0, 0)
+        callback(enabled)
+    end)
 end
 
--- TABS
-local MainTab = Window:CreateTab("Auto Farm", 4483362458)
-local CombatTab = Window:CreateTab("Combat", 4483362458)
-
--- AUTO FARM SECTION
-MainTab:CreateToggle({
-   Name = "Auto Oil Farm (Safe Mode)",
-   CurrentValue = false,
-   Callback = function(Value)
-      AutoFarm = Value
-      while AutoFarm do
-         task.wait(1)
-         for _, obj in pairs(game.Workspace:GetDescendants()) do
-            if obj.Name == "Oil" or obj.Name == "OilBarrel" then
-               -- Petrolün yanına güvenli git
-               safeTeleport(obj.CFrame * CFrame.new(0, 5, 0))
-               task.wait(0.5)
-               -- Toplama (ProximityPrompt tetikleme)
-               local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
-               if prompt then fireproximityprompt(prompt) end
-               
-               -- Saklan (Yer altına veya havaya)
-               safeTeleport(CFrame.new(obj.Position.X, 100, obj.Position.Z))
-               task.wait(2)
+-- 1. AUTO OIL FARM (ATMAYA KARŞI GÜVENLİ)
+local farmActive = false
+createFeature("Auto Oil Farm", 60, function(val)
+    farmActive = val
+    spawn(function()
+        while farmActive do
+            task.wait(2) -- Atılmamak için 2 saniye bekleme (Çok önemli!)
+            for _, v in pairs(game.Workspace:GetDescendants()) do
+                if farmActive and (v.Name == "Oil" or v.Name == "OilBarrel") then
+                    local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        -- Işınlanma ve Toplama
+                        hrp.CFrame = v.CFrame * CFrame.new(0, 2, 0)
+                        task.wait(0.5)
+                        if v:FindFirstChildOfClass("ProximityPrompt") then
+                            fireproximityprompt(v:FindFirstChildOfClass("ProximityPrompt"))
+                        end
+                        -- Hemen havaya saklan (Görünmemek için)
+                        hrp.CFrame = hrp.CFrame * CFrame.new(0, 150, 0)
+                        task.wait(2)
+                    end
+                end
             end
-            if not AutoFarm then break end
-         end
-      end
-   end,
-})
+        end
+    end)
+end)
 
--- COMBAT SECTION
-CombatTab:CreateSlider({
-   Name = "Hitbox Size",
-   Range = {10, 50},
-   Increment = 1,
-   Suffix = "Studs",
-   CurrentValue = 10,
-   Callback = function(Value)
-      HitboxSize = Value
-   end,
-})
+-- 2. HITBOX EXPANDER (10M ÖLDÜRME)
+local hitboxActive = false
+createFeature("Hitbox 10m", 120, function(val)
+    hitboxActive = val
+end)
 
-CombatTab:CreateToggle({
-   Name = "Enable Hitbox (Headshot Focus)",
-   CurrentValue = false,
-   Callback = function(Value)
-      HitboxEnabled = Value
-      game:GetService("RunService").RenderStepped:Connect(function()
-         if HitboxEnabled then
-            for _, v in pairs(game.Players:GetPlayers()) do
-               if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                  v.Character.HumanoidRootPart.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
-                  v.Character.HumanoidRootPart.Transparency = 0.7
-                  v.Character.HumanoidRootPart.CanCollide = false
-               end
+game:GetService("RunService").RenderStepped:Connect(function()
+    if hitboxActive then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local part = p.Character.HumanoidRootPart
+                part.Size = Vector3.new(15, 15, 15) -- 10-15 metre arası genişlik
+                part.Transparency = 0.6
+                part.CanCollide = false
             end
-         end
-      end)
-   end,
-})
+        end
+    end
+end)
 
-Rayfield:Notify({
-   Title = "Sistem Hazır",
-   Content = "Layroxc Menü Başarıyla Yüklendi!",
-   Duration = 5,
-   Image = 4483362458,
-})
+-- 3. AUTO SELL (SATMA)
+createFeature("Otomatik Sat", 180, function(val)
+    _G.AutoSell = val
+    spawn(function()
+        while _G.AutoSell do
+            task.wait(5)
+            local sellPart = game.Workspace:FindFirstChild("SellPoint") or game.Workspace:FindFirstChild("OilSell")
+            if sellPart and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = sellPart.CFrame
+                task.wait(1)
+            end
+        end
+    end)
+end)
