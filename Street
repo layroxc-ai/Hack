@@ -1,1 +1,81 @@
+-- Ayarlar
+local Config = {
+    HitboxSize = 15, -- 10m yetmez diyenler için 15
+    FarmSpeed = 0.3,
+    HideY = 500, -- Gökyüzünde saklanma yüksekliği
+    AutoSellLimit = 10 -- Kaç petrolde bir satmaya gitsin?
+}
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+-- 1. GELİŞMİŞ HITBOX (Sadece Düşmanlar)
+spawn(function()
+    while task.wait(1) do
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = v.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                hrp.Transparency = 0.8
+                hrp.BrickColor = BrickColor.new("Bright blue")
+                hrp.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- 2. GÖRÜNMEZ SAKLANMA & GOD MODE (Basit NoClip)
+game:GetService("RunService").Stepped:Connect(function()
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end)
+
+-- 3. OTOMATİK PETROL & SATIŞ DÖNGÜSÜ
+local function autoFarm()
+    print("Farm Baslatildi...")
+    while true do
+        task.wait(Config.FarmSpeed)
+        
+        -- Petrol Bulma
+        for _, obj in pairs(game.Workspace:GetDescendants()) do
+            if obj.Name == "Oil" or obj.Name == "OilBarrel" then 
+                -- Önce objenin 10 birim üstüne ışınlan (Güvenlik için)
+                root.CFrame = obj.CFrame * CFrame.new(0, 10, 0)
+                task.wait(0.1)
+                
+                -- Toplama İşlemi (Proximity veya Click)
+                if obj:FindFirstChildOfClass("ProximityPrompt") then
+                    fireproximityprompt(obj:FindFirstChildOfClass("ProximityPrompt"))
+                elseif obj:IsA("ClickDetector") then
+                    fireclickdetector(obj:FindFirstChildOfClass("ClickDetector"))
+                end
+                
+                -- Hızla Gökyüzüne Saklan (Kimse göremez)
+                root.CFrame = root.CFrame * CFrame.new(0, Config.HideY, 0)
+                task.wait(0.5)
+            end
+        end
+        
+        -- Satış Noktasına Işınlanma
+        local inventory = player.Backpack:GetChildren()
+        if #inventory >= Config.AutoSellLimit then
+            local sellPoint = game.Workspace:FindFirstChild("OilSell") or game.Workspace:FindFirstChild("SellPart")
+            if sellPoint then
+                root.CFrame = sellPoint.CFrame
+                task.wait(1)
+                -- Satış sonrası tekrar güvenli bölgeye
+                root.CFrame = root.CFrame * CFrame.new(0, Config.HideY, 0)
+            end
+        end
+    end
+end
+
+spawn(autoFarm)
+
+-- 4. ÖLÜMSÜZLÜK DESTEĞİ (Yere Düşmeyi Engeller)
+player.Character.Humanoid.HipHeight = 2 -- Karakterin biraz havada durmasını sağlar
 
