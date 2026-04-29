@@ -1,38 +1,36 @@
 -- ESKİ UI TEMİZLİĞİ
 for _, v in pairs(game.CoreGui:GetChildren()) do
-    if v.Name == "LayroxcV5" then v:Destroy() end
+    if v.Name == "LayroxcV6" then v:Destroy() end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "LayroxcV5"
+ScreenGui.Name = "LayroxcV6"
 ScreenGui.Parent = game.CoreGui
 
--- ANA ÇERÇEVE
+-- ANA MENÜ
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 250, 0, 300)
+Main.Size = UDim2.new(0, 220, 0, 250)
 Main.Position = UDim2.new(0.4, 0, 0.3, 0)
-Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Main.BorderSizePixel = 0
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Main.Active = true
 Main.Draggable = true
 Main.Parent = ScreenGui
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "STREET LIFE V5 (ANTI-KICK)"
-Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Title.Text = "LAYROXC V6"
+Title.BackgroundColor3 = Color3.fromRGB(50, 0, 100)
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Parent = Main
 
--- GÜVENLİ HAREKET FONKSİYONU (ATMAYI ENGELLER)
+-- GÜVENLİ HAREKET (Tween)
 local function safeMove(targetCFrame)
     local char = game.Players.LocalPlayer.Character
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if hrp then
         local distance = (hrp.Position - targetCFrame.Position).Magnitude
-        local speed = 25 -- Bu hız "kick" yememen için idealdir. Daha hızlısı atar.
+        local speed = 20 -- Kick yememek için güvenli hız
         local duration = distance / speed
-        
         local ts = game:GetService("TweenService")
         local tween = ts:Create(hrp, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
         tween:Play()
@@ -43,7 +41,7 @@ end
 -- BUTON OLUŞTURUCU
 local function createBtn(text, pos, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 230, 0, 45)
+    btn.Size = UDim2.new(0, 200, 0, 50)
     btn.Position = UDim2.new(0, 10, 0, pos)
     btn.Text = text .. ": KAPALI"
     btn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
@@ -59,24 +57,18 @@ local function createBtn(text, pos, callback)
     end)
 end
 
--- 1. SAFE OIL FARM (KAYARAK GİDER)
-local farmLoop = false
-createBtn("Ultra Oil Farm", 60, function(val)
-    farmLoop = val
+-- 1. PASPAS FARM (MOP FARM)
+local mopActive = false
+createBtn("Otomatik Paspas Farm", 60, function(val)
+    mopActive = val
     spawn(function()
-        while farmLoop do
+        while mopActive do
+            -- Haritadaki kirleri/lekeleri ara
             for _, v in pairs(game.Workspace:GetDescendants()) do
-                if farmLoop and (v.Name == "Oil" or v.Name == "OilBarrel") then
-                    -- Petrolün 3 metre üstüne yavaşça süzül
-                    local t = safeMove(v.CFrame * CFrame.new(0, 3, 0))
-                    if t then t.Completed:Wait() end -- Oraya varana kadar bekle
-                    
-                    task.wait(0.5)
-                    -- Topla
-                    if v:FindFirstChildOfClass("ProximityPrompt") then
-                        fireproximityprompt(v:FindFirstChildOfClass("ProximityPrompt"))
-                    end
-                    task.wait(1)
+                if mopActive and (v.Name:find("Dirt") or v.Name:find("Stain") or v.Name:find("Paspas")) then
+                    local t = safeMove(v.CFrame * CFrame.new(0, 2, 0))
+                    if t then t.Completed:Wait() end
+                    task.wait(1) -- Temizleme süresi
                 end
             end
             task.wait(2)
@@ -84,9 +76,9 @@ createBtn("Ultra Oil Farm", 60, function(val)
     end)
 end)
 
--- 2. HITBOX (MERMİ HİLESİ)
+-- 2. ULTRA HITBOX (20M)
 local hbActive = false
-createBtn("Hitbox Expander", 120, function(val)
+createBtn("Ultra Hitbox (20m)", 120, function(val)
     hbActive = val
 end)
 
@@ -95,27 +87,35 @@ game:GetService("RunService").RenderStepped:Connect(function()
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                 local hrp = p.Character.HumanoidRootPart
-                hrp.Size = Vector3.new(15, 15, 15) -- 10 metre çapında hitbox
+                -- 20 Metre devasa hitbox
+                hrp.Size = Vector3.new(20, 20, 20)
                 hrp.Transparency = 0.7
+                hrp.BrickColor = BrickColor.new("Bright red")
                 hrp.CanCollide = false
             end
         end
     end
 end)
 
--- 3. GÖRÜNMEZLİK / SAKLANMA (GÖKYÜZÜ)
-createBtn("Gökyüzüne Saklan", 180, function(val)
+-- 3. GÜVENLİ SAKLANMA (GÖKYÜZÜ)
+createBtn("Saklan (Havada Dur)", 180, function(val)
+    local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
     if val then
-        safeMove(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 200, 0))
+        hrp.CFrame = hrp.CFrame * CFrame.new(0, 300, 0)
+        local bv = Instance.new("BodyVelocity") -- Havada asılı kalmak için
+        bv.Name = "StayFly"
+        bv.Velocity = Vector3.new(0,0,0)
+        bv.Parent = hrp
     else
-        safeMove(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, -200, 0))
+        if hrp:FindFirstChild("StayFly") then hrp.StayFly:Destroy() end
+        hrp.CFrame = hrp.CFrame * CFrame.new(0, -300, 0)
     end
 end)
 
--- MENÜYÜ GİZLE/AÇ BUTONU (EKRANIN SOLUNDA)
+-- KÜÇÜK MENU BUTONU
 local OpenBtn = Instance.new("TextButton")
-OpenBtn.Size = UDim2.new(0, 60, 0, 30)
-OpenBtn.Position = UDim2.new(0, 0, 0.5, 0)
-OpenBtn.Text = "MENU"
+OpenBtn.Size = UDim2.new(0, 50, 0, 30)
+OpenBtn.Position = UDim2.new(0, 0, 0.4, 0)
+OpenBtn.Text = "MENÜ"
 OpenBtn.Parent = ScreenGui
 OpenBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
