@@ -1,81 +1,97 @@
--- Ayarlar
-local Config = {
-    HitboxSize = 15, -- 10m yetmez diyenler için 15
-    FarmSpeed = 0.3,
-    HideY = 500, -- Gökyüzünde saklanma yüksekliği
-    AutoSellLimit = 10 -- Kaç petrolde bir satmaya gitsin?
-}
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local root = character:WaitForChild("HumanoidRootPart")
+local Window = Rayfield:CreateWindow({
+   Name = "Layroxc Hub | Street Life",
+   LoadingTitle = "Street Life Remastered",
+   LoadingSubtitle = "by Layroxc",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "LayroxcScripts"
+   }
+})
 
--- 1. GELİŞMİŞ HITBOX (Sadece Düşmanlar)
-spawn(function()
-    while task.wait(1) do
-        for _, v in pairs(game.Players:GetPlayers()) do
-            if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = v.Character.HumanoidRootPart
-                hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                hrp.Transparency = 0.8
-                hrp.BrickColor = BrickColor.new("Bright blue")
-                hrp.CanCollide = false
-            end
-        end
-    end
-end)
+-- Değişkenler
+local AutoFarm = false
+local HitboxEnabled = false
+local HitboxSize = 10
 
--- 2. GÖRÜNMEZ SAKLANMA & GOD MODE (Basit NoClip)
-game:GetService("RunService").Stepped:Connect(function()
-    for _, part in pairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
-    end
-end)
-
--- 3. OTOMATİK PETROL & SATIŞ DÖNGÜSÜ
-local function autoFarm()
-    print("Farm Baslatildi...")
-    while true do
-        task.wait(Config.FarmSpeed)
-        
-        -- Petrol Bulma
-        for _, obj in pairs(game.Workspace:GetDescendants()) do
-            if obj.Name == "Oil" or obj.Name == "OilBarrel" then 
-                -- Önce objenin 10 birim üstüne ışınlan (Güvenlik için)
-                root.CFrame = obj.CFrame * CFrame.new(0, 10, 0)
-                task.wait(0.1)
-                
-                -- Toplama İşlemi (Proximity veya Click)
-                if obj:FindFirstChildOfClass("ProximityPrompt") then
-                    fireproximityprompt(obj:FindFirstChildOfClass("ProximityPrompt"))
-                elseif obj:IsA("ClickDetector") then
-                    fireclickdetector(obj:FindFirstChildOfClass("ClickDetector"))
-                end
-                
-                -- Hızla Gökyüzüne Saklan (Kimse göremez)
-                root.CFrame = root.CFrame * CFrame.new(0, Config.HideY, 0)
-                task.wait(0.5)
-            end
-        end
-        
-        -- Satış Noktasına Işınlanma
-        local inventory = player.Backpack:GetChildren()
-        if #inventory >= Config.AutoSellLimit then
-            local sellPoint = game.Workspace:FindFirstChild("OilSell") or game.Workspace:FindFirstChild("SellPart")
-            if sellPoint then
-                root.CFrame = sellPoint.CFrame
-                task.wait(1)
-                -- Satış sonrası tekrar güvenli bölgeye
-                root.CFrame = root.CFrame * CFrame.new(0, Config.HideY, 0)
-            end
-        end
+-- Anti-Kick Işınlanma Fonksiyonu (Tween)
+local function safeTeleport(targetCFrame)
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local tweenService = game:GetService("TweenService")
+        local info = TweenInfo.new(1, Enum.EasingStyle.Linear) -- Hızı buradan ayarlayabilirsin
+        local tween = tweenService:Create(char.HumanoidRootPart, info, {CFrame = targetCFrame})
+        tween:Play()
+        tween.Completed:Wait()
     end
 end
 
-spawn(autoFarm)
+-- TABS
+local MainTab = Window:CreateTab("Auto Farm", 4483362458)
+local CombatTab = Window:CreateTab("Combat", 4483362458)
 
--- 4. ÖLÜMSÜZLÜK DESTEĞİ (Yere Düşmeyi Engeller)
-player.Character.Humanoid.HipHeight = 2 -- Karakterin biraz havada durmasını sağlar
+-- AUTO FARM SECTION
+MainTab:CreateToggle({
+   Name = "Auto Oil Farm (Safe Mode)",
+   CurrentValue = false,
+   Callback = function(Value)
+      AutoFarm = Value
+      while AutoFarm do
+         task.wait(1)
+         for _, obj in pairs(game.Workspace:GetDescendants()) do
+            if obj.Name == "Oil" or obj.Name == "OilBarrel" then
+               -- Petrolün yanına güvenli git
+               safeTeleport(obj.CFrame * CFrame.new(0, 5, 0))
+               task.wait(0.5)
+               -- Toplama (ProximityPrompt tetikleme)
+               local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
+               if prompt then fireproximityprompt(prompt) end
+               
+               -- Saklan (Yer altına veya havaya)
+               safeTeleport(CFrame.new(obj.Position.X, 100, obj.Position.Z))
+               task.wait(2)
+            end
+            if not AutoFarm then break end
+         end
+      end
+   end,
+})
 
+-- COMBAT SECTION
+CombatTab:CreateSlider({
+   Name = "Hitbox Size",
+   Range = {10, 50},
+   Increment = 1,
+   Suffix = "Studs",
+   CurrentValue = 10,
+   Callback = function(Value)
+      HitboxSize = Value
+   end,
+})
+
+CombatTab:CreateToggle({
+   Name = "Enable Hitbox (Headshot Focus)",
+   CurrentValue = false,
+   Callback = function(Value)
+      HitboxEnabled = Value
+      game:GetService("RunService").RenderStepped:Connect(function()
+         if HitboxEnabled then
+            for _, v in pairs(game.Players:GetPlayers()) do
+               if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                  v.Character.HumanoidRootPart.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                  v.Character.HumanoidRootPart.Transparency = 0.7
+                  v.Character.HumanoidRootPart.CanCollide = false
+               end
+            end
+         end
+      end)
+   end,
+})
+
+Rayfield:Notify({
+   Title = "Sistem Hazır",
+   Content = "Layroxc Menü Başarıyla Yüklendi!",
+   Duration = 5,
+   Image = 4483362458,
+})
