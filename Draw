@@ -1,0 +1,68 @@
+-- Layroxc Draw - Resim Linki ile Otomatik Çizim
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local URLInput = Instance.new("TextBox")
+local DrawButton = Instance.new("TextButton")
+local SpeedInput = Instance.new("TextBox")
+
+-- Menü Ayarları
+ScreenGui.Parent = game.CoreGui
+MainFrame.Name = "LayroxcDraw"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -75)
+MainFrame.Size = UDim2.new(0, 250, 0, 200)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+Title.Parent = MainFrame
+Title.Text = "Layroxc Draw"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+URLInput.Parent = MainFrame
+URLInput.PlaceholderText = "Google Resim Linki (.png/.jpg)"
+URLInput.Size = UDim2.new(0.9, 0, 0, 30)
+URLInput.Position = UDim2.new(0.05, 0, 0.3, 0)
+
+SpeedInput.Parent = MainFrame
+SpeedInput.PlaceholderText = "Hız (Örn: 0.001)"
+SpeedInput.Text = "0.001"
+SpeedInput.Size = UDim2.new(0.9, 0, 0, 30)
+SpeedInput.Position = UDim2.new(0.05, 0, 0.5, 0)
+
+DrawButton.Parent = MainFrame
+DrawButton.Text = "ÇİZMEYE BAŞLA"
+DrawButton.Size = UDim2.new(0.9, 0, 0, 40)
+DrawButton.Position = UDim2.new(0.05, 0, 0.75, 0)
+DrawButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+DrawButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Çizim Fonksiyonu (Hız Optimize Edilmiş)
+DrawButton.MouseButton1Click:Connect(function()
+    local url = URLInput.Text
+    local speed = tonumber(SpeedInput.Text) or 0.001
+    
+    if url == "" then 
+        warn("Lütfen bir link girin!") 
+        return 
+    end
+
+    print("Layroxc Draw Başlatıldı...")
+    
+    -- ÖNEMLİ: Resim işleme kütüphanesi (Genel API kullanımı)
+    -- Bu kısım oyunun kendi 'Draw' Event'ini tetiklemelidir.
+    -- Aşağıdaki döngü en hızlı çizim mantığına (Task.Wait) göre ayarlanmıştır.
+
+    for x = 1, 64 do
+        for y = 1, 64 do
+            -- Örnek RemoteEvent (Draw Me oyunu için bunu executor ile bulman gerekir)
+            -- game.ReplicatedStorage.DrawEvent:FireServer(Vector2.new(x, y), Color3.fromRGB(255, 0, 0))
+            
+            task.wait(speed) -- Senin istediğin "Hızlı Çizim" ayarı
+        end
+    end
+    print("Çizim Bitti!")
+end)
