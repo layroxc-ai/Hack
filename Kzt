@@ -1,0 +1,62 @@
+-- DELTA MOBIL UYUMLU FULL OTOMASYON SCRIPT
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+_G.MobileFarm = true -- Hileyi durdurmak için 'false' yapın
+
+-- 1. MOBİL OPTİMİZASYONLU AUTO-CLICKER
+task.spawn(function()
+    while _G.MobileFarm do
+        task.wait(0.1) -- Telefonun ısınmaması için makul bir süre
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("ClickDetector") then
+                local name = obj.Parent.Name:lower()
+                if name:find("click") or name:find("drop") or name:find("spawn") then
+                    fireclickdetector(obj)
+                end
+            end
+        end
+    end
+end)
+
+-- 2. DÜŞEN ÖDÜLLERİ OTOMATİK TOPLAMA
+task.spawn(function()
+    while _G.MobileFarm do
+        task.wait(0.5)
+        local character = LocalPlayer.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        
+        if root then
+            for _, item in ipairs(Workspace:GetChildren()) do
+                if item:IsA("BasePart") then
+                    local name = item.Name:lower()
+                    if name:find("coin") or name:find("cash") or name:find("nuke") then
+                        -- Nesneyi doğrudan karaktere ışınlar (Telefonda en stabil yöntem)
+                        item.CFrame = root.CFrame
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- 3. ARKA PLANDA OTOMATİK GELİŞTİRME
+task.spawn(function()
+    while _G.MobileFarm do
+        task.wait(2) -- Sunucuyu ve telefonu yormamak için 2 saniyede bir kontrol eder
+        for _, remote in ipairs(ReplicatedStorage:GetDescendants()) do
+            if remote:IsA("RemoteEvent") then
+                local name = remote.Name:lower()
+                if name:find("upgrade") or name:find("buy") or name:find("purchase") then
+                    remote:FireServer("Speed")
+                    remote:FireServer("Income")
+                end
+            end
+        end
+    end
+end)
+
+print("Mobil uyumlu script başarıyla çalıştırıldı!")
