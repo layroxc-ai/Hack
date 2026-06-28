@@ -1,41 +1,142 @@
--- DELTA MOBIL UYUMLU FULL OTOMASYON SCRIPT
+-- [[ MERGE A NUKE! - TAM MOBİL HİLE MENÜSÜ ]]
 
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LocalPlayer = Players.LocalPlayer
+-- Eski menü varsa temizle (Üst üste binmesin diye)
+if game:GetService("CoreGui"):FindFirstChild("NukeHackMenu") then
+    game:GetService("CoreGui"):FindFirstChild("NukeHackMenu"):Destroy()
+end
 
-_G.MobileFarm = true -- Hileyi durdurmak için 'false' yapın
+-- --- ARAYÜZ (GUI) KURULUMU ---
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "NukeHackMenu"
+ScreenGui.Parent = game:GetService("CoreGui")
 
--- 1. MOBİL OPTİMİZASYONLU AUTO-CLICKER
-task.spawn(function()
-    while _G.MobileFarm do
-        task.wait(0.1) -- Telefonun ısınmaması için makul bir süre
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("ClickDetector") then
-                local name = obj.Parent.Name:lower()
-                if name:find("click") or name:find("drop") or name:find("spawn") then
-                    fireclickdetector(obj)
-                end
-            end
-        end
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.15, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, 220, 0, 280)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Menüyü ekranda sürükleyebilirsiniz
+
+-- Menü Köşelerini Yuvarlama
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 10)
+Corner.Parent = MainFrame
+
+-- Başlık
+local Title = Instance.new("TextLabel")
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "NUKE MERGE V1.0"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+Title.Font = Enum.Font.SourceSansBold
+Title.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = Title
+
+-- --- DEĞİŞKENLER (TOGGLES) ---
+_G.AutoClick = false
+_G.AutoMerge = false
+_G.AutoUpgrade = false
+
+-- --- BUTON 1: AUTO CLICK ---
+local Btn1 = Instance.new("TextButton")
+Btn1.Parent = MainFrame
+Btn1.Size = UDim2.new(0.9, 0, 0, 45)
+Btn1.Position = UDim2.new(0.05, 0, 0.2, 0)
+Btn1.Text = "Auto Click: OFF"
+Btn1.TextColor3 = Color3.fromRGB(255, 255, 255)
+Btn1.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+Btn1.Font = Enum.Font.SourceSansBold
+Btn1.TextSize = 14
+
+local c1 = Instance.new("UICorner") c1.CornerRadius = UDim.new(0, 6) c1.Parent = Btn1
+
+Btn1.MouseButton1Click:Connect(function()
+    _G.AutoClick = not _G.AutoClick
+    if _G.AutoClick then
+        Btn1.Text = "Auto Click: ON"
+        Btn1.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
+    else
+        Btn1.Text = "Auto Click: OFF"
+        Btn1.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
     end
 end)
 
--- 2. DÜŞEN ÖDÜLLERİ OTOMATİK TOPLAMA
+-- --- BUTON 2: AUTO MERGE / COLLECT ---
+local Btn2 = Instance.new("TextButton")
+Btn2.Parent = MainFrame
+Btn2.Size = UDim2.new(0.9, 0, 0, 45)
+Btn2.Position = UDim2.new(0.05, 0, 0.42, 0)
+Btn2.Text = "Auto Merge/Collect: OFF"
+Btn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+Btn2.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+Btn2.Font = Enum.Font.SourceSansBold
+Btn2.TextSize = 14
+
+local c2 = Instance.new("UICorner") c2.CornerRadius = UDim.new(0, 6) c2.Parent = Btn2
+
+Btn2.MouseButton1Click:Connect(function()
+    _G.AutoMerge = not _G.AutoMerge
+    if _G.AutoMerge then
+        Btn2.Text = "Auto Merge/Collect: ON"
+        Btn2.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
+    else
+        Btn2.Text = "Auto Merge/Collect: OFF"
+        Btn2.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    end
+end)
+
+-- --- BUTON 3: AUTO UPGRADE ---
+local Btn3 = Instance.new("TextButton")
+Btn3.Parent = MainFrame
+Btn3.Size = UDim2.new(0.9, 0, 0, 45)
+Btn3.Position = UDim2.new(0.05, 0, 0.64, 0)
+Btn3.Text = "Auto Upgrade: OFF"
+Btn3.TextColor3 = Color3.fromRGB(255, 255, 255)
+Btn3.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+Btn3.Font = Enum.Font.SourceSansBold
+Btn3.TextSize = 14
+
+local c3 = Instance.new("UICorner") c3.CornerRadius = UDim.new(0, 6) c3.Parent = Btn3
+
+Btn3.MouseButton1Click:Connect(function()
+    _G.AutoUpgrade = not _G.AutoUpgrade
+    if _G.AutoUpgrade then
+        Btn3.Text = "Auto Upgrade: ON"
+        Btn3.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
+    else
+        Btn3.Text = "Auto Upgrade: OFF"
+        Btn3.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    end
+end)
+
+-- --- Kapatma / Küçültme Uyarısı ---
+local Info = Instance.new("TextLabel")
+Info.Parent = MainFrame
+Info.Size = UDim2.new(1, 0, 0, 25)
+Info.Position = UDim2.new(0, 0, 0.9, 0)
+Info.Text = "Kapatmak için Delta'yı Yeniden Başlatın"
+Info.TextColor3 = Color3.fromRGB(150, 150, 150)
+Info.TextSize = 11
+Info.BackgroundTransparency = 1
+
+-- --- ARKA PLAN DÖNGÜLERİ (FONKSİYONLAR) ---
+
+-- 1. Tıklama Döngüsü
 task.spawn(function()
-    while _G.MobileFarm do
-        task.wait(0.5)
-        local character = LocalPlayer.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if root then
-            for _, item in ipairs(Workspace:GetChildren()) do
-                if item:IsA("BasePart") then
-                    local name = item.Name:lower()
-                    if name:find("coin") or name:find("cash") or name:find("nuke") then
-                        -- Nesneyi doğrudan karaktere ışınlar (Telefonda en stabil yöntem)
-                        item.CFrame = root.CFrame
+    while true do
+        task.wait(0.1)
+        if _G.AutoClick then
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("ClickDetector") then
+                    local name = obj.Parent.Name:lower()
+                    if name:find("click") or name:find("drop") or name:find("spawn") then
+                        fireclickdetector(obj)
                     end
                 end
             end
@@ -43,20 +144,51 @@ task.spawn(function()
     end
 end)
 
--- 3. ARKA PLANDA OTOMATİK GELİŞTİRME
+-- 2. Birleştirme/Toplama Döngüsü
 task.spawn(function()
-    while _G.MobileFarm do
-        task.wait(2) -- Sunucuyu ve telefonu yormamak için 2 saniyede bir kontrol eder
-        for _, remote in ipairs(ReplicatedStorage:GetDescendants()) do
-            if remote:IsA("RemoteEvent") then
-                local name = remote.Name:lower()
-                if name:find("upgrade") or name:find("buy") or name:find("purchase") then
-                    remote:FireServer("Speed")
-                    remote:FireServer("Income")
+    while true do
+        task.wait(0.5)
+        if _G.AutoMerge then
+            local char = game:GetService("Players").LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                for _, item in ipairs(workspace:GetChildren()) do
+                    if item:IsA("BasePart") then
+                        local name = item.Name:lower()
+                        if name:find("coin") or name:find("cash") or name:find("nuke") or name:find("bomb") then
+                            item.CFrame = root.CFrame
+                        end
+                    end
                 end
             end
         end
     end
 end)
 
-print("Mobil uyumlu script başarıyla çalıştırıldı!")
+-- 3. Geliştirme Döngüsü
+task.spawn(function()
+    while true do
+        task.wait(2)
+        if _G.AutoUpgrade then
+            for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+                if remote:IsA("RemoteEvent") then
+                    local name = remote.Name:lower()
+                    if name:find("upgrade") or name:find("buy") or name:find("purchase") then
+                        remote:FireServer("Speed")
+                        remote:FireServer("Income")
+                        remote:FireServer("Spawn")
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Anti-AFK
+local VirtualUser = game:GetService("VirtualUser")
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(0,0))
+end)
+
+print("Hile Menüsü Aktif!")
