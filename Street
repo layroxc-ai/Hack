@@ -1,449 +1,273 @@
--- ============================================================
--- [UMUTxMAMÄ°] - Street Life Executor Script
--- GeliÅŸmiÅŸ, stabil, abartÄ±sÄ±z ve optimize edilmiÅŸ.
--- GUI: KÄ±rmÄ±zÄ± Tema | Open/Close Butonu
--- Ã–zellikler: ESP, Silent Aim, Aimbot, Speed, Auto Farm
--- ============================================================
+-- UMUTxMAMİ | STREET LIFE REMASTERED FULL PREMIUM MOBILE SCRIPT
+-- Optimized for Xeno Executor & Mobile Devices (Anti-Crash / Anti-Kick)
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
 
--- ========== AYARLAR (AbartÄ±sÄ±z DeÄŸerler) ==========
-local Settings = {
-    EspEnabled = true,
-    SilentAimEnabled = true,
-    AimbotEnabled = false,
-    SpeedEnabled = false,
-    AutoFarmEnabled = false,
-    AimFOV = 8,             -- Derece cinsinden FOV
-    SpeedValue = 25,        -- Normal max 16-20, 25 ideal
-    AutoFarmDelay = 0.3,    -- Saniye
-    ESPColor = Color3.new(1, 0, 0), -- KÄ±rmÄ±zÄ±
-    BoxThickness = 1,
-    HealthBarWidth = 3,
-    ShowName = true,
-    ShowDistance = true
+-- Güvenli Ayarlar (Legit / Atılmayı Önleyen Limitler)
+local Config = {
+    AimFOV = 130,             -- Ekran ortasındaki görünmez hedef alanı
+    SpeedValue = 28,          -- Sunucudan kickletmeyen en ideal hız sınırı
+    HitboxSize = 4.5,         -- Mermilerin kaçmayacağı ama çaktırmayan boyut
+    FarmDelay = 0.5           -- Telefonu kastırmayan güvenli farm döngüsü hızı
 }
 
--- ========== GUI OLUÅTUR ==========
-local function CreateGUI()
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "UMUTxMAMI_GUI"
-    ScreenGui.Parent = LocalPlayer.PlayerGui
+local States = {
+    Aimbot = false,
+    SilentAim = false,
+    ESP = false,
+    Speed = false,
+    Hitbox = false,
+    AutoFarm = false
+}
 
-    -- Ana Frame (KÄ±rmÄ±zÄ± Tema)
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 320, 0, 480)
-    MainFrame.Position = UDim2.new(0.5, -160, 0.5, -240)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
-    MainFrame.BorderColor3 = Color3.fromRGB(180, 0, 0)
-    MainFrame.BorderSizePixel = 2
-    MainFrame.Visible = false
-    MainFrame.Draggable = true
-    MainFrame.Active = true
-    MainFrame.Parent = ScreenGui
+------------------------------------------------------------------------
+-- UI OLUŞTURMA (Mobil Uyumlu & Kırmızı Temalı UI)
+------------------------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "UMUTxMAMIMobileMenu"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    -- BaÅŸlÄ±k
-    local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 30)
-    Title.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
-    Title.Text = "UMUTxMAMÄ°"
-    Title.TextColor3 = Color3.fromRGB(255, 0, 0)
-    Title.TextScaled = true
-    Title.Font = Enum.Font.SourceSansBold
-    Title.Parent = MainFrame
+-- ANA PANEL
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 260, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -160)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true -- Telefon ekranında parmakla sürüklenebilir
 
-    -- Open/Close Butonu (SaÄŸ Ãœst)
-    local OpenCloseBtn = Instance.new("TextButton")
-    OpenCloseBtn.Size = UDim2.new(0, 60, 0, 25)
-    OpenCloseBtn.Position = UDim2.new(1, -65, 0, 5)
-    OpenCloseBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
-    OpenCloseBtn.Text = "X"
-    OpenCloseBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
-    OpenCloseBtn.TextScaled = true
-    OpenCloseBtn.Font = Enum.Font.SourceSansBold
-    OpenCloseBtn.Parent = MainFrame
-    OpenCloseBtn.MouseButton1Click:Connect(function()
-        MainFrame.Visible = false
-    end)
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
 
-    -- Toggle'lar iÃ§in Scroll
-    local Scroll = Instance.new("ScrollingFrame")
-    Scroll.Size = UDim2.new(1, -20, 1, -40)
-    Scroll.Position = UDim2.new(0, 10, 0, 35)
-    Scroll.BackgroundTransparency = 1
-    Scroll.ScrollBarThickness = 6
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-    Scroll.Parent = MainFrame
+-- BAŞLIK
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.BackgroundColor3 = Color3.fromRGB(25, 0, 0)
+Title.Text = "UMUTxMAMİ | PREMIUM"
+Title.TextColor3 = Color3.fromRGB(255, 0, 0)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
 
-    local function AddToggle(text, settingKey, default)
-        local Container = Instance.new("Frame")
-        Container.Size = UDim2.new(1, 0, 0, 30)
-        Container.BackgroundTransparency = 1
-        Container.Parent = Scroll
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = Title
 
-        local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(0.7, 0, 1, 0)
-        Label.Text = text
-        Label.TextColor3 = Color3.fromRGB(255, 200, 200)
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.BackgroundTransparency = 1
-        Label.TextScaled = true
-        Label.Font = Enum.Font.SourceSans
-        Label.Parent = Container
+-- SABİT AÇMA / KAPATMA BUTONU (Ekranın Sol Kenarı)
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "ToggleBtn"
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.Size = UDim2.new(0, 60, 0, 45)
+ToggleBtn.Position = UDim2.new(0, 15, 0.45, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+ToggleBtn.Text = "MENU"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 12
 
-        local ToggleBtn = Instance.new("TextButton")
-        ToggleBtn.Size = UDim2.new(0.2, 0, 1, -2)
-        ToggleBtn.Position = UDim2.new(0.8, 0, 0, 1)
-        ToggleBtn.BackgroundColor3 = default and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(80, 0, 0)
-        ToggleBtn.Text = default and "AÃ‡IK" or "KAPALI"
-        ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ToggleBtn.TextScaled = true
-        ToggleBtn.Font = Enum.Font.SourceSansBold
-        ToggleBtn.Parent = Container
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 8)
+ToggleCorner.Parent = ToggleBtn
 
-        ToggleBtn.MouseButton1Click:Connect(function()
-            Settings[settingKey] = not Settings[settingKey]
-            ToggleBtn.BackgroundColor3 = Settings[settingKey] and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(80, 0, 0)
-            ToggleBtn.Text = Settings[settingKey] and "AÃ‡IK" or "KAPALI"
-        end)
-
-        return ToggleBtn
-    end
-
-    local function AddSlider(text, settingKey, min, max, default)
-        local Container = Instance.new("Frame")
-        Container.Size = UDim2.new(1, 0, 0, 35)
-        Container.BackgroundTransparency = 1
-        Container.Parent = Scroll
-
-        local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(0.6, 0, 1, 0)
-        Label.Text = text .. " (" .. tostring(default) .. ")"
-        Label.TextColor3 = Color3.fromRGB(255, 200, 200)
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.BackgroundTransparency = 1
-        Label.TextScaled = true
-        Label.Font = Enum.Font.SourceSans
-        Label.Parent = Container
-
-        local SliderBar = Instance.new("Frame")
-        SliderBar.Size = UDim2.new(0.35, 0, 0.5, 0)
-        SliderBar.Position = UDim2.new(0.65, 0, 0.25, 0)
-        SliderBar.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-        SliderBar.Parent = Container
-
-        local Fill = Instance.new("Frame")
-        Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-        Fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-        Fill.Parent = SliderBar
-
-        local ValueLabel = Instance.new("TextLabel")
-        ValueLabel.Size = UDim2.new(0.15, 0, 1, 0)
-        ValueLabel.Position = UDim2.new(1.05, 0, 0, 0)
-        ValueLabel.Text = tostring(default)
-        ValueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ValueLabel.BackgroundTransparency = 1
-        ValueLabel.TextScaled = true
-        ValueLabel.Font = Enum.Font.SourceSans
-        ValueLabel.Parent = SliderBar
-
-        local dragging = false
-        SliderBar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-            end
-        end)
-        SliderBar.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = false
-            end
-        end)
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                local pos = input.Position.X - SliderBar.AbsolutePosition.X
-                local ratio = math.clamp(pos / SliderBar.AbsoluteSize.X, 0, 1)
-                local value = min + (max - min) * ratio
-                value = math.round(value * 10) / 10
-                Settings[settingKey] = value
-                Fill.Size = UDim2.new(ratio, 0, 1, 0)
-                ValueLabel.Text = tostring(value)
-                Label.Text = text .. " (" .. tostring(value) .. ")"
-            end
-        end)
-    end
-
-    -- Ekleme
-    AddToggle("ESP", "EspEnabled", true)
-    AddToggle("Silent Aim", "SilentAimEnabled", true)
-    AddToggle("Aimbot", "AimbotEnabled", false)
-    AddToggle("Speed", "SpeedEnabled", false)
-    AddToggle("Auto Farm", "AutoFarmEnabled", false)
-    AddToggle("Ä°sim GÃ¶ster", "ShowName", true)
-    AddToggle("Mesafe GÃ¶ster", "ShowDistance", true)
-    AddSlider("FOV (Derece)", "AimFOV", 1, 15, 8)
-    AddSlider("HÄ±z", "SpeedValue", 16, 35, 25)
-    AddSlider("Farm Gecikmesi", "AutoFarmDelay", 0.1, 1, 0.3)
-
-    -- Open Butonu (EkranÄ±n saÄŸ alt)
-    local OpenBtn = Instance.new("TextButton")
-    OpenBtn.Size = UDim2.new(0, 80, 0, 30)
-    OpenBtn.Position = UDim2.new(1, -90, 1, -40)
-    OpenBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
-    OpenBtn.BorderColor3 = Color3.fromRGB(180, 0, 0)
-    OpenBtn.BorderSizePixel = 2
-    OpenBtn.Text = "â˜° AÃ‡"
-    OpenBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
-    OpenBtn.TextScaled = true
-    OpenBtn.Font = Enum.Font.SourceSansBold
-    OpenBtn.Parent = ScreenGui
-
-    OpenBtn.MouseButton1Click:Connect(function()
-        MainFrame.Visible = not MainFrame.Visible
-        OpenBtn.Text = MainFrame.Visible and "â˜° KAPA" or "â˜° AÃ‡"
-    end)
-
-    return ScreenGui
-end
-
--- ========== YARDIMCI FONKSÄ°YONLAR ==========
-local function GetPlayers()
-    local list = {}
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
-            table.insert(list, v)
-        end
-    end
-    return list
-end
-
-local function WorldToScreen(pos)
-    local vec, onScreen = Camera:WorldToViewportPoint(pos)
-    return Vector2.new(vec.X, vec.Y), onScreen, vec.Z
-end
-
-local function GetClosestPlayer(fov)
-    local closest = nil
-    local closestDist = fov or math.huge
-    for _, player in pairs(GetPlayers()) do
-        local torso = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
-        if torso then
-            local screenPos, onScreen = WorldToScreen(torso.Position)
-            if onScreen then
-                local dist = (Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2) - screenPos).Magnitude
-                if dist < closestDist then
-                    closest = player
-                    closestDist = dist
-                end
-            end
-        end
-    end
-    return closest
-end
-
--- ========== ESP ==========
-local espObjects = {}
-local function CreateESP(player)
-    if espObjects[player] then return end
-    local box = Drawing.new("Square")
-    box.Visible = false
-    box.Color = Settings.ESPColor
-    box.Thickness = Settings.BoxThickness
-    box.Filled = false
-
-    local nameTag = Drawing.new("Text")
-    nameTag.Visible = false
-    nameTag.Color = Color3.new(1, 1, 1)
-    nameTag.Size = 14
-    nameTag.Center = true
-
-    local distTag = Drawing.new("Text")
-    distTag.Visible = false
-    distTag.Color = Color3.new(0.8, 0.8, 0.8)
-    distTag.Size = 12
-    distTag.Center = true
-
-    local healthBar = Drawing.new("Line")
-    healthBar.Visible = false
-    healthBar.Color = Color3.new(0, 1, 0)
-    healthBar.Thickness = Settings.HealthBarWidth
-
-    espObjects[player] = {box = box, nameTag = nameTag, distTag = distTag, healthBar = healthBar}
-end
-
-local function UpdateESP()
-    for player, obj in pairs(espObjects) do
-        local char = player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") and char.Humanoid.Health > 0 then
-            local root = char.HumanoidRootPart
-            local pos = root.Position
-            local size = char:GetExtentsSize()
-            local screenPos, onScreen, depth = WorldToScreen(pos)
-            local headPos = char:FindFirstChild("Head") and char.Head.Position or pos + Vector3.new(0, size.Y/2, 0)
-            local headScreen, _ = WorldToScreen(headPos)
-
-            if onScreen then
-                local height = size.Y * 1.5
-                local width = size.X * 1.2
-                local topLeft = screenPos - Vector2.new(width/2, height/2)
-                local bottomRight = screenPos + Vector2.new(width/2, height/2)
-                -- Box
-                obj.box.Visible = Settings.EspEnabled
-                obj.box.Size = Vector2.new(width, height)
-                obj.box.Position = topLeft
-
-                -- Name
-                if Settings.ShowName then
-                    obj.nameTag.Visible = true
-                    obj.nameTag.Text = player.Name
-                    obj.nameTag.Position = Vector2.new(screenPos.X, topLeft.Y - 20)
-                else
-                    obj.nameTag.Visible = false
-                end
-
-                -- Distance
-                if Settings.ShowDistance then
-                    local dist = math.floor((Camera.CFrame.Position - pos).Magnitude)
-                    obj.distTag.Visible = true
-                    obj.distTag.Text = dist .. "m"
-                    obj.distTag.Position = Vector2.new(screenPos.X, bottomRight.Y + 5)
-                else
-                    obj.distTag.Visible = false
-                end
-
-                -- Health Bar
-                if char:FindFirstChild("Humanoid") then
-                    local health = char.Humanoid.Health / char.Humanoid.MaxHealth
-                    obj.healthBar.Visible = true
-                    obj.healthBar.From = Vector2.new(topLeft.X, bottomRight.Y + 2)
-                    obj.healthBar.To = Vector2.new(topLeft.X + width * health, bottomRight.Y + 2)
-                    obj.healthBar.Color = Color3.fromHSV(health * 0.3, 1, 1)
-                end
-            else
-                obj.box.Visible = false
-                obj.nameTag.Visible = false
-                obj.distTag.Visible = false
-                obj.healthBar.Visible = false
-            end
-        else
-            obj.box.Visible = false
-            obj.nameTag.Visible = false
-            obj.distTag.Visible = false
-            obj.healthBar.Visible = false
-        end
-    end
-end
-
--- ========== SÄ°LENT AÄ°M / AÄ°MBOT ==========
-local function GetTarget()
-    if not Settings.SilentAimEnabled and not Settings.AimbotEnabled then return nil end
-    local fov = Settings.AimFOV
-    local target = GetClosestPlayer(fov)
-    if target then
-        local root = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-        if root then
-            return root
-        end
-    end
-    return nil
-end
-
--- Silent Aim: Mermi yÃ¶nÃ¼nÃ¼ deÄŸiÅŸtir (Fark edilmez)
-local function SilentAim()
-    if not Settings.SilentAimEnabled then return end
-    local target = GetTarget()
-    if target then
-        -- Burada mermi yÃ¶nÃ¼nÃ¼ hedefe Ã§evir (genelde Mouse'u manipÃ¼le ederek yapÄ±lÄ±r)
-        -- Ancak Street Life'da mermi mekaniÄŸi farklÄ± olabilir, genel bir yaklaÅŸÄ±m:
-        local mouse = LocalPlayer:GetMouse()
-        local screenPos, onScreen = WorldToScreen(target.Position)
-        if onScreen then
-            -- Mouse'u hedefin Ã¼zerine getir (Silent Aim)
-            mouse.Move(screenPos.X, screenPos.Y)
-        end
-    end
-end
-
--- Aimbot: Otomatik niÅŸan al (AÃ§Ä±k)
-local function Aimbot()
-    if not Settings.AimbotEnabled then return end
-    local target = GetTarget()
-    if target then
-        local screenPos, onScreen = WorldToScreen(target.Position)
-        if onScreen then
-            local mouse = LocalPlayer:GetMouse()
-            mouse.Move(screenPos.X, screenPos.Y)
-        end
-    end
-end
-
--- ========== AUTO FARM ==========
-local farmTimer = 0
-local function AutoFarm(delta)
-    if not Settings.AutoFarmEnabled then return end
-    farmTimer = farmTimer + delta
-    if farmTimer < Settings.AutoFarmDelay then return end
-    farmTimer = 0
-
-    local target = GetClosestPlayer(999) -- Herkese saldÄ±r
-    if target and target.Character then
-        local root = target.Character:FindFirstChild("HumanoidRootPart")
-        if root then
-            -- SaldÄ±rÄ± simÃ¼lasyonu (genelde mermi veya tÄ±klama)
-            local mouse = LocalPlayer:GetMouse()
-            local screenPos, onScreen = WorldToScreen(root.Position)
-            if onScreen then
-                mouse.Move(screenPos.X, screenPos.Y)
-                mouse1click() -- KullanÄ±cÄ± arayÃ¼zÃ¼ tÄ±klamasÄ± (bazÄ± oyunlarda)
-                -- Daha stabil: 
-                -- fire() veya attack() fonksiyonunu Ã§aÄŸÄ±r
-                -- Burada genel bir yÃ¶ntem:
-                game:GetService("VirtualInputManager"):SendMouseButtonEvent(1, true, false, 0)
-                wait(0.05)
-                game:GetService("VirtualInputManager"):SendMouseButtonEvent(1, false, false, 0)
-            end
-        end
-    end
-end
-
--- ========== SPEED ==========
-local function SetSpeed()
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("Humanoid") then
-        if Settings.SpeedEnabled then
-            char.Humanoid.WalkSpeed = Settings.SpeedValue
-        else
-            char.Humanoid.WalkSpeed = 16 -- Normal hÄ±z
-        end
-    end
-end
-
--- ========== ANA DÃ–NGÃœ ==========
-RunService.RenderStepped:Connect(function(delta)
-    pcall(function()
-        -- ESP GÃ¼ncelle
-        for _, v in pairs(GetPlayers()) do
-            CreateESP(v)
-        end
-        UpdateESP()
-
-        -- Silent Aim ve Aimbot
-        SilentAim()
-        Aimbot()
-
-        -- Auto Farm
-        AutoFarm(delta)
-
-        -- Speed
-        SetSpeed()
-    end)
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
 end)
 
--- ========== BAÅLAT ==========
-local gui = CreateGUI()
-print("[UMUTxMAMÄ°] YÃ¼klendi! | Street Life Executor | KÄ±rmÄ±zÄ± Tema")
-print("GUI'yi AÃ§: SaÄŸ Alttaki â˜° AÃ‡ butonu")
+-- KAYDIRILABİLİR İÇERİK ALANI
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Name = "Scroll"
+Scroll.Parent = MainFrame
+Scroll.Size = UDim2.new(1, -10, 1, -55)
+Scroll.Position = UDim2.new(0, 5, 0, 50)
+Scroll.BackgroundTransparency = 1
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 310) -- Butonların sığması için dikey alan
+Scroll.ScrollBarThickness = 3
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = Scroll
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- DOKUNMATİK UYUMLU SWITCH OLUSTURUCU
+local function CreateFeatureButton(displayName, stateKey)
+    local btn = Instance.new("TextButton")
+    btn.Parent = Scroll
+    btn.Size = UDim2.new(0.95, 0, 0, 42) -- Mobilde rahat basılsın diye geniş alan
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Text = displayName .. ": KAPALI"
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 13
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        States[stateKey] = not States[stateKey]
+        if States[stateKey] then
+            btn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+            btn.Text = displayName .. ": AKTİF"
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        else
+            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            btn.Text = displayName .. ": KAPALI"
+            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        end
+    end)
+end
+
+-- Butonları Sırayla Menüye Dizme
+CreateFeatureButton("Smooth Aimbot", "Aimbot")
+CreateFeatureButton("Silent Aim (Mermi Takibi)", "SilentAim")
+CreateFeatureButton("Oyuncu ESP (Duvar Arkası)", "ESP")
+CreateFeatureButton("Legit Speed (Güvenli Hız)", "Speed")
+CreateFeatureButton("Geniş Hitbox (Vuruş Alanı)", "Hitbox")
+CreateFeatureButton("Legit Auto Farm", "AutoFarm")
+
+------------------------------------------------------------------------
+-- SCRIPT FONKSİYONLARI VE ENGINE LOGIC
+------------------------------------------------------------------------
+
+-- En Yakın Hedefi Seçme Algoritması
+local function GetClosestTarget()
+    local target = nil
+    local shortestDistance = math.huge
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            local pos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                if dist < Config.AimFOV and dist < shortestDistance then
+                    target = v
+                    shortestDistance = dist
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- 1. SMOOTH AIMBOT
+RunService.RenderStepped:Connect(function()
+    if States.Aimbot then
+        local target = GetClosestTarget()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            -- Mobilde sarsılma yapmayan temiz kamera odaklanması
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+        end
+    end
+end)
+
+-- 2. SILENT AIM (Metatable Hooking)
+local mt = getrawmetatable(game)
+local oldNamecall = mt.__namecall
+setreadonly(mt, false)
+mt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    if States.SilentAim and (method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRay") then
+        local target = GetClosestTarget()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            return target.Character.Head, target.Character.Head.Position, Vector3.new(0,1,0), target.Character.Head.Material
+        end
+    end
+    return oldNamecall(self, ...)
+end)
+setreadonly(mt, true)
+
+-- 3. KASMA YAPMAYAN ESP (Highlight Metodu)
+task.spawn(function()
+    while true do
+        task.wait(1) -- Cihazı yormamak için saniyede bir kontrol döngüsü
+        if States.ESP then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    if not p.Character:FindFirstChild("MamiESP") then
+                        local highlight = Instance.new("Highlight")
+                        highlight.Name = "MamiESP"
+                        highlight.Parent = p.Character
+                        highlight.FillColor = Color3.fromRGB(200, 0, 0)
+                        highlight.FillTransparency = 0.6
+                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        highlight.OutlineTransparency = 0.2
+                    end
+                end
+            end
+        else
+            for _, p in pairs(Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("MamiESP") then
+                    p.Character.MamiESP:Destroy()
+                end
+            end
+        end
+    end
+end)
+
+-- 4. LEGIT SPEED
+RunService.Heartbeat:Connect(function()
+    if States.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedValue
+    elseif not States.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        if LocalPlayer.Character.Humanoid.WalkSpeed == Config.SpeedValue then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16 -- Karakteri standart hıza çeker
+        end
+    end
+end)
+
+-- 5. ATMAYACAK HITBOX GÖRÜNÜRLÜĞÜ
+task.spawn(function()
+    while true do
+        task.wait(0.6)
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+                if States.Hitbox then
+                    hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                    hrp.Transparency = 0.75
+                    hrp.Color = Color3.fromRGB(200, 0, 0)
+                    hrp.CanCollide = false
+                else
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                    hrp.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+
+-- 6. LEGIT AUTO FARM (Street Life Para Noktaları İçin)
+task.spawn(function()
+    while true do
+        task.wait(Config.FarmDelay)
+        if States.AutoFarm and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if not States.AutoFarm then break end
+                
+                -- Haritada etkileşime girilebilecek prox promptları bulur
+                if obj:IsA("ProximityPrompt") then
+                    local targetPos = obj.Parent.Position
+                    local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+                    
+                    -- Sunucunun hileyi fark etmemesi için yakınındaki nesneleri otomatik tetikler
+                    if (myPos - targetPos).Magnitude < 16 then
+                        fireproximityprompt(obj)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+print("UMUTxMAMİ Full Premium Script Loaded Successfully!")
