@@ -1,5 +1,5 @@
--- UMUTxMAMİ | STREET LIFE REMASTERED ULTRA RAGE V3
--- Hitbox Kaldırıldı / Tek Atma & Ayarlanabilir FOV Eklendi
+-- UMUTxMAMİ | STREET LIFE REMASTERED RAGE V6 (LEGIT SPEED UPDATE)
+-- Tamamen Temiz Kod / Gelişmiş İsim, Mesafe ve Traces ESP / Güvenli Hız
 -- Optimized for Xeno Executor (Mobile)
 
 local Players = game:GetService("Players")
@@ -7,11 +7,10 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
--- Dinamik Ayarlar
+-- Ayarlar
 local Config = {
-    AimFOV = 150,             -- Başlangıç FOV Boyutu
-    SpeedValue = 45,          -- Hızlı Rage Koşma
-    OneHitMultiplier = 9999,  -- Tek atma hasar çarpanı
+    AimFOV = 150,
+    SpeedValue = 26,  -- Fark edilmeyen, sunucu sınırındaki en güvenli hız ayarı
     FarmDelay = 0.3
 }
 
@@ -19,14 +18,13 @@ local States = {
     Aimbot = false,
     SilentAim = false,
     ShowFOV = false,
-    OneHit = false,           -- Tek Atma Durumu
-    ESP = false,
+    ESP = false,      
     Speed = false,
     AutoFarm = false
 }
 
 ------------------------------------------------------------------------
--- DİNAMİK FOV ÇEMBERİ (Xeno Drawing API)
+-- DİNAMİK FOV ÇEMBERİ
 ------------------------------------------------------------------------
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Color = Color3.fromRGB(255, 0, 0)
@@ -45,10 +43,10 @@ RunService.RenderStepped:Connect(function()
 end)
 
 ------------------------------------------------------------------------
--- UI OLUŞTURMA (Mobil Kırmızı Premium UI)
+-- PREMIUM UI OLUŞTURMA (Mobil Kırmızı UI)
 ------------------------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "UMUTxMAMIRageMenuV3"
+ScreenGui.Name = "UMUTxMAMIRageMenuV6"
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local MainFrame = Instance.new("Frame", ScreenGui)
@@ -66,7 +64,7 @@ MainCorner.CornerRadius = UDim.new(0, 10)
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 45)
 Title.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
-Title.Text = "UMUTxMAMİ | ULTRA RAGE V3"
+Title.Text = "UMUTxMAMİ | RAGE V6"
 Title.TextColor3 = Color3.fromRGB(255, 0, 0)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 15
@@ -88,7 +86,7 @@ local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Size = UDim2.new(1, -10, 1, -55)
 Scroll.Position = UDim2.new(0, 5, 0, 50)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 380)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 340)
 Scroll.ScrollBarThickness = 3
 
 local UIListLayout = Instance.new("UIListLayout", Scroll)
@@ -96,7 +94,6 @@ UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayout.Padding = UDim.new(0, 8)
 UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Buton Yapıcı Fonksiyon
 local function CreateFeatureButton(displayName, stateKey)
     local btn = Instance.new("TextButton", Scroll)
     btn.Size = UDim2.new(0.95, 0, 0, 38)
@@ -121,7 +118,6 @@ local function CreateFeatureButton(displayName, stateKey)
     end)
 end
 
--- Tıkladıkça Büyüyen FOV Ayarlayıcı
 local function CreateFOVAdjuster()
     local btn = Instance.new("TextButton", Scroll)
     btn.Size = UDim2.new(0.95, 0, 0, 38)
@@ -133,29 +129,22 @@ local function CreateFOVAdjuster()
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
     btn.MouseButton1Click:Connect(function()
-        if Config.AimFOV >= 350 then
-            Config.AimFOV = 100
-        else
-            Config.AimFOV = Config.AimFOV + 50
-        end
+        if Config.AimFOV >= 350 then Config.AimFOV = 100 else Config.AimFOV = Config.AimFOV + 50 end
         btn.Text = "FOV Ayarı: " .. Config.AimFOV
     end)
 end
 
--- Menü Butonları Dizilimi
-CreateFeatureButton("Aimbot (Kilitlenme)", "Aimbot")
-CreateFeatureButton("Silent Aim (Mıknatıs)", "SilentAim")
+CreateFeatureButton("Aimbot (Kamera Kilidi)", "Aimbot")
+CreateFeatureButton("Silent Aim (Mermi Mıknatısı)", "SilentAim")
 CreateFeatureButton("FOV Çemberini Göster", "ShowFOV")
 CreateFOVAdjuster()
-CreateFeatureButton("1-Hit Damage (Tek Atma)", "OneHit")
-CreateFeatureButton("Oyuncu ESP", "ESP")
-CreateFeatureButton("Rage Speed (Hızlı Koşma)", "Speed")
+CreateFeatureButton("Gelişmiş ESP (Name/Dist/Line)", "ESP")
+CreateFeatureButton("Legit Speed (Güvenli Hız)", "Speed")
 CreateFeatureButton("Legit Auto Farm", "AutoFarm")
 
 ------------------------------------------------------------------------
--- CORE FUNCTIONS (HACK ENGINE)
+-- EN YAKIN HEDEF ALGORİTMASI
 ------------------------------------------------------------------------
-
 local function GetClosestTarget()
     local target = nil
     local shortestDistance = math.huge
@@ -184,71 +173,90 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- SILENT AIM & ONE-HIT DAMAGE INJECTION (Metatable Hook)
+-- SILENT AIM
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
-local oldIndex = mt.__index
 setreadonly(mt, false)
-
 mt.__namecall = newcclosure(function(self, ...)
     local method = getnamecallmethod()
-    local args = {...}
-    
-    -- Silent Aim Tetikleyici
-    if States.SilentAim and (method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRay") then
+    if States.SilentAim and (method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRay" or method == "Raycast") then
         local target = GetClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             return target.Character.Head, target.Character.Head.Position, Vector3.new(0,1,0), target.Character.Head.Material
         end
     end
-    
-    -- Tek Atma Mantığı: Silah hasar verilerini sunucuya atan remote eventleri yakalar
-    if States.OneHit and method == "FireServer" and tostring(self):lower():find("damage") then
-        for i, arg in pairs(args) do
-            if type(arg) == "number" then
-                args[i] = Config.OneHitMultiplier -- Hasarı 9999 olarak değiştirir
-            end
-        end
-        return oldNamecall(self, unpack(args))
-    end
-    
     return oldNamecall(self, ...)
 end)
-
--- Silah değerlerini hafızadan direkt manipüle etmek için alternatif tarama (One-Hit için)
-mt.__index = newcclosure(function(self, key)
-    if States.OneHit and (key == "Damage" or key == "HitDamage") and self:IsA("NumberValue") then
-        return Config.OneHitMultiplier
-    end
-    return oldIndex(self, key)
-end)
-
 setreadonly(mt, true)
 
--- ESP LOOP
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if States.ESP then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    if not p.Character:FindFirstChild("MamiESP") then
-                        local highlight = Instance.new("Highlight", p.Character)
-                        highlight.Name = "MamiESP"
-                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                        highlight.FillTransparency = 0.5
-                    end
-                end
+------------------------------------------------------------------------
+-- GELİŞMİŞ İSİM, MESAFE VE TRACES (ÇİZGİ) ESP SİSTEMİ
+------------------------------------------------------------------------
+local ESPTable = {}
+
+local function CreateESP(player)
+    local TextObj = Drawing.new("Text")
+    TextObj.Color = Color3.fromRGB(255, 0, 0)
+    TextObj.Size = 14
+    TextObj.Center = true
+    TextObj.Outline = true
+    TextObj.OutlineColor = Color3.fromRGB(0, 0, 0)
+    TextObj.Visible = false
+
+    local LineObj = Drawing.new("Line")
+    LineObj.Color = Color3.fromRGB(255, 0, 0)
+    LineObj.Thickness = 1
+    LineObj.Transparency = 0.7
+    LineObj.Visible = false
+
+    ESPTable[player] = {Text = TextObj, Line = LineObj}
+end
+
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then CreateESP(p) end
+end
+Players.PlayerAdded:Connect(function(p)
+    if p ~= LocalPlayer then CreateESP(p) end
+end)
+
+Players.PlayerRemoving:Connect(function(p)
+    if ESPTable[p] then
+        ESPTable[p].Text:Remove()
+        ESPTable[p].Line:Remove()
+        ESPTable[p] = nil
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    for player, drawings in pairs(ESPTable) do
+        if States.ESP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+            local hrp = player.Character.HumanoidRootPart
+            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            
+            if onScreen then
+                local distance = math.floor((LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude) or 0)
+                
+                drawings.Text.Position = Vector2.new(pos.X, pos.Y - 40)
+                drawings.Text.Text = string.format("%s\n[%dm]", player.Name, distance)
+                drawings.Text.Visible = true
+                
+                drawings.Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                drawings.Line.To = Vector2.new(pos.X, pos.Y)
+                drawings.Line.Visible = true
+            else
+                drawings.Text.Visible = false
+                drawings.Line.Visible = false
             end
         else
-            for _, p in pairs(Players:GetPlayers()) do
-                if p.Character and p.Character:FindFirstChild("MamiESP") then p.Character.MamiESP:Destroy() end
-            end
+            drawings.Text.Visible = false
+            drawings.Line.Visible = false
         end
     end
 end)
 
--- RAGE SPEED LOOP
+------------------------------------------------------------------------
+-- GÜVENLİ SPEED & FARM DÖNGÜLERİ
+------------------------------------------------------------------------
 RunService.Heartbeat:Connect(function()
     if States.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedValue
@@ -259,7 +267,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- AUTO FARM LOOP
 task.spawn(function()
     while true do
         task.wait(Config.FarmDelay)
@@ -276,4 +283,4 @@ task.spawn(function()
     end
 end)
 
-print("UMUTxMAMİ Ultra Rage V3 Successfully Injected on Xeno!")
+print("UMUTxMAMİ Legit Speed Update V6 Loaded!")
