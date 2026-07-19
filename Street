@@ -1,144 +1,449 @@
--- EKRAN BUTONLARI OLUŞTURMA (Menü açılmama sorununa kesin çözüm)
-local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-ScreenGui.Name = "LayroxcSimpleMenu"
+-- ============================================================
+-- [UMUTxMAMÄ°] - Street Life Executor Script
+-- GeliÅŸmiÅŸ, stabil, abartÄ±sÄ±z ve optimize edilmiÅŸ.
+-- GUI: KÄ±rmÄ±zÄ± Tema | Open/Close Butonu
+-- Ã–zellikler: ESP, Silent Aim, Aimbot, Speed, Auto Farm
+-- ============================================================
 
-local function CreateButton(name, pos, color, callback)
-    local btn = Instance.new("TextButton", ScreenGui)
-    btn.Name = name
-    btn.Size = UDim2.new(0, 150, 0, 40)
-    btn.Position = pos
-    btn.BackgroundColor3 = color
-    btn.Text = name .. ": KAPALI"
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 18
-    
-    local active = false
-    btn.MouseButton1Click:Connect(function()
-        active = not active
-        btn.Text = name .. (active and ": AÇIK" or ": KAPALI")
-        btn.BackgroundColor3 = active and Color3.new(0, 0.7, 0) or color
-        callback(active)
-    end)
-end
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
 
--- AYARLAR
-local Ayarlar = {
-    HitboxAcik = false,
-    TekAtmaAcik = false,
-    Boyut = 20
+-- ========== AYARLAR (AbartÄ±sÄ±z DeÄŸerler) ==========
+local Settings = {
+    EspEnabled = true,
+    SilentAimEnabled = true,
+    AimbotEnabled = false,
+    SpeedEnabled = false,
+    AutoFarmEnabled = false,
+    AimFOV = 8,             -- Derece cinsinden FOV
+    SpeedValue = 25,        -- Normal max 16-20, 25 ideal
+    AutoFarmDelay = 0.3,    -- Saniye
+    ESPColor = Color3.new(1, 0, 0), -- KÄ±rmÄ±zÄ±
+    BoxThickness = 1,
+    HealthBarWidth = 3,
+    ShowName = true,
+    ShowDistance = true
 }
 
--- BUTONLARI YERLEŞTİR
-CreateButton("HITBOX", UDim2.new(0, 10, 0, 50), Color3.new(0.2, 0.2, 0.2), function(s) Ayarlar.HitboxAcik = s end)
-CreateButton("TEK ATMA", UDim2.new(0, 10, 0, 100), Color3.new(0.2, 0.2, 0.2), function(s) Ayarlar.TekAtmaAcik = s end)
+-- ========== GUI OLUÅTUR ==========
+local function CreateGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "UMUTxMAMI_GUI"
+    ScreenGui.Parent = LocalPlayer.PlayerGui
 
--- ANTI-KICK (Atılmayı Engelleme)
-local old; old = hookmetamethod(game, "__namecall", function(self, ...)
-    local method = getnamecallmethod()
-    if method == "Kick" or method == "kick" then return nil end
-    return old(self, ...)
-end)
+    -- Ana Frame (KÄ±rmÄ±zÄ± Tema)
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 320, 0, 480)
+    MainFrame.Position = UDim2.new(0.5, -160, 0.5, -240)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+    MainFrame.BorderColor3 = Color3.fromRGB(180, 0, 0)
+    MainFrame.BorderSizePixel = 2
+    MainFrame.Visible = false
+    MainFrame.Draggable = true
+    MainFrame.Active = true
+    MainFrame.Parent = ScreenGui
 
--- ANA DÖNGÜ (Hitbox ve Tek Atma)
-task.spawn(function()
-    while task.wait(0.5) do
-        for _, pl in pairs(game:GetService("Players"):GetPlayers()) do
-            if pl ~= game.Players.LocalPlayer and pl.Character then
-                local hrp = pl.Character:FindFirstChild("HumanoidRootPart")
-                local hum = pl.Character:FindFirstChild("Humanoid")
+    -- BaÅŸlÄ±k
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+    Title.Text = "UMUTxMAMÄ°"
+    Title.TextColor3 = Color3.fromRGB(255, 0, 0)
+    Title.TextScaled = true
+    Title.Font = Enum.Font.SourceSansBold
+    Title.Parent = MainFrame
 
-                -- Hitbox Uygula
-                if hrp and Ayarlar.HitboxAcik then
-                    hrp.Size = Vector3.new(Ayarlar.Boyut, Ayarlar.Boyut, Ayarlar.Boyut)
-                    hrp.Transparency = 0.7
-                    hrp.CanCollide = false
-                elseif hrp then
-                    hrp.Size = Vector3.new(2, 2, 1)
-                    hrp.Transparency = 1
-                end
+    -- Open/Close Butonu (SaÄŸ Ãœst)
+    local OpenCloseBtn = Instance.new("TextButton")
+    OpenCloseBtn.Size = UDim2.new(0, 60, 0, 25)
+    OpenCloseBtn.Position = UDim2.new(1, -65, 0, 5)
+    OpenCloseBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+    OpenCloseBtn.Text = "X"
+    OpenCloseBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+    OpenCloseBtn.TextScaled = true
+    OpenCloseBtn.Font = Enum.Font.SourceSansBold
+    OpenCloseBtn.Parent = MainFrame
+    OpenCloseBtn.MouseButton1Click:Connect(function()
+        MainFrame.Visible = false
+    end)
 
-                -- Tek Atma Uygula (Hasar Aldığı An Öldürür)
-                if hum and Ayarlar.TekAtmaAcik then
-                    if hum.Health < hum.MaxHealth and hum.Health > 0 then
-                        hum.Health = 0
-                    end
+    -- Toggle'lar iÃ§in Scroll
+    local Scroll = Instance.new("ScrollingFrame")
+    Scroll.Size = UDim2.new(1, -20, 1, -40)
+    Scroll.Position = UDim2.new(0, 10, 0, 35)
+    Scroll.BackgroundTransparency = 1
+    Scroll.ScrollBarThickness = 6
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Scroll.Parent = MainFrame
+
+    local function AddToggle(text, settingKey, default)
+        local Container = Instance.new("Frame")
+        Container.Size = UDim2.new(1, 0, 0, 30)
+        Container.BackgroundTransparency = 1
+        Container.Parent = Scroll
+
+        local Label = Instance.new("TextLabel")
+        Label.Size = UDim2.new(0.7, 0, 1, 0)
+        Label.Text = text
+        Label.TextColor3 = Color3.fromRGB(255, 200, 200)
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.BackgroundTransparency = 1
+        Label.TextScaled = true
+        Label.Font = Enum.Font.SourceSans
+        Label.Parent = Container
+
+        local ToggleBtn = Instance.new("TextButton")
+        ToggleBtn.Size = UDim2.new(0.2, 0, 1, -2)
+        ToggleBtn.Position = UDim2.new(0.8, 0, 0, 1)
+        ToggleBtn.BackgroundColor3 = default and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(80, 0, 0)
+        ToggleBtn.Text = default and "AÃ‡IK" or "KAPALI"
+        ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ToggleBtn.TextScaled = true
+        ToggleBtn.Font = Enum.Font.SourceSansBold
+        ToggleBtn.Parent = Container
+
+        ToggleBtn.MouseButton1Click:Connect(function()
+            Settings[settingKey] = not Settings[settingKey]
+            ToggleBtn.BackgroundColor3 = Settings[settingKey] and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(80, 0, 0)
+            ToggleBtn.Text = Settings[settingKey] and "AÃ‡IK" or "KAPALI"
+        end)
+
+        return ToggleBtn
+    end
+
+    local function AddSlider(text, settingKey, min, max, default)
+        local Container = Instance.new("Frame")
+        Container.Size = UDim2.new(1, 0, 0, 35)
+        Container.BackgroundTransparency = 1
+        Container.Parent = Scroll
+
+        local Label = Instance.new("TextLabel")
+        Label.Size = UDim2.new(0.6, 0, 1, 0)
+        Label.Text = text .. " (" .. tostring(default) .. ")"
+        Label.TextColor3 = Color3.fromRGB(255, 200, 200)
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.BackgroundTransparency = 1
+        Label.TextScaled = true
+        Label.Font = Enum.Font.SourceSans
+        Label.Parent = Container
+
+        local SliderBar = Instance.new("Frame")
+        SliderBar.Size = UDim2.new(0.35, 0, 0.5, 0)
+        SliderBar.Position = UDim2.new(0.65, 0, 0.25, 0)
+        SliderBar.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+        SliderBar.Parent = Container
+
+        local Fill = Instance.new("Frame")
+        Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+        Fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        Fill.Parent = SliderBar
+
+        local ValueLabel = Instance.new("TextLabel")
+        ValueLabel.Size = UDim2.new(0.15, 0, 1, 0)
+        ValueLabel.Position = UDim2.new(1.05, 0, 0, 0)
+        ValueLabel.Text = tostring(default)
+        ValueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ValueLabel.BackgroundTransparency = 1
+        ValueLabel.TextScaled = true
+        ValueLabel.Font = Enum.Font.SourceSans
+        ValueLabel.Parent = SliderBar
+
+        local dragging = false
+        SliderBar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+            end
+        end)
+        SliderBar.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local pos = input.Position.X - SliderBar.AbsolutePosition.X
+                local ratio = math.clamp(pos / SliderBar.AbsoluteSize.X, 0, 1)
+                local value = min + (max - min) * ratio
+                value = math.round(value * 10) / 10
+                Settings[settingKey] = value
+                Fill.Size = UDim2.new(ratio, 0, 1, 0)
+                ValueLabel.Text = tostring(value)
+                Label.Text = text .. " (" .. tostring(value) .. ")"
+            end
+        end)
+    end
+
+    -- Ekleme
+    AddToggle("ESP", "EspEnabled", true)
+    AddToggle("Silent Aim", "SilentAimEnabled", true)
+    AddToggle("Aimbot", "AimbotEnabled", false)
+    AddToggle("Speed", "SpeedEnabled", false)
+    AddToggle("Auto Farm", "AutoFarmEnabled", false)
+    AddToggle("Ä°sim GÃ¶ster", "ShowName", true)
+    AddToggle("Mesafe GÃ¶ster", "ShowDistance", true)
+    AddSlider("FOV (Derece)", "AimFOV", 1, 15, 8)
+    AddSlider("HÄ±z", "SpeedValue", 16, 35, 25)
+    AddSlider("Farm Gecikmesi", "AutoFarmDelay", 0.1, 1, 0.3)
+
+    -- Open Butonu (EkranÄ±n saÄŸ alt)
+    local OpenBtn = Instance.new("TextButton")
+    OpenBtn.Size = UDim2.new(0, 80, 0, 30)
+    OpenBtn.Position = UDim2.new(1, -90, 1, -40)
+    OpenBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+    OpenBtn.BorderColor3 = Color3.fromRGB(180, 0, 0)
+    OpenBtn.BorderSizePixel = 2
+    OpenBtn.Text = "â˜° AÃ‡"
+    OpenBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+    OpenBtn.TextScaled = true
+    OpenBtn.Font = Enum.Font.SourceSansBold
+    OpenBtn.Parent = ScreenGui
+
+    OpenBtn.MouseButton1Click:Connect(function()
+        MainFrame.Visible = not MainFrame.Visible
+        OpenBtn.Text = MainFrame.Visible and "â˜° KAPA" or "â˜° AÃ‡"
+    end)
+
+    return ScreenGui
+end
+
+-- ========== YARDIMCI FONKSÄ°YONLAR ==========
+local function GetPlayers()
+    local list = {}
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            table.insert(list, v)
+        end
+    end
+    return list
+end
+
+local function WorldToScreen(pos)
+    local vec, onScreen = Camera:WorldToViewportPoint(pos)
+    return Vector2.new(vec.X, vec.Y), onScreen, vec.Z
+end
+
+local function GetClosestPlayer(fov)
+    local closest = nil
+    local closestDist = fov or math.huge
+    for _, player in pairs(GetPlayers()) do
+        local torso = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
+        if torso then
+            local screenPos, onScreen = WorldToScreen(torso.Position)
+            if onScreen then
+                local dist = (Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2) - screenPos).Magnitude
+                if dist < closestDist then
+                    closest = player
+                    closestDist = dist
                 end
             end
         end
     end
-end)
-
-print("Layroxc Butonlu Menü Yüklendi!")
--- EKRAN BUTONLARI OLUŞTURMA (Menü açılmama sorununa kesin çözüm)
-local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-ScreenGui.Name = "LayroxcSimpleMenu"
-
-local function CreateButton(name, pos, color, callback)
-    local btn = Instance.new("TextButton", ScreenGui)
-    btn.Name = name
-    btn.Size = UDim2.new(0, 150, 0, 40)
-    btn.Position = pos
-    btn.BackgroundColor3 = color
-    btn.Text = name .. ": KAPALI"
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 18
-    
-    local active = false
-    btn.MouseButton1Click:Connect(function()
-        active = not active
-        btn.Text = name .. (active and ": AÇIK" or ": KAPALI")
-        btn.BackgroundColor3 = active and Color3.new(0, 0.7, 0) or color
-        callback(active)
-    end)
+    return closest
 end
 
--- AYARLAR
-local Ayarlar = {
-    HitboxAcik = false,
-    TekAtmaAcik = false,
-    Boyut = 20
-}
+-- ========== ESP ==========
+local espObjects = {}
+local function CreateESP(player)
+    if espObjects[player] then return end
+    local box = Drawing.new("Square")
+    box.Visible = false
+    box.Color = Settings.ESPColor
+    box.Thickness = Settings.BoxThickness
+    box.Filled = false
 
--- BUTONLARI YERLEŞTİR
-CreateButton("HITBOX", UDim2.new(0, 10, 0, 50), Color3.new(0.2, 0.2, 0.2), function(s) Ayarlar.HitboxAcik = s end)
-CreateButton("TEK ATMA", UDim2.new(0, 10, 0, 100), Color3.new(0.2, 0.2, 0.2), function(s) Ayarlar.TekAtmaAcik = s end)
+    local nameTag = Drawing.new("Text")
+    nameTag.Visible = false
+    nameTag.Color = Color3.new(1, 1, 1)
+    nameTag.Size = 14
+    nameTag.Center = true
 
--- ANTI-KICK (Atılmayı Engelleme)
-local old; old = hookmetamethod(game, "__namecall", function(self, ...)
-    local method = getnamecallmethod()
-    if method == "Kick" or method == "kick" then return nil end
-    return old(self, ...)
-end)
+    local distTag = Drawing.new("Text")
+    distTag.Visible = false
+    distTag.Color = Color3.new(0.8, 0.8, 0.8)
+    distTag.Size = 12
+    distTag.Center = true
 
--- ANA DÖNGÜ (Hitbox ve Tek Atma)
-task.spawn(function()
-    while task.wait(0.5) do
-        for _, pl in pairs(game:GetService("Players"):GetPlayers()) do
-            if pl ~= game.Players.LocalPlayer and pl.Character then
-                local hrp = pl.Character:FindFirstChild("HumanoidRootPart")
-                local hum = pl.Character:FindFirstChild("Humanoid")
+    local healthBar = Drawing.new("Line")
+    healthBar.Visible = false
+    healthBar.Color = Color3.new(0, 1, 0)
+    healthBar.Thickness = Settings.HealthBarWidth
 
-                -- Hitbox Uygula
-                if hrp and Ayarlar.HitboxAcik then
-                    hrp.Size = Vector3.new(Ayarlar.Boyut, Ayarlar.Boyut, Ayarlar.Boyut)
-                    hrp.Transparency = 0.7
-                    hrp.CanCollide = false
-                elseif hrp then
-                    hrp.Size = Vector3.new(2, 2, 1)
-                    hrp.Transparency = 1
+    espObjects[player] = {box = box, nameTag = nameTag, distTag = distTag, healthBar = healthBar}
+end
+
+local function UpdateESP()
+    for player, obj in pairs(espObjects) do
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") and char.Humanoid.Health > 0 then
+            local root = char.HumanoidRootPart
+            local pos = root.Position
+            local size = char:GetExtentsSize()
+            local screenPos, onScreen, depth = WorldToScreen(pos)
+            local headPos = char:FindFirstChild("Head") and char.Head.Position or pos + Vector3.new(0, size.Y/2, 0)
+            local headScreen, _ = WorldToScreen(headPos)
+
+            if onScreen then
+                local height = size.Y * 1.5
+                local width = size.X * 1.2
+                local topLeft = screenPos - Vector2.new(width/2, height/2)
+                local bottomRight = screenPos + Vector2.new(width/2, height/2)
+                -- Box
+                obj.box.Visible = Settings.EspEnabled
+                obj.box.Size = Vector2.new(width, height)
+                obj.box.Position = topLeft
+
+                -- Name
+                if Settings.ShowName then
+                    obj.nameTag.Visible = true
+                    obj.nameTag.Text = player.Name
+                    obj.nameTag.Position = Vector2.new(screenPos.X, topLeft.Y - 20)
+                else
+                    obj.nameTag.Visible = false
                 end
 
-                -- Tek Atma Uygula (Hasar Aldığı An Öldürür)
-                if hum and Ayarlar.TekAtmaAcik then
-                    if hum.Health < hum.MaxHealth and hum.Health > 0 then
-                        hum.Health = 0
-                    end
+                -- Distance
+                if Settings.ShowDistance then
+                    local dist = math.floor((Camera.CFrame.Position - pos).Magnitude)
+                    obj.distTag.Visible = true
+                    obj.distTag.Text = dist .. "m"
+                    obj.distTag.Position = Vector2.new(screenPos.X, bottomRight.Y + 5)
+                else
+                    obj.distTag.Visible = false
                 end
+
+                -- Health Bar
+                if char:FindFirstChild("Humanoid") then
+                    local health = char.Humanoid.Health / char.Humanoid.MaxHealth
+                    obj.healthBar.Visible = true
+                    obj.healthBar.From = Vector2.new(topLeft.X, bottomRight.Y + 2)
+                    obj.healthBar.To = Vector2.new(topLeft.X + width * health, bottomRight.Y + 2)
+                    obj.healthBar.Color = Color3.fromHSV(health * 0.3, 1, 1)
+                end
+            else
+                obj.box.Visible = false
+                obj.nameTag.Visible = false
+                obj.distTag.Visible = false
+                obj.healthBar.Visible = false
+            end
+        else
+            obj.box.Visible = false
+            obj.nameTag.Visible = false
+            obj.distTag.Visible = false
+            obj.healthBar.Visible = false
+        end
+    end
+end
+
+-- ========== SÄ°LENT AÄ°M / AÄ°MBOT ==========
+local function GetTarget()
+    if not Settings.SilentAimEnabled and not Settings.AimbotEnabled then return nil end
+    local fov = Settings.AimFOV
+    local target = GetClosestPlayer(fov)
+    if target then
+        local root = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            return root
+        end
+    end
+    return nil
+end
+
+-- Silent Aim: Mermi yÃ¶nÃ¼nÃ¼ deÄŸiÅŸtir (Fark edilmez)
+local function SilentAim()
+    if not Settings.SilentAimEnabled then return end
+    local target = GetTarget()
+    if target then
+        -- Burada mermi yÃ¶nÃ¼nÃ¼ hedefe Ã§evir (genelde Mouse'u manipÃ¼le ederek yapÄ±lÄ±r)
+        -- Ancak Street Life'da mermi mekaniÄŸi farklÄ± olabilir, genel bir yaklaÅŸÄ±m:
+        local mouse = LocalPlayer:GetMouse()
+        local screenPos, onScreen = WorldToScreen(target.Position)
+        if onScreen then
+            -- Mouse'u hedefin Ã¼zerine getir (Silent Aim)
+            mouse.Move(screenPos.X, screenPos.Y)
+        end
+    end
+end
+
+-- Aimbot: Otomatik niÅŸan al (AÃ§Ä±k)
+local function Aimbot()
+    if not Settings.AimbotEnabled then return end
+    local target = GetTarget()
+    if target then
+        local screenPos, onScreen = WorldToScreen(target.Position)
+        if onScreen then
+            local mouse = LocalPlayer:GetMouse()
+            mouse.Move(screenPos.X, screenPos.Y)
+        end
+    end
+end
+
+-- ========== AUTO FARM ==========
+local farmTimer = 0
+local function AutoFarm(delta)
+    if not Settings.AutoFarmEnabled then return end
+    farmTimer = farmTimer + delta
+    if farmTimer < Settings.AutoFarmDelay then return end
+    farmTimer = 0
+
+    local target = GetClosestPlayer(999) -- Herkese saldÄ±r
+    if target and target.Character then
+        local root = target.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            -- SaldÄ±rÄ± simÃ¼lasyonu (genelde mermi veya tÄ±klama)
+            local mouse = LocalPlayer:GetMouse()
+            local screenPos, onScreen = WorldToScreen(root.Position)
+            if onScreen then
+                mouse.Move(screenPos.X, screenPos.Y)
+                mouse1click() -- KullanÄ±cÄ± arayÃ¼zÃ¼ tÄ±klamasÄ± (bazÄ± oyunlarda)
+                -- Daha stabil: 
+                -- fire() veya attack() fonksiyonunu Ã§aÄŸÄ±r
+                -- Burada genel bir yÃ¶ntem:
+                game:GetService("VirtualInputManager"):SendMouseButtonEvent(1, true, false, 0)
+                wait(0.05)
+                game:GetService("VirtualInputManager"):SendMouseButtonEvent(1, false, false, 0)
             end
         end
     end
+end
+
+-- ========== SPEED ==========
+local function SetSpeed()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if Settings.SpeedEnabled then
+            char.Humanoid.WalkSpeed = Settings.SpeedValue
+        else
+            char.Humanoid.WalkSpeed = 16 -- Normal hÄ±z
+        end
+    end
+end
+
+-- ========== ANA DÃ–NGÃœ ==========
+RunService.RenderStepped:Connect(function(delta)
+    pcall(function()
+        -- ESP GÃ¼ncelle
+        for _, v in pairs(GetPlayers()) do
+            CreateESP(v)
+        end
+        UpdateESP()
+
+        -- Silent Aim ve Aimbot
+        SilentAim()
+        Aimbot()
+
+        -- Auto Farm
+        AutoFarm(delta)
+
+        -- Speed
+        SetSpeed()
+    end)
 end)
 
-print("Layroxc Butonlu Menü Yüklendi!")
+-- ========== BAÅLAT ==========
+local gui = CreateGUI()
+print("[UMUTxMAMÄ°] YÃ¼klendi! | Street Life Executor | KÄ±rmÄ±zÄ± Tema")
+print("GUI'yi AÃ§: SaÄŸ Alttaki â˜° AÃ‡ butonu")
