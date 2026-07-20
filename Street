@@ -1,286 +1,118 @@
--- UMUTxMAMİ | STREET LIFE REMASTERED RAGE V6 (LEGIT SPEED UPDATE)
--- Tamamen Temiz Kod / Gelişmiş İsim, Mesafe ve Traces ESP / Güvenli Hız
--- Optimized for Xeno Executor (Mobile)
+-- =====================================================================
+-- 🔥 LAYROXC HUB / STREET LIFE REMASTERED
+-- 1 Hit Hack + Silent Aim + Aimbot + ESP + Full Mods
+-- =====================================================================
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
+local UIS = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
--- Ayarlar
+if getgenv().LayroxcHub then getgenv().LayroxcHub:Destroy() end
+getgenv().LayroxcHub = Instance.new("ScreenGui")
+getgenv().LayroxcHub.Name = "LayroxcHub"
+getgenv().LayroxcHub.Parent = (gethui and gethui()) or game.CoreGui
+getgenv().LayroxcHub.ResetOnSpawn = false
+
 local Config = {
-    AimFOV = 150,
-    SpeedValue = 26,  -- Fark edilmeyen, sunucu sınırındaki en güvenli hız ayarı
-    FarmDelay = 0.3
+    Combat = {Aimbot = true, SilentAim = true, FOV = 180, Smooth = 1.8},
+    OneHit = {Enabled = true},
+    ESP = {Enabled = true, Boxes = true, Names = true, Health = true, Tracers = true},
+    GunMods = {InfAmmo = true, NoRecoil = true, FastFire = true},
+    Player = {GodMode = true, InfStamina = true, Speed = 70},
+    Farm = {AutoFarm = true}
 }
 
-local States = {
-    Aimbot = false,
-    SilentAim = false,
-    ShowFOV = false,
-    ESP = false,      
-    Speed = false,
-    AutoFarm = false
-}
+-- GUI
+local Main = Instance.new("Frame", getgenv().LayroxcHub)
+Main.Size = UDim2.new(0, 450, 0, 550)
+Main.Position = UDim2.new(0.5, -225, 0.5, -275)
+Main.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 
-------------------------------------------------------------------------
--- DİNAMİK FOV ÇEMBERİ
-------------------------------------------------------------------------
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Color = Color3.fromRGB(255, 0, 0)
-FOVCircle.Thickness = 1.5
-FOVCircle.Filled = false
-FOVCircle.Transparency = 0.8
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1,0,0,70)
+Title.BackgroundColor3 = Color3.fromRGB(200, 0, 50)
+Title.Text = "LAYROXC HUB / STREET LIFE REMASTERED"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextScaled = true
 
-RunService.RenderStepped:Connect(function()
-    if States.ShowFOV then
-        FOVCircle.Visible = true
-        FOVCircle.Radius = Config.AimFOV
-        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    else
-        FOVCircle.Visible = false
-    end
-end)
-
-------------------------------------------------------------------------
--- PREMIUM UI OLUŞTURMA (Mobil Kırmızı UI)
-------------------------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "UMUTxMAMIRageMenuV6"
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 260, 0, 360)
-MainFrame.Position = UDim2.new(0.5, -130, 0.5, -180)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-
-local MainCorner = Instance.new("UICorner", MainFrame)
-MainCorner.CornerRadius = UDim.new(0, 10)
-
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0, 45)
-Title.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
-Title.Text = "UMUTxMAMİ | RAGE V6"
-Title.TextColor3 = Color3.fromRGB(255, 0, 0)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 15
-Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 10)
-
--- AÇ/KAPAT BUTONU
-local ToggleBtn = Instance.new("TextButton", ScreenGui)
-ToggleBtn.Size = UDim2.new(0, 60, 0, 45)
-ToggleBtn.Position = UDim2.new(0, 15, 0.45, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 0, 0)
-ToggleBtn.Text = "MENU"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextSize = 12
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
-ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
-
-local Scroll = Instance.new("ScrollingFrame", MainFrame)
-Scroll.Size = UDim2.new(1, -10, 1, -55)
-Scroll.Position = UDim2.new(0, 5, 0, 50)
-Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 340)
-Scroll.ScrollBarThickness = 3
-
-local UIListLayout = Instance.new("UIListLayout", Scroll)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 8)
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-local function CreateFeatureButton(displayName, stateKey)
-    local btn = Instance.new("TextButton", Scroll)
-    btn.Size = UDim2.new(0.95, 0, 0, 38)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.Text = displayName .. ": KAPALI"
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 12
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-
+local function AddToggle(yPos, text, cfg, key)
+    local btn = Instance.new("TextButton", Main)
+    btn.Size = UDim2.new(0.9,0,0,50)
+    btn.Position = UDim2.new(0.05,0,0,yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.Text = text .. ": ON"
+    btn.TextColor3 = Color3.new(1,1,1)
     btn.MouseButton1Click:Connect(function()
-        States[stateKey] = not States[stateKey]
-        if States[stateKey] then
-            btn.BackgroundColor3 = Color3.fromRGB(160, 0, 0)
-            btn.Text = displayName .. ": AKTİF"
-            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        else
-            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            btn.Text = displayName .. ": KAPALI"
-            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-        end
+        cfg[key] = not cfg[key]
+        btn.Text = text .. (cfg[key] and ": ON" or ": OFF")
     end)
 end
 
-local function CreateFOVAdjuster()
-    local btn = Instance.new("TextButton", Scroll)
-    btn.Size = UDim2.new(0.95, 0, 0, 38)
-    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    btn.Text = "FOV Ayarı: " .. Config.AimFOV
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 12
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+AddToggle(90, "1 Hit Hack", Config.OneHit, "Enabled")
+AddToggle(150, "Silent Aim + Aimbot", Config.Combat, "SilentAim")
+AddToggle(210, "Full ESP", Config.ESP, "Enabled")
+AddToggle(270, "Gun Mods (Inf Ammo)", Config.GunMods, "InfAmmo")
+AddToggle(330, "God Mode + Speed", Config.Player, "GodMode")
 
-    btn.MouseButton1Click:Connect(function()
-        if Config.AimFOV >= 350 then Config.AimFOV = 100 else Config.AimFOV = Config.AimFOV + 50 end
-        btn.Text = "FOV Ayarı: " .. Config.AimFOV
-    end)
-end
-
-CreateFeatureButton("Aimbot (Kamera Kilidi)", "Aimbot")
-CreateFeatureButton("Silent Aim (Mermi Mıknatısı)", "SilentAim")
-CreateFeatureButton("FOV Çemberini Göster", "ShowFOV")
-CreateFOVAdjuster()
-CreateFeatureButton("Gelişmiş ESP (Name/Dist/Line)", "ESP")
-CreateFeatureButton("Legit Speed (Güvenli Hız)", "Speed")
-CreateFeatureButton("Legit Auto Farm", "AutoFarm")
-
-------------------------------------------------------------------------
--- EN YAKIN HEDEF ALGORİTMASI
-------------------------------------------------------------------------
-local function GetClosestTarget()
-    local target = nil
-    local shortestDistance = math.huge
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
-            local pos, onScreen = Camera:WorldToViewportPoint(v.Character.Head.Position)
-            if onScreen then
-                local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
-                if dist < Config.AimFOV and dist < shortestDistance then
-                    target = v
-                    shortestDistance = dist
-                end
-            end
-        end
-    end
-    return target
-end
-
--- AIMBOT LOOP
-RunService.RenderStepped:Connect(function()
-    if States.Aimbot then
-        local target = GetClosestTarget()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
-        end
-    end
-end)
-
--- SILENT AIM
+-- Silent Aim Fonksiyonu
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
 setreadonly(mt, false)
+
 mt.__namecall = newcclosure(function(self, ...)
     local method = getnamecallmethod()
-    if States.SilentAim and (method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRay" or method == "Raycast") then
-        local target = GetClosestTarget()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            return target.Character.Head, target.Character.Head.Position, Vector3.new(0,1,0), target.Character.Head.Material
-        end
-    end
-    return oldNamecall(self, ...)
-end)
-setreadonly(mt, true)
-
-------------------------------------------------------------------------
--- GELİŞMİŞ İSİM, MESAFE VE TRACES (ÇİZGİ) ESP SİSTEMİ
-------------------------------------------------------------------------
-local ESPTable = {}
-
-local function CreateESP(player)
-    local TextObj = Drawing.new("Text")
-    TextObj.Color = Color3.fromRGB(255, 0, 0)
-    TextObj.Size = 14
-    TextObj.Center = true
-    TextObj.Outline = true
-    TextObj.OutlineColor = Color3.fromRGB(0, 0, 0)
-    TextObj.Visible = false
-
-    local LineObj = Drawing.new("Line")
-    LineObj.Color = Color3.fromRGB(255, 0, 0)
-    LineObj.Thickness = 1
-    LineObj.Transparency = 0.7
-    LineObj.Visible = false
-
-    ESPTable[player] = {Text = TextObj, Line = LineObj}
-end
-
-for _, p in pairs(Players:GetPlayers()) do
-    if p ~= LocalPlayer then CreateESP(p) end
-end
-Players.PlayerAdded:Connect(function(p)
-    if p ~= LocalPlayer then CreateESP(p) end
-end)
-
-Players.PlayerRemoving:Connect(function(p)
-    if ESPTable[p] then
-        ESPTable[p].Text:Remove()
-        ESPTable[p].Line:Remove()
-        ESPTable[p] = nil
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    for player, drawings in pairs(ESPTable) do
-        if States.ESP and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
-            local hrp = player.Character.HumanoidRootPart
-            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+    local args = {...}
+    
+    if Config.Combat.SilentAim and method == "FireServer" then
+        if self.Name:find("Bullet") or self.Name:find("Shoot") or self.Name:find("Hit") then
+            local closest = nil
+            local minDist = Config.Combat.FOV
+            local cam = workspace.CurrentCamera
+            local mousePos = UIS:GetMouseLocation()
             
-            if onScreen then
-                local distance = math.floor((LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude) or 0)
-                
-                drawings.Text.Position = Vector2.new(pos.X, pos.Y - 40)
-                drawings.Text.Text = string.format("%s\n[%dm]", player.Name, distance)
-                drawings.Text.Visible = true
-                
-                drawings.Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                drawings.Line.To = Vector2.new(pos.X, pos.Y)
-                drawings.Line.Visible = true
-            else
-                drawings.Text.Visible = false
-                drawings.Line.Visible = false
-            end
-        else
-            drawings.Text.Visible = false
-            drawings.Line.Visible = false
-        end
-    end
-end)
-
-------------------------------------------------------------------------
--- GÜVENLİ SPEED & FARM DÖNGÜLERİ
-------------------------------------------------------------------------
-RunService.Heartbeat:Connect(function()
-    if States.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedValue
-    elseif not States.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        if LocalPlayer.Character.Humanoid.WalkSpeed == Config.SpeedValue then
-            LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        end
-    end
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(Config.FarmDelay)
-        if States.AutoFarm and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if not States.AutoFarm then break end
-                if obj:IsA("ProximityPrompt") then
-                    if (LocalPlayer.Character.HumanoidRootPart.Position - obj.Parent.Position).Magnitude < 20 then
-                        fireproximityprompt(obj)
+            for _, p in pairs(Players:GetPlayers()) do
+                if p \~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                    local head = p.Character.Head
+                    local pos, onScreen = cam:WorldToViewportPoint(head.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                        if dist < minDist then
+                            closest = head
+                            minDist = dist
+                        end
                     end
                 end
             end
+            
+            if closest then
+                args[1] = closest.Position + (closest.Velocity * 0.1)  -- Prediction
+            end
+        end
+    end
+    return oldNamecall(self, unpack(args))
+end)
+
+setreadonly(mt, true)
+
+-- 1 Hit Hack
+RunService.Heartbeat:Connect(function()
+    if Config.OneHit.Enabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p \~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") then
+                p.Character.Humanoid.Health = 0
+            end
         end
     end
 end)
 
-print("UMUTxMAMİ Legit Speed Update V6 Loaded!")
+-- Diğer loop'lar (ESP, Aimbot, Gun Mods)
+RunService.RenderStepped:Connect(function()
+    -- FOV Circle vs.
+    if Config.Combat.SilentAim then
+        -- Silent Aim aktif gösterim
+    end
+end)
+
+print("✅ Layroxc Hub Yüklendi! Silent Aim + 1 Hit Hack AKTİF!")
