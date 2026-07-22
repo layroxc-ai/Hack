@@ -1,235 +1,208 @@
--- ========================================================================
--- LAYROXC PRO MOD MENU - EKSİKSİZ FARM + OTOMATİK YENİDEN BAŞLATMA
--- PC & MOBILE UYUMLU - KAYAN MENÜ
--- =======================================================================
+-- ============================================================
+-- STREET LIFE LAYROXC ULTIMATE PRO MENU
+-- Tüm özellikler: Aimbot, Silent Aim, Speed, ESP, Farm (Oil/Mob/Breed), AutoBuy, Shop/ Wall Controller
+-- PC + Mobile uyumlu, kaydırma çubuklu, toggle butonlu
+-- ============================================================
 
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
 local runService = game:GetService("RunService")
 local userInputService = game:GetService("UserInputService")
 local teleportService = game:GetService("TeleportService")
-local players = game:GetService("Players")
-local replicatedStorage = game:GetService("ReplicatedStorage")
 local httpService = game:GetService("HttpService")
+local workspace = game:GetService("Workspace")
+local players = game:GetService("Players")
 
--- ===== ANA AYARLAR =====
+-- ============================================================
+-- AYARLAR (başlangıç değerleri)
+-- ============================================================
 local settings = {
-    -- Aimbot / ESP (önceki gibi)
+    -- Aimbot
     aimbotEnabled = false,
     silentAim = false,
     aimPart = "Head",
     aimFOV = 120,
     aimSmoothness = 0.3,
+    -- Hareket
     walkSpeed = 16,
     jumpPower = 50,
+    -- ESP
     espEnabled = false,
     espBox = true,
     espTracer = true,
     espName = true,
     espDistance = true,
     espColor = Color3.new(0, 1, 0),
-    
-    -- FARM AYARLARI
-    oilFarmEnabled = false,
-    mobFarmEnabled = false,
-    iceFarmEnabled = false, -- dondurma
-    autoUnlockEnabled = false, -- tüm pazarları/alanalrı aç
-    autoRestartEnabled = true, -- durduğunda yeniden başlat
-    
-    -- Farm kontrolleri
-    farmInterval = 1, -- saniye
-    farmRadius = 50, -- yarıçap
+    -- Farmlar
+    oilFarm = false,
+    mobFarm = false,
+    breedFarm = false,
+    -- Otomatik satın alma
+    autoBuy = false,
+    -- Dükkan & Duvar kontrolü
+    shopsVisible = true,
+    wallsVisible = true,
 }
 
--- ===== FARM YÖNETİCİSİ =====
-local farmManager = {
-    oil = { active = false, task = nil, lastRun = 0, status = "Duruyor" },
-    mob = { active = false, task = nil, lastRun = 0, status = "Duruyor" },
-    ice = { active = false, task = nil, lastRun = 0, status = "Duruyor" },
-    unlock = { active = false, task = nil, status = "Duruyor" },
-}
+-- ============================================================
+-- FARM YÖNETİCİSİ (dur-kontrol-et-yeniden başlat)
+-- ============================================================
+local FarmManager = {}
+FarmManager.running = false
+FarmManager.tasks = {}
 
--- ===== FARM FONKSİYONLARI (GERÇEK OYUN İÇİN ÖRNEK) =====
--- NOT: Street Life oyunundaki spesifik objeleri/etkileşimleri bilmediğim için
--- burada genel bir yapı kuruyorum. Gerçek farm işlemleri için oyundaki
--- RemoteEvent veya touch/click mekaniklerine göre düzenlemen gerekebilir.
--- Ama ben sana örnek mantığı veriyorum.
+function FarmManager:start()
+    if self.running then return end
+    self.running = true
+    print("Farm Manager başlatıldı.")
+    -- Ana döngüyü başlat
+    self:loop()
+end
 
-local function findNearestObject(className, distance)
-    local char = player.Character
-    if not char then return nil end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return nil end
-    local nearest = nil
-    local minDist = distance or settings.farmRadius
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA(className) and obj:FindFirstChild("TouchInterest") then -- örnek
-            local dist = (obj.Position - root.Position).Magnitude
-            if dist < minDist then
-                minDist = dist
-                nearest = obj
+function FarmManager:stop()
+    self.running = false
+    for _, task in pairs(self.tasks) do
+        task:Disconnect()
+    end
+    self.tasks = {}
+    print("Farm Manager durduruldu.")
+end
+
+function FarmManager:loop()
+    if not self.running then return end
+    -- Her 2 saniyede bir farmları kontrol et ve çalıştır
+    local conn = runService.Heartbeat:Connect(function()
+        if not self.running then conn:Disconnect() return end
+        self:checkFarms()
+    end)
+    table.insert(self.tasks, conn)
+end
+
+function FarmManager:checkFarms()
+    -- Petrol Farm
+    if settings.oilFarm then
+        self:doOilFarm()
+    end
+    -- Mob Farm
+    if settings.mobFarm then
+        self:doMobFarm()
+    end
+    -- Doğurma Farm (örnek olarak hayvan veya NPC üretme)
+    if settings.breedFarm then
+        self:doBreedFarm()
+    end
+    -- Otomatik satın alma
+    if settings.autoBuy then
+        self:doAutoBuy()
+    end
+end
+
+-- === PETROL FARM ===
+function FarmManager:doOilFarm()
+    -- Örnek: Petrol kulelerini bul ve topla (oyuna göre değiştir)
+    local oilRigs = workspace:FindFirstChild("OilRigs") or workspace:FindFirstChild("OilTowers")
+    if oilRigs then
+        for _, rig in pairs(oilRigs:GetChildren()) do
+            if rig:IsA("Model") and rig:FindFirstChild("Collect") then
+                -- Toplama butonuna tıkla
+                fireclickdetector(rig.Collect)
+                wait(0.1)
             end
         end
     end
-    return nearest
 end
 
--- Oil Farm (Petrol)
-local function oilFarm()
-    if not settings.oilFarmEnabled then return end
-    local oilObj = findNearestObject("Part", 50) -- örnek, gerçekte "Oil" tag veya model
-    if oilObj then
-        -- Örnek: fire touch event veya click detector
-        local click = oilObj:FindFirstChild("ClickDetector")
-        if click then
-            click:FireClick() -- veya fire event
-        else
-            -- belki remote event
-            local remote = replicatedStorage:FindFirstChild("OilCollect")
-            if remote then remote:FireServer(oilObj) end
-        end
-        farmManager.oil.status = "Çalışıyor (Petrol toplanıyor)"
-    else
-        farmManager.oil.status = "Petrol bulunamadı, bekleniyor..."
-    end
-end
-
--- Mob Farm (Canavar)
-local function mobFarm()
-    if not settings.mobFarmEnabled then return end
-    local mob = findNearestObject("Model", 50) -- moblar genelde model
-    if mob and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-        -- Saldırma işlemi (örnek: equip weapon, attack remote)
-        local attackRemote = replicatedStorage:FindFirstChild("AttackMob")
-        if attackRemote then
-            attackRemote:FireServer(mob)
-        end
-        farmManager.mob.status = "Çalışıyor (Mob dövülüyor)"
-    else
-        farmManager.mob.status = "Mob yok veya ölü, bekleniyor..."
-    end
-end
-
--- Ice Farm (Dondurma)
-local function iceFarm()
-    if not settings.iceFarmEnabled then return end
-    local iceObj = findNearestObject("Part", 50) -- dondurma tezgahı vb.
-    if iceObj then
-        local click = iceObj:FindFirstChild("ClickDetector")
-        if click then
-            click:FireClick()
-        end
-        farmManager.ice.status = "Çalışıyor (Dondurma toplanıyor)"
-    else
-        farmManager.ice.status = "Dondurma bulunamadı"
-    end
-end
-
--- Auto Unlock: Tüm pazarları, alanları satın al / aç
-local function autoUnlock()
-    if not settings.autoUnlockEnabled then return end
-    -- Örnek: Tüm "Buy" butonlarını tıkla, veya remote event gönder
-    local buyButtons = workspace:FindFirstChild("BuyButtons") -- örnek
-    if buyButtons then
-        for _, btn in pairs(buyButtons:GetChildren()) do
-            if btn:IsA("ClickDetector") then
-                btn:FireClick()
+-- === MOB FARM ===
+function FarmManager:doMobFarm()
+    -- Örnek: Canavarları bul ve saldır
+    local mobs = workspace:FindFirstChild("Mobs") or workspace:FindFirstChild("Enemies")
+    if mobs then
+        for _, mob in pairs(mobs:GetChildren()) do
+            if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+                -- Saldırı fonksiyonu (örnek: silah ateşleme)
+                -- Burada oyunun saldırı mekaniğine göre ayarla
+                -- Örneğin: player.Character:FindFirstChild("Tool") kullan
+                local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+                if tool then
+                    tool:Activate()
+                    wait(0.2)
+                    tool:Deactivate()
+                end
             end
         end
     end
-    -- Alternatif: Remote event
-    local unlockRemote = replicatedStorage:FindFirstChild("UnlockAll")
-    if unlockRemote then
-        unlockRemote:FireServer()
-    end
-    farmManager.unlock.status = "Açma işlemi çalışıyor..."
 end
 
--- ===== OTOMATİK YENİDEN BAŞLATMA KONTROLÜ =====
-local function checkAndRestartFarm()
-    if not settings.autoRestartEnabled then return end
-    
-    -- Oil kontrol
-    if settings.oilFarmEnabled and not farmManager.oil.active then
-        farmManager.oil.active = true
-        farmManager.oil.status = "Yeniden başlatıldı (Oil)"
-    end
-    -- Mob kontrol
-    if settings.mobFarmEnabled and not farmManager.mob.active then
-        farmManager.mob.active = true
-        farmManager.mob.status = "Yeniden başlatıldı (Mob)"
-    end
-    -- Ice kontrol
-    if settings.iceFarmEnabled and not farmManager.ice.active then
-        farmManager.ice.active = true
-        farmManager.ice.status = "Yeniden başlatıldı (Ice)"
-    end
-    -- Unlock kontrol
-    if settings.autoUnlockEnabled and not farmManager.unlock.active then
-        farmManager.unlock.active = true
-        farmManager.unlock.status = "Yeniden başlatıldı (Unlock)"
+-- === DOĞURMA FARM ===
+function FarmManager:doBreedFarm()
+    -- Örnek: Belirli bir bölgede sürekli NPC çağırma veya hayvan doğurma
+    -- Bu kısmı oyuna özel düzenlemen gerekir
+    local breedZone = workspace:FindFirstChild("BreedZone")
+    if breedZone then
+        -- Örnek: Her 5 saniyede bir doğurma butonuna tıkla
+        local breedBtn = breedZone:FindFirstChild("BreedButton")
+        if breedBtn then
+            fireclickdetector(breedBtn)
+        end
     end
 end
 
--- ===== FARM DÖNGÜSÜ =====
-runService.RenderStepped:Connect(function(deltaTime)
-    -- Farm işlemlerini çalıştır
-    if settings.oilFarmEnabled then
-        oilFarm()
-    else
-        farmManager.oil.active = false
-        farmManager.oil.status = "Durduruldu"
+-- === OTOMATİK SATIN ALMA (tüm dükkanlar, evler, arabalar) ===
+function FarmManager:doAutoBuy()
+    local buyables = workspace:FindFirstChild("Buyables") or workspace:FindFirstChild("Shops")
+    if buyables then
+        for _, obj in pairs(buyables:GetChildren()) do
+            if obj:IsA("Model") and obj:FindFirstChild("BuyButton") then
+                fireclickdetector(obj.BuyButton)
+                wait(0.3)
+            end
+        end
     end
-    
-    if settings.mobFarmEnabled then
-        mobFarm()
-    else
-        farmManager.mob.active = false
-        farmManager.mob.status = "Durduruldu"
+end
+
+-- FarmManager'ı başlat (başlangıçta kapalı)
+FarmManager:stop()
+
+-- ============================================================
+-- KARAKTER OLAYLARI (yeniden doğunca farm yeniden başlasın)
+-- ============================================================
+player.CharacterAdded:Connect(function(char)
+    wait(1)
+    if FarmManager.running then
+        FarmManager:stop()
+        FarmManager:start()
     end
-    
-    if settings.iceFarmEnabled then
-        iceFarm()
-    else
-        farmManager.ice.active = false
-        farmManager.ice.status = "Durduruldu"
-    end
-    
-    if settings.autoUnlockEnabled then
-        autoUnlock()
-    else
-        farmManager.unlock.active = false
-        farmManager.unlock.status = "Durduruldu"
-    end
-    
-    -- Otomatik yeniden başlatma kontrolü (her 5 saniyede bir)
-    if tick() - (farmManager.lastCheck or 0) > 5 then
-        checkAndRestartFarm()
-        farmManager.lastCheck = tick()
+    -- Hız ve zıplama ayarlarını uygula
+    local hum = char:FindFirstChild("Humanoid")
+    if hum then
+        hum.WalkSpeed = settings.walkSpeed
+        hum.JumpPower = settings.jumpPower
     end
 end)
 
--- ===== MENÜ GUI (PC & MOBILE UYUMLU, KAYAN) =====
+-- ============================================================
+-- MENÜ OLUŞTURMA (PC + MOBİL UYUMLU, KAYDIRMALI)
+-- ============================================================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ProFarmMenu"
+screenGui.Name = "UltimateMenu"
 screenGui.Parent = player.PlayerGui
 
--- Ana çerçeve (kayan)
+-- Ana Frame (kaydırma alanı)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 600)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -300)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-mainFrame.BackgroundTransparency = 0.1
+mainFrame.Size = UDim2.new(0, math.min(400, screenGui.AbsoluteSize.X - 20), 0, math.min(600, screenGui.AbsoluteSize.Y - 40))
+mainFrame.Position = UDim2.new(0.5, -mainFrame.Size.X.Offset/2, 0.5, -mainFrame.Size.Y.Offset/2)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BackgroundTransparency = 0.15
 mainFrame.BorderSizePixel = 0
-mainFrame.Visible = true
+mainFrame.Visible = false  -- Başlangıçta kapalı
 mainFrame.Parent = screenGui
 
--- Başlık (sürükleme için)
+-- Başlık
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 40)
-title.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-title.Text = "🚀 Street Life PRO Menu"
-title.TextColor3 = Color3.fromRGB(255, 200, 100)
+title.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+title.Text = "🔥 ULTIMATE PRO MENU"
+title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
 title.Parent = mainFrame
@@ -239,37 +212,39 @@ local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -35, 0, 5)
 closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-closeBtn.Text = "X"
+closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 closeBtn.TextScaled = true
-closeBtn.Font = Enum.Font.Gotham
+closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = mainFrame
 closeBtn.MouseButton1Click:Connect(function()
-    screenGui.Enabled = not screenGui.Enabled
+    mainFrame.Visible = false
 end)
 
--- KAYDIRILABİLİR ALAN (Scroll)
-local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -10, 1, -50)
-scroll.Position = UDim2.new(0, 5, 0, 45)
-scroll.BackgroundTransparency = 1
-scroll.CanvasSize = UDim2.new(0, 0, 0, 1200) -- yeterince büyük
-scroll.ScrollBarThickness = 8
-scroll.Parent = mainFrame
+-- Kaydırma alanı (ScrollingFrame)
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Size = UDim2.new(1, -10, 1, -50)
+scrollFrame.Position = UDim2.new(0, 5, 0, 45)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 2000)  -- Yüksekliği ayarlarız
+scrollFrame.ScrollBarThickness = 8
+scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
+scrollFrame.Parent = mainFrame
 
 local UIList = Instance.new("UIListLayout")
 UIList.Padding = UDim.new(0, 6)
-UIList.Parent = scroll
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Parent = scrollFrame
 
--- ===== BUTON / KONTROL OLUŞTURMA FONKSİYONLARI (MOBILE DOSTU) =====
-function createToggle(labelText, getter, setter, desc)
+-- Helper: Buton oluşturma (toggle)
+function createToggle(labelText, getter, setter)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 35)
+    frame.Size = UDim2.new(1, 0, 0, 32)
     frame.BackgroundTransparency = 1
-    frame.Parent = scroll
-    
+    frame.Parent = scrollFrame
+
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.65, 0, 1, 0)
+    label.Size = UDim2.new(0.7, 0, 1, 0)
     label.BackgroundTransparency = 1
     label.Text = labelText
     label.TextColor3 = Color3.fromRGB(220, 220, 220)
@@ -277,58 +252,57 @@ function createToggle(labelText, getter, setter, desc)
     label.TextScaled = true
     label.Font = Enum.Font.Gotham
     label.Parent = frame
-    
-    if desc then
-        local descLabel = Instance.new("TextLabel")
-        descLabel.Size = UDim2.new(0.65, 0, 0.4, 0)
-        descLabel.Position = UDim2.new(0, 0, 0.6, 0)
-        descLabel.BackgroundTransparency = 1
-        descLabel.Text = desc
-        descLabel.TextColor3 = Color3.fromRGB(150,150,150)
-        descLabel.TextXAlignment = Enum.TextXAlignment.Left
-        descLabel.TextScaled = true
-        descLabel.Font = Enum.Font.Gotham
-        descLabel.Parent = frame
-    end
-    
+
     local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0.25, 0, 0.8, 0)
-    toggle.Position = UDim2.new(0.75, 0, 0.1, 0)
+    toggle.Size = UDim2.new(0.2, 0, 1, 0)
+    toggle.Position = UDim2.new(0.8, 0, 0, 0)
     toggle.BackgroundColor3 = getter() and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(60, 60, 80)
-    toggle.Text = getter() and "✅ AÇIK" or "❌ KAPALI"
-    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.Text = getter() and "AÇIK" or "KAPALI"
+    toggle.TextColor3 = Color3.fromRGB(255,255,255)
     toggle.TextScaled = true
-    toggle.Font = Enum.Font.Gotham
+    toggle.Font = Enum.Font.GothamBold
     toggle.Parent = frame
-    
-    -- Mobil için dokunmatik destek
+
     toggle.MouseButton1Click:Connect(function()
         local newVal = not getter()
         setter(newVal)
-        toggle.Text = newVal and "✅ AÇIK" or "❌ KAPALI"
+        toggle.Text = newVal and "AÇIK" or "KAPALI"
         toggle.BackgroundColor3 = newVal and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(60, 60, 80)
-        -- Farm aktifliğini güncelle
-        if labelText:find("Oil") or labelText:find("Petrol") then
-            farmManager.oil.active = newVal
-        elseif labelText:find("Mob") then
-            farmManager.mob.active = newVal
-        elseif labelText:find("Ice") or labelText:find("Dondurma") then
-            farmManager.ice.active = newVal
-        elseif labelText:find("Unlock") or labelText:find("Aç") then
-            farmManager.unlock.active = newVal
+        -- FarmManager'ı başlat/durdur
+        if labelText:find("Farm") then
+            if newVal and not FarmManager.running then
+                FarmManager:start()
+            elseif not newVal and FarmManager.running then
+                -- Sadece ilgili farm kapatıldı, ama diğer farmlar açık olabilir, kontrol et
+                if not settings.oilFarm and not settings.mobFarm and not settings.breedFarm then
+                    FarmManager:stop()
+                end
+            end
+        end
+        -- ESP için yenile
+        if labelText:find("ESP") then
+            refreshESP()
+        end
+        -- Dükkan/duvar değişimi
+        if labelText:find("Dükkan") then
+            toggleShops()
+        end
+        if labelText:find("Duvar") then
+            toggleWalls()
         end
     end)
     return toggle
 end
 
-function createSlider(labelText, min, max, getter, setter, suffix, desc)
+-- Helper: Slider (kaydırıcı)
+function createSlider(labelText, min, max, getter, setter, suffix)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 55)
+    frame.Size = UDim2.new(1, 0, 0, 48)
     frame.BackgroundTransparency = 1
-    frame.Parent = scroll
-    
+    frame.Parent = scrollFrame
+
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 0.4, 0)
+    label.Size = UDim2.new(0.7, 0, 0.5, 0)
     label.BackgroundTransparency = 1
     label.Text = labelText
     label.TextColor3 = Color3.fromRGB(220, 220, 220)
@@ -336,171 +310,135 @@ function createSlider(labelText, min, max, getter, setter, suffix, desc)
     label.TextScaled = true
     label.Font = Enum.Font.Gotham
     label.Parent = frame
-    
-    if desc then
-        local descLabel = Instance.new("TextLabel")
-        descLabel.Size = UDim2.new(0.7, 0, 0.3, 0)
-        descLabel.Position = UDim2.new(0, 0, 0.4, 0)
-        descLabel.BackgroundTransparency = 1
-        descLabel.Text = desc
-        descLabel.TextColor3 = Color3.fromRGB(150,150,150)
-        descLabel.TextXAlignment = Enum.TextXAlignment.Left
-        descLabel.TextScaled = true
-        descLabel.Font = Enum.Font.Gotham
-        descLabel.Parent = frame
-    end
-    
+
     local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(0.3, 0, 0.4, 0)
+    valueLabel.Size = UDim2.new(0.3, 0, 0.5, 0)
     valueLabel.Position = UDim2.new(0.7, 0, 0, 0)
     valueLabel.BackgroundTransparency = 1
-    valueLabel.Text = tostring(getter()) .. (suffix or "")
+    valueLabel.Text = tostring(math.round(getter())) .. (suffix or "")
     valueLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
     valueLabel.TextScaled = true
     valueLabel.Font = Enum.Font.Gotham
     valueLabel.Parent = frame
-    
-    local slider = Instance.new("Frame")
-    slider.Size = UDim2.new(1, 0, 0.3, 0)
-    slider.Position = UDim2.new(0, 0, 0.6, 0)
-    slider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-    slider.BorderSizePixel = 0
-    slider.Parent = frame
-    
+
+    local sliderBg = Instance.new("Frame")
+    sliderBg.Size = UDim2.new(1, 0, 0.35, 0)
+    sliderBg.Position = UDim2.new(0, 0, 0.65, 0)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    sliderBg.BorderSizePixel = 0
+    sliderBg.Parent = frame
+
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new((getter() - min) / (max - min), 0, 1, 0)
     fill.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
     fill.BorderSizePixel = 0
-    fill.Parent = slider
-    
+    fill.Parent = sliderBg
+
     local function updateSlider(newVal)
         local clamped = math.clamp(newVal, min, max)
         setter(clamped)
         fill.Size = UDim2.new((clamped - min) / (max - min), 0, 1, 0)
         valueLabel.Text = tostring(math.round(clamped)) .. (suffix or "")
     end
-    
-    -- Fare ve dokunmatik için
-    local function onInputBegin(input)
+
+    local function startDrag()
+        local function move()
+            local pos = (mouse.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
+            local val = min + pos * (max - min)
+            updateSlider(val)
+        end
+        move()
+        local conn = mouse.Move:Connect(move)
+        local release = userInputService.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                conn:Disconnect()
+                release:Disconnect()
+            end
+        end)
+    end
+
+    sliderBg.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local function move(input2)
-                local pos
-                if input2.UserInputType == Enum.UserInputType.Touch then
-                    pos = (input2.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
-                else
-                    pos = (mouse.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
-                end
-                local val = min + pos * (max - min)
-                updateSlider(val)
-            end
-            move(input)
-            local conn
-            if input.UserInputType == Enum.UserInputType.Touch then
-                conn = userInputService.TouchMoved:Connect(move)
-            else
-                conn = mouse.Move:Connect(function() move(input) end)
-            end
-            local release = userInputService.InputEnded:Connect(function(inp)
-                if inp.UserInputType == input.UserInputType then
-                    conn:Disconnect()
-                    release:Disconnect()
-                end
-            end)
+            startDrag()
         end
-    end
-    slider.InputBegan:Connect(onInputBegin)
+    end)
 end
 
--- ===== MENÜ ÖĞELERİ =====
+-- ============================================================
+-- MENÜ ÖĞELERİ (Tüm ayarlar)
+-- ============================================================
+-- ---- AIMBOT ----
+createToggle("🎯 Aimbot Aç/Kapat", function() return settings.aimbotEnabled end, function(v) settings.aimbotEnabled = v end)
+createToggle("🔇 Silent Aim (Gizli)", function() return settings.silentAim end, function(v) settings.silentAim = v end)
+createSlider("📐 FOV Derece", 10, 180, function() return settings.aimFOV end, function(v) settings.aimFOV = v end, "°")
+createSlider("🎚️ Yumuşaklık", 0, 1, function() return settings.aimSmoothness end, function(v) settings.aimSmoothness = v end, "")
 
--- BAŞLIK: Aimbot ve ESP
-local titleAim = Instance.new("TextLabel")
-titleAim.Size = UDim2.new(1, 0, 0, 25)
-titleAim.BackgroundColor3 = Color3.fromRGB(40,40,50)
-titleAim.Text = "🎯 AİMBOT & ESP"
-titleAim.TextColor3 = Color3.fromRGB(255,200,100)
-titleAim.TextScaled = true
-titleAim.Font = Enum.Font.GothamBold
-titleAim.Parent = scroll
-
-createToggle("Aimbot Aç", function() return settings.aimbotEnabled end, function(v) settings.aimbotEnabled = v end, "Otomatik nişan alma")
-createToggle("Silent Aim (Gizli)", function() return settings.silentAim end, function(v) settings.silentAim = v end, "Hedefe gizli nişan")
-createSlider("Aim FOV", 10, 180, function() return settings.aimFOV end, function(v) settings.aimFOV = v end, "°", "Görüş alanı")
-createSlider("Aim Yumuşaklık", 0, 1, function() return settings.aimSmoothness end, function(v) settings.aimSmoothness = v end, "", "0=anlık, 1=yavaş")
-createSlider("Yürüme Hızı", 10, 80, function() return settings.walkSpeed end, function(v) settings.walkSpeed = v; if player.Character then local h = player.Character:FindFirstChild("Humanoid"); if h then h.WalkSpeed = v end end end, "", "Hızını ayarla")
-createSlider("Zıplama Gücü", 40, 120, function() return settings.jumpPower end, function(v) settings.jumpPower = v; if player.Character then local h = player.Character:FindFirstChild("Humanoid"); if h then h.JumpPower = v end end end, "", "Zıplama yüksekliği")
-
-createToggle("ESP Aç", function() return settings.espEnabled end, function(v) settings.espEnabled = v; createESP() end, "Oyuncuları göster")
-createToggle("ESP Kutu", function() return settings.espBox end, function(v) settings.espBox = v; createESP() end)
-createToggle("ESP Tracer", function() return settings.espTracer end, function(v) settings.espTracer = v; createESP() end)
-createToggle("ESP İsim", function() return settings.espName end, function(v) settings.espName = v; createESP() end)
-createToggle("ESP Mesafe", function() return settings.espDistance end, function(v) settings.espDistance = v; createESP() end)
-
--- BAŞLIK: FARM
-local titleFarm = Instance.new("TextLabel")
-titleFarm.Size = UDim2.new(1, 0, 0, 25)
-titleFarm.BackgroundColor3 = Color3.fromRGB(40,40,50)
-titleFarm.Text = "🌾 FARM SİSTEMLERİ"
-titleFarm.TextColor3 = Color3.fromRGB(100,255,100)
-titleFarm.TextScaled = true
-titleFarm.Font = Enum.Font.GothamBold
-titleFarm.Parent = scroll
-
-createToggle("Petrol (Oil) Farm", function() return settings.oilFarmEnabled end, function(v) settings.oilFarmEnabled = v; farmManager.oil.active = v end, "Otomatik petrol topla")
-createToggle("Mob Farm", function() return settings.mobFarmEnabled end, function(v) settings.mobFarmEnabled = v; farmManager.mob.active = v end, "Canavar döv")
-createToggle("Dondurma (Ice) Farm", function() return settings.iceFarmEnabled end, function(v) settings.iceFarmEnabled = v; farmManager.ice.active = v end, "Otomatik dondurma topla")
-createToggle("Tüm Alanları/Pazarları Aç", function() return settings.autoUnlockEnabled end, function(v) settings.autoUnlockEnabled = v; farmManager.unlock.active = v end, "Satın alma yerlerini aç")
-
-createToggle("Otomatik Yeniden Başlat", function() return settings.autoRestartEnabled end, function(v) settings.autoRestartEnabled = v end, "Farm durursa tekrar başlat")
-createSlider("Farm Aralığı (sn)", 0.5, 5, function() return settings.farmInterval end, function(v) settings.farmInterval = v end, "sn", "İşlem sıklığı")
-createSlider("Farm Yarıçapı", 10, 150, function() return settings.farmRadius end, function(v) settings.farmRadius = v end, "m", "Nesne arama mesafesi")
-
--- Durum Göstergeleri
-local statusFrame = Instance.new("Frame")
-statusFrame.Size = UDim2.new(1, 0, 0, 80)
-statusFrame.BackgroundColor3 = Color3.fromRGB(30,30,40)
-statusFrame.Parent = scroll
-
-local statusTitle = Instance.new("TextLabel")
-statusTitle.Size = UDim2.new(1, 0, 0, 20)
-statusTitle.BackgroundTransparency = 1
-statusTitle.Text = "📊 FARM DURUMU"
-statusTitle.TextColor3 = Color3.fromRGB(200,200,200)
-statusTitle.TextScaled = true
-statusTitle.Font = Enum.Font.GothamBold
-statusTitle.Parent = statusFrame
-
-local statusLabels = {}
-local farmNames = {"Oil", "Mob", "Ice", "Unlock"}
-for i, name in ipairs(farmNames) do
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.5, 0, 0.25, 0)
-    lbl.Position = UDim2.new((i-1)%2 * 0.5, 0, math.floor((i-1)/2) * 0.25 + 0.25, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = name .. ": " .. (farmManager[name:lower()] and farmManager[name:lower()].status or "Beklemede")
-    lbl.TextColor3 = Color3.fromRGB(200,200,200)
-    lbl.TextScaled = true
-    lbl.Font = Enum.Font.Gotham
-    lbl.Parent = statusFrame
-    statusLabels[name] = lbl
-end
-
--- Durum güncelleme (her saniye)
-runService.RenderStepped:Connect(function()
-    for name, lbl in pairs(statusLabels) do
-        local key = name:lower()
-        if farmManager[key] then
-            lbl.Text = name .. ": " .. farmManager[key].status
-        end
+-- ---- HAREKET ----
+createSlider("🏃 Yürüme Hızı", 10, 80, function() return settings.walkSpeed end, function(v) 
+    settings.walkSpeed = v
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = v
     end
+end, "")
+createSlider("🦘 Zıplama Gücü", 40, 200, function() return settings.jumpPower end, function(v)
+    settings.jumpPower = v
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.JumpPower = v
+    end
+end, "")
+
+-- ---- ESP ----
+createToggle("👁️ ESP Aç/Kapat", function() return settings.espEnabled end, function(v) settings.espEnabled = v end)
+createToggle("📦 ESP Kutu", function() return settings.espBox end, function(v) settings.espBox = v end)
+createToggle("〰️ ESP Tracer", function() return settings.espTracer end, function(v) settings.espTracer = v end)
+createToggle("🏷️ ESP İsim", function() return settings.espName end, function(v) settings.espName = v end)
+createToggle("📏 ESP Mesafe", function() return settings.espDistance end, function(v) settings.espDistance = v end)
+
+-- ---- FARMLAR ----
+createToggle("🛢️ Petrol Farm", function() return settings.oilFarm end, function(v) settings.oilFarm = v end)
+createToggle("👹 Mob Farm", function() return settings.mobFarm end, function(v) settings.mobFarm = v end)
+createToggle("🐣 Doğurma Farm", function() return settings.breedFarm end, function(v) settings.breedFarm = v end)
+createToggle("🛒 Otomatik Satın Al", function() return settings.autoBuy end, function(v) settings.autoBuy = v end)
+
+-- ---- DÜKKAN & DUVAR KONTROL ----
+createToggle("🏪 Dükkanları Aç/Kapat", function() return settings.shopsVisible end, function(v) 
+    settings.shopsVisible = v
+    toggleShops()
+end)
+createToggle("🧱 Duvarları Göster/Gizle", function() return settings.wallsVisible end, function(v)
+    settings.wallsVisible = v
+    toggleWalls()
 end)
 
--- ===== ESP (Önceki scriptteki gibi) =====
+-- ---- MENÜ TOGGLE BUTONU (ekranın sağ altında) ----
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 50, 0, 50)
+toggleButton.Position = UDim2.new(1, -60, 1, -60)
+toggleButton.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+toggleButton.Text = "☰"
+toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
+toggleButton.TextScaled = true
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.Parent = screenGui
+
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+    -- Menüyü ortala (ekran boyutu değişebilir)
+    mainFrame.Position = UDim2.new(0.5, -mainFrame.Size.X.Offset/2, 0.5, -mainFrame.Size.Y.Offset/2)
+end)
+
+-- ============================================================
+-- ESP SİSTEMİ (Drawing)
+-- ============================================================
 local espObjects = {}
-function createESP()
-    for _, v in pairs(espObjects) do v:Remove() end
+
+function refreshESP()
+    for _, obj in pairs(espObjects) do
+        obj:Destroy()
+    end
     espObjects = {}
     if not settings.espEnabled then return end
+
     for _, plr in pairs(players:GetPlayers()) do
         if plr ~= player and plr.Character then
             local root = plr.Character:FindFirstChild("HumanoidRootPart")
@@ -510,7 +448,7 @@ function createESP()
                     box.Size = Vector3.new(3, 5, 1.5)
                     box.Adornee = root
                     box.Color3 = settings.espColor
-                    box.Transparency = 0.5
+                    box.Transparency = 0.4
                     box.ZIndex = 0
                     box.Parent = plr.Character
                     table.insert(espObjects, box)
@@ -525,67 +463,181 @@ function createESP()
                 end
                 if settings.espName or settings.espDistance then
                     local bill = Instance.new("BillboardGui")
-                    bill.Size = UDim2.new(0, 150, 0, 30)
+                    bill.Size = UDim2.new(0, 180, 0, 30)
                     bill.Adornee = root
-                    bill.StudsOffset = Vector3.new(0, 3, 0)
+                    bill.StudsOffset = Vector3.new(0, 3.5, 0)
                     bill.Parent = plr.Character
                     local label = Instance.new("TextLabel")
-                    label.Size = UDim2.new(1, 0, 1, 0)
+                    label.Size = UDim2.new(1,0,1,0)
                     label.BackgroundTransparency = 1
                     label.TextColor3 = settings.espColor
                     label.TextScaled = true
-                    label.Font = Enum.Font.Gotham
+                    label.Font = Enum.Font.GothamBold
                     label.Parent = bill
-                    local function update()
+                    local function updateText()
                         local name = settings.espName and plr.Name or ""
-                        local dist = settings.espDistance and (" " .. math.round((root.Position - player.Character.HumanoidRootPart.Position).Magnitude) .. "m") or ""
+                        local dist = settings.espDistance and (" " .. math.round((root.Position - (player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character.HumanoidRootPart.Position or Vector3.zero)).Magnitude) .. "m") or ""
                         label.Text = name .. dist
                     end
-                    update()
+                    updateText()
+                    local conn = runService.RenderStepped:Connect(function()
+                        if not bill.Parent then conn:Disconnect() return end
+                        updateText()
+                    end)
                     table.insert(espObjects, bill)
+                    table.insert(espObjects, conn)
                 end
             end
         end
     end
 end
 
-players.PlayerAdded:Connect(createESP)
-players.PlayerRemoving:Connect(createESP)
-createESP()
+-- ESP'yi oyuncu girip çıkınca yenile
+players.PlayerAdded:Connect(refreshESP)
+players.PlayerRemoving:Connect(refreshESP)
 
--- ===== SÜRÜKLEME (PC & MOBILE) =====
-local dragging = false
-local dragStart, startPos
+-- ============================================================
+-- DÜKKAN & DUVAR KONTROL FONKSİYONLARI
+-- ============================================================
+local shopCache = {}
+local wallCache = {}
 
-title.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
+function toggleShops()
+    -- Tüm dükkanları bul (örnek: "Shop" etiketli veya isimli)
+    local shops = workspace:FindFirstChild("Shops") or workspace:FindFirstChild("Stores")
+    if not shops then return end
+    for _, shop in pairs(shops:GetChildren()) do
+        if shop:IsA("Model") then
+            if settings.shopsVisible then
+                if shopCache[shop] then
+                    shop.Parent = shopCache[shop].Parent
+                    shop.Position = shopCache[shop].Position
+                    shopCache[shop] = nil
+                end
+            else
+                if not shopCache[shop] then
+                    shopCache[shop] = {Parent = shop.Parent, Position = shop.Position}
+                    shop.Parent = nil  -- veya workspace'a at, gizlemek için
+                end
+            end
+        end
     end
-end)
-userInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-userInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
-
--- ===== KARAKTER EKLENDİĞİNDE HIZ AYARI =====
-player.CharacterAdded:Connect(function(char)
-    local humanoid = char:WaitForChild("Humanoid")
-    humanoid.WalkSpeed = settings.walkSpeed
-    humanoid.JumpPower = settings.jumpPower
-end)
-
-if player.Character then
-    local h = player.Character:FindFirstChild("Humanoid")
-    if h then h.WalkSpeed = settings.walkSpeed; h.JumpPower = settings.jumpPower end
 end
 
-print("✅ Street Life PRO Menu yüklendi! (Farm + Otomatik Restart + Tüm alanları aç)")
+function toggleWalls()
+    -- Duvarları bul (örnek: "Wall" isimli)
+    local walls = workspace:FindFirstChild("Walls") or workspace:FindFirstChild("Barriers")
+    if not walls then return end
+    for _, wall in pairs(walls:GetChildren()) do
+        if wall:IsA("BasePart") or wall:IsA("Model") then
+            if settings.wallsVisible then
+                if wallCache[wall] then
+                    wall.CanCollide = true
+                    wall.Transparency = 0
+                    wallCache[wall] = nil
+                end
+            else
+                if not wallCache[wall] then
+                    wallCache[wall] = true
+                    wall.CanCollide = false
+                    wall.Transparency = 1
+                end
+            end
+        end
+    end
+end
+
+-- ============================================================
+-- AİMBOT (RenderStep ile)
+-- ============================================================
+local camera = workspace.CurrentCamera
+local aimTarget = nil
+
+runService.RenderStepped:Connect(function()
+    if settings.aimbotEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character then
+            local part = target.Character:FindFirstChild(settings.aimPart) or target.Character:FindFirstChild("HumanoidRootPart")
+            if part then
+                if settings.silentAim then
+                    aimTarget = part
+                else
+                    local lookVector = (part.Position - camera.CFrame.Position).Unit
+                    local targetCFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + lookVector)
+                    camera.CFrame = camera.CFrame:Lerp(targetCFrame, settings.aimSmoothness)
+                end
+            end
+        end
+    else
+        aimTarget = nil
+    end
+end)
+
+function getClosestPlayer()
+    local maxDist = settings.aimFOV
+    local target = nil
+    local char = player.Character
+    if not char then return nil end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+
+    for _, plr in pairs(players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
+            local targetRoot = plr.Character:FindFirstChild(settings.aimPart) or plr.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                local screenPos, onScreen = camera:WorldToScreenPoint(targetRoot.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                    if dist < maxDist then
+                        maxDist = dist
+                        target = plr
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- ============================================================
+-- OTOMATİK YENİDEN BAŞLATMA KONTROLÜ (Farm durduysa)
+-- ============================================================
+-- Her 10 saniyede bir farmlar çalışıyor mu kontrol et
+runService.Heartbeat:Connect(function()
+    if FarmManager.running then
+        -- Eğer farm ayarları kapalıysa durdur
+        if not settings.oilFarm and not settings.mobFarm and not settings.breedFarm and not settings.autoBuy then
+            FarmManager:stop()
+        end
+        -- Farm çalışıyor ama belki oyuncu öldü, karakter yoksa yeniden başlat
+        if not player.Character then
+            FarmManager:stop()
+            wait(2)
+            if settings.oilFarm or settings.mobFarm or settings.breedFarm or settings.autoBuy then
+                FarmManager:start()
+            end
+        end
+    else
+        -- FarmManager durdu ama ayarlar açık mı? tekrar başlat
+        if settings.oilFarm or settings.mobFarm or settings.breedFarm or settings.autoBuy then
+            FarmManager:start()
+        end
+    end
+end)
+
+-- ============================================================
+-- BAŞLANGIÇ AYARLARI
+-- ============================================================
+-- Menü başlangıçta kapalı
+mainFrame.Visible = false
+
+-- FarmManager başlangıçta kapalı
+FarmManager:stop()
+
+-- ESP'yi başlat (kapalı)
+refreshESP()
+
+print("✅ ULTIMATE PRO MENU başarıyla yüklendi!")
+print("📌 Sağ alttaki ☰ butonuna tıklayarak menüyü aç/kapat.")
+print("🔄 Farmlar durursa otomatik yeniden başlatılır.")
+print("⚠️ Tüm özellikler risk içerir, dikkatli kullan.")
