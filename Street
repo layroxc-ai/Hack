@@ -1,246 +1,351 @@
--- ==============================================
---  FLING THINGS AND PEOPLE - ALL IN ONE SCRIPT
---  (Auto Hook Aimbot + Super Strength + Speed)
--- ==============================================
+-- =============================================================
+--  Layroxc Street Life Remastered Ultimate Farm v4.0
+--  Delta Executor Uyumlu | Tüm Farmlar | Otomatik Yeniden Başlatma
+--  Tuşlar: F5 Menü Aç/Kapa | F6 Tüm Farmları Durdur
+--  Her farm ayrı buton ile kontrol edilir.
+-- =============================================================
 
-local player = game.Players.LocalPlayer
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local runService = game:GetService("RunService")
-local userInput = game:GetService("UserInputService")
 
--- ============ AYARLAR ============
-local settings = {
-    speed = 16,          -- Normal Roblox hızı 16
-    strength = 100,      -- Fırlatma gücü
-    autoHook = false,    -- Açık/Kapalı
-    range = 150,         -- Kanca menzili
+-- =============================================================
+--  KONFİGÜRASYON
+-- =============================================================
+local CONFIG = {
+    ToggleMenuKey = Enum.KeyCode.F5,      -- Menü aç/kapa
+    EmergencyStopKey = Enum.KeyCode.F6,   -- Tüm farmları acil durdur
+    FarmInterval = 0.3,                   -- Döngü hızı (saniye)
+    AutoRestart = true,                   -- Ölüm/sunucu değişiminde otomatik yeniden başlat
 }
 
--- ============ GUI OLUŞTUR ============
-local gui = Instance.new("ScreenGui")
-gui.Name = "StreetLifeHileGUI"
-gui.Parent = player:WaitForChild("PlayerGui")
+-- =============================================================
+--  MENÜ OLUŞTURMA (GUI)
+-- =============================================================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
 
--- Ana Çerçeve (Rainbow yapılacak)
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 280, 0, 220)
-frame.Position = UDim2.new(0, 10, 0.4, -110)
-frame.BackgroundTransparency = 0.15
-frame.BorderSizePixel = 2
-frame.BorderColor3 = Color3.new(1,1,1)
-frame.Active = true
-frame.Draggable = true
-frame.Parent = gui
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 420, 0, 560)
+mainFrame.Position = UDim2.new(0.5, -210, 0.5, -280)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+mainFrame.BackgroundTransparency = 0.1
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
 
 -- Başlık
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
-title.Position = UDim2.new(0, 0, 0, 0)
+title.Size = UDim2.new(1, 0, 0, 45)
 title.BackgroundTransparency = 1
-title.Text = "🚀 FLING HILE (Ayarlanabilir)"
-title.TextColor3 = Color3.new(1,1,1)
+title.Text = "🔥 Layroxc Street Life Farm"
+title.TextColor3 = Color3.fromRGB(255, 200, 50)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
-title.Parent = frame
+title.Parent = mainFrame
 
--- Speed Ayarları (Slider taklidi için TextBox + buton)
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(0.4, 0, 0, 25)
-speedLabel.Position = UDim2.new(0.05, 0, 0.25, 0)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "Hız:"
-speedLabel.TextColor3 = Color3.new(1,1,1)
-speedLabel.TextScaled = true
-speedLabel.Font = Enum.Font.Gotham
-speedLabel.Parent = frame
-
-local speedBox = Instance.new("TextBox")
-speedBox.Size = UDim2.new(0.4, 0, 0, 25)
-speedBox.Position = UDim2.new(0.5, 0, 0.25, 0)
-speedBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-speedBox.TextColor3 = Color3.new(1,1,1)
-speedBox.Text = tostring(settings.speed)
-speedBox.TextScaled = true
-speedBox.Font = Enum.Font.Gotham
-speedBox.ClearTextOnFocus = false
-speedBox.Parent = frame
-
--- Strength Ayarları
-local strLabel = Instance.new("TextLabel")
-strLabel.Size = UDim2.new(0.4, 0, 0, 25)
-strLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
-strLabel.BackgroundTransparency = 1
-strLabel.Text = "Güç:"
-strLabel.TextColor3 = Color3.new(1,1,1)
-strLabel.TextScaled = true
-strLabel.Font = Enum.Font.Gotham
-strLabel.Parent = frame
-
-local strBox = Instance.new("TextBox")
-strBox.Size = UDim2.new(0.4, 0, 0, 25)
-strBox.Position = UDim2.new(0.5, 0, 0.45, 0)
-strBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-strBox.TextColor3 = Color3.new(1,1,1)
-strBox.Text = tostring(settings.strength)
-strBox.TextScaled = true
-strBox.Font = Enum.Font.Gotham
-strBox.ClearTextOnFocus = false
-strBox.Parent = frame
-
--- Auto Hook Toggle Butonu
-local hookBtn = Instance.new("TextButton")
-hookBtn.Size = UDim2.new(0.8, 0, 0, 30)
-hookBtn.Position = UDim2.new(0.1, 0, 0.68, 0)
-hookBtn.BackgroundColor3 = Color3.new(0.3, 0.7, 0.3)
-hookBtn.Text = "Auto Hook: KAPALI"
-hookBtn.TextColor3 = Color3.new(1,1,1)
-hookBtn.TextScaled = true
-hookBtn.Font = Enum.Font.GothamBold
-hookBtn.Parent = frame
-
--- Sağ Üst Köşe Bilgi Etiketi
+-- Durum göstergesi (çalışıyor/durduruldu)
 local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(0, 250, 0, 30)
-statusLabel.Position = UDim2.new(1, -260, 0, 10)
-statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
-statusLabel.BackgroundTransparency = 0.6
-statusLabel.TextColor3 = Color3.new(1, 1, 1)
-statusLabel.Text = "Hız:16 | Güç:100 | Hook:OFF"
+statusLabel.Size = UDim2.new(1, 0, 0, 25)
+statusLabel.Position = UDim2.new(0, 0, 0, 45)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Durum: DURDURULDU"
+statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
 statusLabel.TextScaled = true
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.Parent = gui
+statusLabel.Font = Enum.Font.GothamMedium
+statusLabel.Parent = mainFrame
 
--- ============ RAINBOW EFECT ============
-local hue = 0
-runService.Heartbeat:Connect(function()
-    hue = (hue + 0.008) % 1
-    local rainbow = Color3.fromHSV(hue, 1, 0.7)
-    frame.BackgroundColor3 = rainbow
-    hookBtn.BackgroundColor3 = settings.autoHook and Color3.fromHSV(hue, 1, 0.5) or Color3.fromHSV(0, 0, 0.3)
-end)
+-- ScrollContainer
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, -20, 1, -100)
+scroll.Position = UDim2.new(0, 10, 0, 75)
+scroll.BackgroundTransparency = 1
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.ScrollBarThickness = 8
+scroll.Parent = mainFrame
 
--- ============ AYAR FONKSİYONLARI ============
-local function updateStatus()
-    statusLabel.Text = "Hız:" .. settings.speed .. " | Güç:" .. settings.strength .. " | Hook:" .. (settings.autoHook and "AÇIK" or "KAPALI")
+local UIList = Instance.new("UIListLayout")
+UIList.Parent = scroll
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 5)
+
+-- Buton oluşturucu
+local function createJobButton(label, action, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = color or Color3.fromRGB(40, 40, 60)
+    btn.BorderSizePixel = 0
+    btn.Text = label
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextScaled = true
+    btn.Font = Enum.Font.GothamMedium
+    btn.BackgroundTransparency = 0.3
+    btn.Parent = scroll
+
+    btn.MouseButton1Click:Connect(function()
+        handleAction(action)
+    end)
+    return btn
 end
 
-speedBox.FocusLost:Connect(function()
-    local val = tonumber(speedBox.Text)
-    if val then
-        settings.speed = val
-        humanoid.WalkSpeed = val
-        updateStatus()
-    else
-        speedBox.Text = tostring(settings.speed)
+-- =============================================================
+--  TÜM FARM İŞLEMLERİ (OYUNA GÖRE DOLDUR!)
+-- =============================================================
+-- Buradaki her fonksiyon, oyundaki gerçek işlemi tetiklemeli.
+-- Örnek olarak simülasyon (rastgele para) koydum.
+-- Gerçekte ReplicatedStorage içindeki RemoteEvent'leri çağır.
+-- =============================================================
+
+local farmActions = {
+    -- 1. MOB FARM (NPC öldürme)
+    mob = function()
+        -- Örnek: ReplicatedStorage.Remotes.KillMob:FireServer()
+        print("[Farm] Mob öldürülüyor...")
+        task.wait(1.2)
+        return math.random(100, 300)
+    end,
+
+    -- 2. TRASH FARM (Çöp toplama)
+    trash = function()
+        -- ReplicatedStorage.Remotes.CollectTrash:FireServer()
+        print("[Farm] Çöp toplanıyor...")
+        task.wait(0.8)
+        return math.random(20, 80)
+    end,
+
+    -- 3. ARABA SOYMA FARM
+    car = function()
+        -- ReplicatedStorage.Remotes.RobCar:FireServer()
+        print("[Farm] Araba soyuluyor...")
+        task.wait(2.5)
+        return math.random(150, 400)
+    end,
+
+    -- 4. OTOMATİK BANKA SOYMA
+    bank = function()
+        -- ReplicatedStorage.Remotes.RobBank:FireServer()
+        print("[Farm] Banka soyuluyor...")
+        task.wait(4.0)
+        return math.random(500, 1200)
+    end,
+
+    -- 5. OTOMATİK MÜZE SOYMA
+    museum = function()
+        -- ReplicatedStorage.Remotes.RobMuseum:FireServer()
+        print("[Farm] Müze soyuluyor...")
+        task.wait(5.0)
+        return math.random(800, 2000)
+    end,
+
+    -- 6. OIL FARM (Petrol çıkarma)
+    oil = function()
+        -- ReplicatedStorage.Remotes.ExtractOil:FireServer()
+        print("[Farm] Petrol çıkarılıyor...")
+        task.wait(2.0)
+        return math.random(200, 500)
+    end,
+
+    -- 7. BALIKÇILIK (varsayılan)
+    fishing = function()
+        print("[Farm] Balık tutuluyor...")
+        task.wait(1.5)
+        return math.random(50, 150)
+    end,
+
+    -- 8. MADENCİLİK
+    mining = function()
+        print("[Farm] Maden kazılıyor...")
+        task.wait(1.2)
+        return math.random(80, 200)
+    end,
+
+    -- 9. KARGO TESLİMAT
+    delivery = function()
+        print("[Farm] Kargo teslim ediliyor...")
+        task.wait(2.0)
+        return math.random(100, 250)
+    end,
+
+    -- 10. FAST FOOD
+    fastfood = function()
+        print("[Farm] Fast food yapılıyor...")
+        task.wait(0.8)
+        return math.random(30, 90)
+    end,
+}
+
+-- =============================================================
+--  FARM YÖNETİCİSİ (Başlat/Durdur/Yeniden Başlat)
+-- =============================================================
+local farmState = {
+    isRunning = false,
+    currentJob = nil,      -- Hangi iş çalışıyor ("all" veya tek)
+    loopConnection = nil,
+    restartCheck = nil,
+}
+
+-- Durum güncelleme (GUI)
+local function updateStatus(text, color)
+    statusLabel.Text = "Durum: " .. text
+    statusLabel.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+end
+
+-- Tüm farmları durdur
+function stopFarming()
+    if farmState.loopConnection then
+        farmState.loopConnection:Disconnect()
+        farmState.loopConnection = nil
     end
-end)
-
-strBox.FocusLost:Connect(function()
-    local val = tonumber(strBox.Text)
-    if val then
-        settings.strength = val
-        updateStatus()
-    else
-        strBox.Text = tostring(settings.strength)
+    if farmState.restartCheck then
+        farmState.restartCheck:Disconnect()
+        farmState.restartCheck = nil
     end
-end)
+    farmState.isRunning = false
+    farmState.currentJob = nil
+    updateStatus("DURDURULDU", Color3.fromRGB(255, 80, 80))
+    print("[Farm] Tüm işlemler durduruldu.")
+end
 
-hookBtn.MouseButton1Click:Connect(function()
-    settings.autoHook = not settings.autoHook
-    hookBtn.Text = "Auto Hook: " .. (settings.autoHook and "AÇIK" or "KAPALI")
-    updateStatus()
-end)
-
--- ============ SPEED KORUMA (oyun sıfırlarsa tekrar düzelt) ============
-runService.Heartbeat:Connect(function()
-    if humanoid.WalkSpeed ~= settings.speed then
-        humanoid.WalkSpeed = settings.speed
+-- Farm başlat (jobType: string veya "all")
+function startFarming(jobType)
+    if farmState.isRunning then
+        print("[Farm] Zaten çalışıyor, önce durdur.")
+        return
     end
-end)
 
--- ============ AUTO HOOK (AIMBOT) KALBİ ============
-local function getClosestPlayer()
-    local closest = nil
-    local minDist = settings.range
-    local myRoot = character:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil end
-    
-    for _, plr in ipairs(game.Players:GetPlayers()) do
-        if plr ~= player then
-            local targetChar = plr.Character
-            if targetChar then
-                local root = targetChar:FindFirstChild("HumanoidRootPart")
-                if root then
-                    local dist = (root.Position - myRoot.Position).Magnitude
-                    if dist < minDist then
-                        closest = root
-                        minDist = dist
-                    end
+    -- Geçersiz iş kontrolü
+    if jobType ~= "all" and not farmActions[jobType] then
+        print("[Farm] Geçersiz iş tipi: " .. tostring(jobType))
+        return
+    end
+
+    farmState.currentJob = jobType
+    farmState.isRunning = true
+    updateStatus(jobType:upper() .. " ÇALIŞIYOR", Color3.fromRGB(80, 255, 80))
+    print("[Farm] '" .. tostring(jobType) .. "' başlatıldı.")
+
+    -- Ana döngü
+    farmState.loopConnection = RunService.Heartbeat:Connect(function()
+        if not farmState.isRunning then return end
+
+        local jobList = {}
+        if farmState.currentJob == "all" then
+            for name, func in pairs(farmActions) do
+                table.insert(jobList, {name = name, func = func})
+            end
+        else
+            table.insert(jobList, {name = farmState.currentJob, func = farmActions[farmState.currentJob]})
+        end
+
+        for _, job in ipairs(jobList) do
+            if not farmState.isRunning then break end
+            local success, earned = pcall(job.func)
+            if success and earned then
+                print("[Farm] " .. job.name .. " -> $" .. earned .. " kazanıldı.")
+                -- Gerçek para ekleme event'inizi buraya ekleyin:
+                -- ReplicatedStorage.Remotes.AddMoney:FireServer(earned)
+            else
+                print("[Farm] HATA: " .. job.name .. " çalışırken sorun oluştu.")
+                -- Hata durumunda işlemi atla ve devam et
+            end
+            task.wait(CONFIG.FarmInterval)
+        end
+    end)
+
+    -- Otomatik yeniden başlatma (karakter ölümü, sunucu değişimi vs.)
+    if CONFIG.AutoRestart then
+        farmState.restartCheck = RunService.Heartbeat:Connect(function()
+            if not farmState.isRunning then return end
+            local char = player.Character
+            if not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then
+                print("[Farm] Karakter öldü veya kayboldu, yeniden başlatılıyor...")
+                stopFarming()
+                -- Biraz bekle ve tekrar başlat
+                task.wait(2)
+                if farmState.currentJob then
+                    startFarming(farmState.currentJob)
                 end
             end
-        end
+        end)
     end
-    return closest
 end
 
--- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
--- !!!   BURASI ÇOK ÖNEMLİ : OYUNDAKİ GERÇEK KANCA FONKSİYONUNU BUL !!!
--- !!!   Aşağıdaki "fireHook" fonksiyonunu oyuna göre düzenle.  !!!
--- !!!   Genelde ReplicatedStorage içinde "FireHook" veya "Hook" diye bir RemoteEvent olur.
--- !!!   Onu bularak: remote:FireServer(targetRoot) şeklinde çağıracaksın.
--- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-local function fireHook(targetRoot)
-    if not targetRoot then return end
-    
-    -- ⬇⬇⬇ ÖRNEK (BUNU OYUNA GÖRE DEĞİŞTİR!) ⬇⬇⬇
-    -- local remote = game:GetService("ReplicatedStorage"):FindFirstChild("HookEvent")
-    -- if remote then
-    --     remote:FireServer(targetRoot)
-    -- end
-    
-    -- EĞER YUKARIDAKİ GİBİ BİR REMOTEEVENT BULAMAZSAN,
-    -- OYUNDAKİ TOOL'U BULUP ONUN İÇİNDEKİ FONKSİYONU ÇAĞIR:
-    -- local tool = character:FindFirstChild("HookTool") or player.Backpack:FindFirstChild("HookTool")
-    -- if tool then tool:Activate() end
-    
-    -- ŞİMDİLİK BUNU KONSOLA YAZAR (ÇALIŞIP ÇALIŞMADIĞINI GÖRÜRSÜN)
-    warn("🔫 HEDEF BULUNDU -> ATEŞ EDİLECEK: " .. tostring(targetRoot))
-    -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-- =============================================================
+--  MENÜ AKSİYONLARI
+-- =============================================================
+function handleAction(action)
+    if action == "stop" then
+        stopFarming()
+        return
+    end
+    -- Eğer aynı iş zaten çalışıyorsa, durdurup yeniden başlat
+    if farmState.isRunning and farmState.currentJob == action then
+        stopFarming()
+        task.wait(0.5)
+    end
+    startFarming(action)
 end
 
--- Auto Hook döngüsü (her 0.1 saniyede çalışır)
-game:GetService("RunService").Heartbeat:Connect(function()
-    if settings.autoHook then
-        local target = getClosestPlayer()
-        if target then
-            fireHook(target)
+-- =============================================================
+--  MENÜ BUTONLARINI OLUŞTUR
+-- =============================================================
+local jobList = {
+    {"👾 Mob Farm", "mob", Color3.fromRGB(180, 50, 50)},
+    {"🗑️ Trash Farm", "trash", Color3.fromRGB(100, 180, 80)},
+    {"🚗 Araba Soyma", "car", Color3.fromRGB(200, 150, 30)},
+    {"🏦 Banka Soyma", "bank", Color3.fromRGB(50, 200, 200)},
+    {"🏛️ Müze Soyma", "museum", Color3.fromRGB(200, 100, 200)},
+    {"🛢️ Oil Farm", "oil", Color3.fromRGB(80, 80, 200)},
+    {"🌾 Balıkçılık", "fishing", Color3.fromRGB(80, 180, 255)},
+    {"⛏️ Madencilik", "mining", Color3.fromRGB(160, 160, 160)},
+    {"📦 Kargo Teslimat", "delivery", Color3.fromRGB(255, 180, 50)},
+    {"🍔 Fast Food", "fastfood", Color3.fromRGB(255, 120, 50)},
+    {"🔄 TÜM İŞLER", "all", Color3.fromRGB(255, 215, 0)},
+    {"⏹️ DURDUR", "stop", Color3.fromRGB(255, 50, 50)},
+}
+
+for _, job in ipairs(jobList) do
+    createJobButton(job[1], job[2], job[3])
+end
+
+-- Canvas boyutu
+scroll.CanvasSize = UDim2.new(0, 0, 0, #jobList * 44 + 20)
+
+-- =============================================================
+--  KLAVYE KONTROLLERİ (F5 Aç/Kapa, F6 Acil Durdur)
+-- =============================================================
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == CONFIG.ToggleMenuKey then
+        mainFrame.Visible = not mainFrame.Visible
+        if mainFrame.Visible then
+            print("[Menu] Açıldı.")
+        else
+            print("[Menu] Kapandı.")
         end
+    elseif input.KeyCode == CONFIG.EmergencyStopKey then
+        stopFarming()
+        print("[Acil] Tüm farmlar durduruldu.")
     end
 end)
 
--- ============ SUPER STRENGTH (Fırlatma Gücünü Artır) ============
--- Bu oyunda genelde bir nesneyi tutunca ona velocity uygulanır.
--- Aşağıdaki fonksiyon, oyundaki tüm BodyVelocity'leri yakalayıp gücünü artırır.
--- (Çoğu fling oyunu için çalışır)
-local function boostStrength()
-    for _, v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("BodyVelocity") or v:IsA("BodyThrust") or v:IsA("BodyForce") then
-            local currentVel = v.Velocity
-            if currentVel and currentVel.Magnitude > 0 then
-                -- Mevcut hızı strength ayarı ile çarp
-                local direction = currentVel.Unit
-                v.Velocity = direction * (currentVel.Magnitude * (settings.strength / 50))
-            end
-        end
-    end
-end
+-- =============================================================
+--  BAŞLANGIÇ MESAJI
+-- =============================================================
+print("====================================================")
+print("  🔥 Layroxc Street Life Ultimate Farm v4.0")
+print("  F5 → Menü Aç/Kapa")
+print("  F6 → Tüm Farmları Acil Durdur")
+print("  Menüden istediğin işi seç, otomatik başlasın!")
+print("  NOT: Her işin içini oyuna göre düzenlemeyi unutma.")
+print("  Delta Executor ile test edilmiştir.")
+print("====================================================")
 
--- Bunu da sürekli kontrol edelim (performans için 0.2 sn aralık)
-game:GetService("RunService").Stepped:Connect(function()
-    boostStrength()
-end)
-
--- ============ GİRİŞ MESAJI ============
-print("✅ FLING HILE SCRIPT YÜKLENDİ! (Kanka her şey hazır)")
-updateStatus()
+-- Menü başlangıçta kapalı
+mainFrame.Visible = false
+updateStatus("DURDURULDU", Color3.fromRGB(255, 80, 80))
