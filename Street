@@ -1,643 +1,246 @@
--- ============================================================
--- STREET LIFE LAYROXC ULTIMATE PRO MENU
--- Tüm özellikler: Aimbot, Silent Aim, Speed, ESP, Farm (Oil/Mob/Breed), AutoBuy, Shop/ Wall Controller
--- PC + Mobile uyumlu, kaydırma çubuklu, toggle butonlu
--- ============================================================
+-- ==============================================
+--  FLING THINGS AND PEOPLE - ALL IN ONE SCRIPT
+--  (Auto Hook Aimbot + Super Strength + Speed)
+-- ==============================================
 
 local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
 local runService = game:GetService("RunService")
-local userInputService = game:GetService("UserInputService")
-local teleportService = game:GetService("TeleportService")
-local httpService = game:GetService("HttpService")
-local workspace = game:GetService("Workspace")
-local players = game:GetService("Players")
+local userInput = game:GetService("UserInputService")
 
--- ============================================================
--- AYARLAR (başlangıç değerleri)
--- ============================================================
+-- ============ AYARLAR ============
 local settings = {
-    -- Aimbot
-    aimbotEnabled = false,
-    silentAim = false,
-    aimPart = "Head",
-    aimFOV = 120,
-    aimSmoothness = 0.3,
-    -- Hareket
-    walkSpeed = 16,
-    jumpPower = 50,
-    -- ESP
-    espEnabled = false,
-    espBox = true,
-    espTracer = true,
-    espName = true,
-    espDistance = true,
-    espColor = Color3.new(0, 1, 0),
-    -- Farmlar
-    oilFarm = false,
-    mobFarm = false,
-    breedFarm = false,
-    -- Otomatik satın alma
-    autoBuy = false,
-    -- Dükkan & Duvar kontrolü
-    shopsVisible = true,
-    wallsVisible = true,
+    speed = 16,          -- Normal Roblox hızı 16
+    strength = 100,      -- Fırlatma gücü
+    autoHook = false,    -- Açık/Kapalı
+    range = 150,         -- Kanca menzili
 }
 
--- ============================================================
--- FARM YÖNETİCİSİ (dur-kontrol-et-yeniden başlat)
--- ============================================================
-local FarmManager = {}
-FarmManager.running = false
-FarmManager.tasks = {}
+-- ============ GUI OLUŞTUR ============
+local gui = Instance.new("ScreenGui")
+gui.Name = "StreetLifeHileGUI"
+gui.Parent = player:WaitForChild("PlayerGui")
 
-function FarmManager:start()
-    if self.running then return end
-    self.running = true
-    print("Farm Manager başlatıldı.")
-    -- Ana döngüyü başlat
-    self:loop()
-end
-
-function FarmManager:stop()
-    self.running = false
-    for _, task in pairs(self.tasks) do
-        task:Disconnect()
-    end
-    self.tasks = {}
-    print("Farm Manager durduruldu.")
-end
-
-function FarmManager:loop()
-    if not self.running then return end
-    -- Her 2 saniyede bir farmları kontrol et ve çalıştır
-    local conn = runService.Heartbeat:Connect(function()
-        if not self.running then conn:Disconnect() return end
-        self:checkFarms()
-    end)
-    table.insert(self.tasks, conn)
-end
-
-function FarmManager:checkFarms()
-    -- Petrol Farm
-    if settings.oilFarm then
-        self:doOilFarm()
-    end
-    -- Mob Farm
-    if settings.mobFarm then
-        self:doMobFarm()
-    end
-    -- Doğurma Farm (örnek olarak hayvan veya NPC üretme)
-    if settings.breedFarm then
-        self:doBreedFarm()
-    end
-    -- Otomatik satın alma
-    if settings.autoBuy then
-        self:doAutoBuy()
-    end
-end
-
--- === PETROL FARM ===
-function FarmManager:doOilFarm()
-    -- Örnek: Petrol kulelerini bul ve topla (oyuna göre değiştir)
-    local oilRigs = workspace:FindFirstChild("OilRigs") or workspace:FindFirstChild("OilTowers")
-    if oilRigs then
-        for _, rig in pairs(oilRigs:GetChildren()) do
-            if rig:IsA("Model") and rig:FindFirstChild("Collect") then
-                -- Toplama butonuna tıkla
-                fireclickdetector(rig.Collect)
-                wait(0.1)
-            end
-        end
-    end
-end
-
--- === MOB FARM ===
-function FarmManager:doMobFarm()
-    -- Örnek: Canavarları bul ve saldır
-    local mobs = workspace:FindFirstChild("Mobs") or workspace:FindFirstChild("Enemies")
-    if mobs then
-        for _, mob in pairs(mobs:GetChildren()) do
-            if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-                -- Saldırı fonksiyonu (örnek: silah ateşleme)
-                -- Burada oyunun saldırı mekaniğine göre ayarla
-                -- Örneğin: player.Character:FindFirstChild("Tool") kullan
-                local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
-                if tool then
-                    tool:Activate()
-                    wait(0.2)
-                    tool:Deactivate()
-                end
-            end
-        end
-    end
-end
-
--- === DOĞURMA FARM ===
-function FarmManager:doBreedFarm()
-    -- Örnek: Belirli bir bölgede sürekli NPC çağırma veya hayvan doğurma
-    -- Bu kısmı oyuna özel düzenlemen gerekir
-    local breedZone = workspace:FindFirstChild("BreedZone")
-    if breedZone then
-        -- Örnek: Her 5 saniyede bir doğurma butonuna tıkla
-        local breedBtn = breedZone:FindFirstChild("BreedButton")
-        if breedBtn then
-            fireclickdetector(breedBtn)
-        end
-    end
-end
-
--- === OTOMATİK SATIN ALMA (tüm dükkanlar, evler, arabalar) ===
-function FarmManager:doAutoBuy()
-    local buyables = workspace:FindFirstChild("Buyables") or workspace:FindFirstChild("Shops")
-    if buyables then
-        for _, obj in pairs(buyables:GetChildren()) do
-            if obj:IsA("Model") and obj:FindFirstChild("BuyButton") then
-                fireclickdetector(obj.BuyButton)
-                wait(0.3)
-            end
-        end
-    end
-end
-
--- FarmManager'ı başlat (başlangıçta kapalı)
-FarmManager:stop()
-
--- ============================================================
--- KARAKTER OLAYLARI (yeniden doğunca farm yeniden başlasın)
--- ============================================================
-player.CharacterAdded:Connect(function(char)
-    wait(1)
-    if FarmManager.running then
-        FarmManager:stop()
-        FarmManager:start()
-    end
-    -- Hız ve zıplama ayarlarını uygula
-    local hum = char:FindFirstChild("Humanoid")
-    if hum then
-        hum.WalkSpeed = settings.walkSpeed
-        hum.JumpPower = settings.jumpPower
-    end
-end)
-
--- ============================================================
--- MENÜ OLUŞTURMA (PC + MOBİL UYUMLU, KAYDIRMALI)
--- ============================================================
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "UltimateMenu"
-screenGui.Parent = player.PlayerGui
-
--- Ana Frame (kaydırma alanı)
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, math.min(400, screenGui.AbsoluteSize.X - 20), 0, math.min(600, screenGui.AbsoluteSize.Y - 40))
-mainFrame.Position = UDim2.new(0.5, -mainFrame.Size.X.Offset/2, 0.5, -mainFrame.Size.Y.Offset/2)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-mainFrame.BackgroundTransparency = 0.15
-mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false  -- Başlangıçta kapalı
-mainFrame.Parent = screenGui
+-- Ana Çerçeve (Rainbow yapılacak)
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 280, 0, 220)
+frame.Position = UDim2.new(0, 10, 0.4, -110)
+frame.BackgroundTransparency = 0.15
+frame.BorderSizePixel = 2
+frame.BorderColor3 = Color3.new(1,1,1)
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
 
 -- Başlık
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 40)
-title.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-title.Text = "🔥 ULTIMATE PRO MENU"
-title.TextColor3 = Color3.fromRGB(255, 215, 0)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "🚀 FLING HILE (Ayarlanabilir)"
+title.TextColor3 = Color3.new(1,1,1)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
-title.Parent = mainFrame
+title.Parent = frame
 
--- Kapatma butonu (X)
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 5)
-closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-closeBtn.Text = "✕"
-closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-closeBtn.TextScaled = true
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.Parent = mainFrame
-closeBtn.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-end)
+-- Speed Ayarları (Slider taklidi için TextBox + buton)
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0.4, 0, 0, 25)
+speedLabel.Position = UDim2.new(0.05, 0, 0.25, 0)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Hız:"
+speedLabel.TextColor3 = Color3.new(1,1,1)
+speedLabel.TextScaled = true
+speedLabel.Font = Enum.Font.Gotham
+speedLabel.Parent = frame
 
--- Kaydırma alanı (ScrollingFrame)
-local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, -10, 1, -50)
-scrollFrame.Position = UDim2.new(0, 5, 0, 45)
-scrollFrame.BackgroundTransparency = 1
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 2000)  -- Yüksekliği ayarlarız
-scrollFrame.ScrollBarThickness = 8
-scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
-scrollFrame.Parent = mainFrame
+local speedBox = Instance.new("TextBox")
+speedBox.Size = UDim2.new(0.4, 0, 0, 25)
+speedBox.Position = UDim2.new(0.5, 0, 0.25, 0)
+speedBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+speedBox.TextColor3 = Color3.new(1,1,1)
+speedBox.Text = tostring(settings.speed)
+speedBox.TextScaled = true
+speedBox.Font = Enum.Font.Gotham
+speedBox.ClearTextOnFocus = false
+speedBox.Parent = frame
 
-local UIList = Instance.new("UIListLayout")
-UIList.Padding = UDim.new(0, 6)
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Parent = scrollFrame
+-- Strength Ayarları
+local strLabel = Instance.new("TextLabel")
+strLabel.Size = UDim2.new(0.4, 0, 0, 25)
+strLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
+strLabel.BackgroundTransparency = 1
+strLabel.Text = "Güç:"
+strLabel.TextColor3 = Color3.new(1,1,1)
+strLabel.TextScaled = true
+strLabel.Font = Enum.Font.Gotham
+strLabel.Parent = frame
 
--- Helper: Buton oluşturma (toggle)
-function createToggle(labelText, getter, setter)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 32)
-    frame.BackgroundTransparency = 1
-    frame.Parent = scrollFrame
+local strBox = Instance.new("TextBox")
+strBox.Size = UDim2.new(0.4, 0, 0, 25)
+strBox.Position = UDim2.new(0.5, 0, 0.45, 0)
+strBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+strBox.TextColor3 = Color3.new(1,1,1)
+strBox.Text = tostring(settings.strength)
+strBox.TextScaled = true
+strBox.Font = Enum.Font.Gotham
+strBox.ClearTextOnFocus = false
+strBox.Parent = frame
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = labelText
-    label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextScaled = true
-    label.Font = Enum.Font.Gotham
-    label.Parent = frame
+-- Auto Hook Toggle Butonu
+local hookBtn = Instance.new("TextButton")
+hookBtn.Size = UDim2.new(0.8, 0, 0, 30)
+hookBtn.Position = UDim2.new(0.1, 0, 0.68, 0)
+hookBtn.BackgroundColor3 = Color3.new(0.3, 0.7, 0.3)
+hookBtn.Text = "Auto Hook: KAPALI"
+hookBtn.TextColor3 = Color3.new(1,1,1)
+hookBtn.TextScaled = true
+hookBtn.Font = Enum.Font.GothamBold
+hookBtn.Parent = frame
 
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0.2, 0, 1, 0)
-    toggle.Position = UDim2.new(0.8, 0, 0, 0)
-    toggle.BackgroundColor3 = getter() and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(60, 60, 80)
-    toggle.Text = getter() and "AÇIK" or "KAPALI"
-    toggle.TextColor3 = Color3.fromRGB(255,255,255)
-    toggle.TextScaled = true
-    toggle.Font = Enum.Font.GothamBold
-    toggle.Parent = frame
+-- Sağ Üst Köşe Bilgi Etiketi
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(0, 250, 0, 30)
+statusLabel.Position = UDim2.new(1, -260, 0, 10)
+statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+statusLabel.BackgroundTransparency = 0.6
+statusLabel.TextColor3 = Color3.new(1, 1, 1)
+statusLabel.Text = "Hız:16 | Güç:100 | Hook:OFF"
+statusLabel.TextScaled = true
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.Parent = gui
 
-    toggle.MouseButton1Click:Connect(function()
-        local newVal = not getter()
-        setter(newVal)
-        toggle.Text = newVal and "AÇIK" or "KAPALI"
-        toggle.BackgroundColor3 = newVal and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(60, 60, 80)
-        -- FarmManager'ı başlat/durdur
-        if labelText:find("Farm") then
-            if newVal and not FarmManager.running then
-                FarmManager:start()
-            elseif not newVal and FarmManager.running then
-                -- Sadece ilgili farm kapatıldı, ama diğer farmlar açık olabilir, kontrol et
-                if not settings.oilFarm and not settings.mobFarm and not settings.breedFarm then
-                    FarmManager:stop()
-                end
-            end
-        end
-        -- ESP için yenile
-        if labelText:find("ESP") then
-            refreshESP()
-        end
-        -- Dükkan/duvar değişimi
-        if labelText:find("Dükkan") then
-            toggleShops()
-        end
-        if labelText:find("Duvar") then
-            toggleWalls()
-        end
-    end)
-    return toggle
-end
-
--- Helper: Slider (kaydırıcı)
-function createSlider(labelText, min, max, getter, setter, suffix)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 48)
-    frame.BackgroundTransparency = 1
-    frame.Parent = scrollFrame
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 0.5, 0)
-    label.BackgroundTransparency = 1
-    label.Text = labelText
-    label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextScaled = true
-    label.Font = Enum.Font.Gotham
-    label.Parent = frame
-
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(0.3, 0, 0.5, 0)
-    valueLabel.Position = UDim2.new(0.7, 0, 0, 0)
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Text = tostring(math.round(getter())) .. (suffix or "")
-    valueLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-    valueLabel.TextScaled = true
-    valueLabel.Font = Enum.Font.Gotham
-    valueLabel.Parent = frame
-
-    local sliderBg = Instance.new("Frame")
-    sliderBg.Size = UDim2.new(1, 0, 0.35, 0)
-    sliderBg.Position = UDim2.new(0, 0, 0.65, 0)
-    sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-    sliderBg.BorderSizePixel = 0
-    sliderBg.Parent = frame
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((getter() - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    fill.BorderSizePixel = 0
-    fill.Parent = sliderBg
-
-    local function updateSlider(newVal)
-        local clamped = math.clamp(newVal, min, max)
-        setter(clamped)
-        fill.Size = UDim2.new((clamped - min) / (max - min), 0, 1, 0)
-        valueLabel.Text = tostring(math.round(clamped)) .. (suffix or "")
-    end
-
-    local function startDrag()
-        local function move()
-            local pos = (mouse.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
-            local val = min + pos * (max - min)
-            updateSlider(val)
-        end
-        move()
-        local conn = mouse.Move:Connect(move)
-        local release = userInputService.InputEnded:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                conn:Disconnect()
-                release:Disconnect()
-            end
-        end)
-    end
-
-    sliderBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            startDrag()
-        end
-    end)
-end
-
--- ============================================================
--- MENÜ ÖĞELERİ (Tüm ayarlar)
--- ============================================================
--- ---- AIMBOT ----
-createToggle("🎯 Aimbot Aç/Kapat", function() return settings.aimbotEnabled end, function(v) settings.aimbotEnabled = v end)
-createToggle("🔇 Silent Aim (Gizli)", function() return settings.silentAim end, function(v) settings.silentAim = v end)
-createSlider("📐 FOV Derece", 10, 180, function() return settings.aimFOV end, function(v) settings.aimFOV = v end, "°")
-createSlider("🎚️ Yumuşaklık", 0, 1, function() return settings.aimSmoothness end, function(v) settings.aimSmoothness = v end, "")
-
--- ---- HAREKET ----
-createSlider("🏃 Yürüme Hızı", 10, 80, function() return settings.walkSpeed end, function(v) 
-    settings.walkSpeed = v
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = v
-    end
-end, "")
-createSlider("🦘 Zıplama Gücü", 40, 200, function() return settings.jumpPower end, function(v)
-    settings.jumpPower = v
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.JumpPower = v
-    end
-end, "")
-
--- ---- ESP ----
-createToggle("👁️ ESP Aç/Kapat", function() return settings.espEnabled end, function(v) settings.espEnabled = v end)
-createToggle("📦 ESP Kutu", function() return settings.espBox end, function(v) settings.espBox = v end)
-createToggle("〰️ ESP Tracer", function() return settings.espTracer end, function(v) settings.espTracer = v end)
-createToggle("🏷️ ESP İsim", function() return settings.espName end, function(v) settings.espName = v end)
-createToggle("📏 ESP Mesafe", function() return settings.espDistance end, function(v) settings.espDistance = v end)
-
--- ---- FARMLAR ----
-createToggle("🛢️ Petrol Farm", function() return settings.oilFarm end, function(v) settings.oilFarm = v end)
-createToggle("👹 Mob Farm", function() return settings.mobFarm end, function(v) settings.mobFarm = v end)
-createToggle("🐣 Doğurma Farm", function() return settings.breedFarm end, function(v) settings.breedFarm = v end)
-createToggle("🛒 Otomatik Satın Al", function() return settings.autoBuy end, function(v) settings.autoBuy = v end)
-
--- ---- DÜKKAN & DUVAR KONTROL ----
-createToggle("🏪 Dükkanları Aç/Kapat", function() return settings.shopsVisible end, function(v) 
-    settings.shopsVisible = v
-    toggleShops()
-end)
-createToggle("🧱 Duvarları Göster/Gizle", function() return settings.wallsVisible end, function(v)
-    settings.wallsVisible = v
-    toggleWalls()
-end)
-
--- ---- MENÜ TOGGLE BUTONU (ekranın sağ altında) ----
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 50, 0, 50)
-toggleButton.Position = UDim2.new(1, -60, 1, -60)
-toggleButton.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-toggleButton.Text = "☰"
-toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
-toggleButton.TextScaled = true
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.Parent = screenGui
-
-toggleButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = not mainFrame.Visible
-    -- Menüyü ortala (ekran boyutu değişebilir)
-    mainFrame.Position = UDim2.new(0.5, -mainFrame.Size.X.Offset/2, 0.5, -mainFrame.Size.Y.Offset/2)
-end)
-
--- ============================================================
--- ESP SİSTEMİ (Drawing)
--- ============================================================
-local espObjects = {}
-
-function refreshESP()
-    for _, obj in pairs(espObjects) do
-        obj:Destroy()
-    end
-    espObjects = {}
-    if not settings.espEnabled then return end
-
-    for _, plr in pairs(players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local root = plr.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                if settings.espBox then
-                    local box = Instance.new("BoxHandleAdornment")
-                    box.Size = Vector3.new(3, 5, 1.5)
-                    box.Adornee = root
-                    box.Color3 = settings.espColor
-                    box.Transparency = 0.4
-                    box.ZIndex = 0
-                    box.Parent = plr.Character
-                    table.insert(espObjects, box)
-                end
-                if settings.espTracer then
-                    local line = Instance.new("LineHandleAdornment")
-                    line.Thickness = 2
-                    line.Color3 = settings.espColor
-                    line.Adornee = root
-                    line.Parent = plr.Character
-                    table.insert(espObjects, line)
-                end
-                if settings.espName or settings.espDistance then
-                    local bill = Instance.new("BillboardGui")
-                    bill.Size = UDim2.new(0, 180, 0, 30)
-                    bill.Adornee = root
-                    bill.StudsOffset = Vector3.new(0, 3.5, 0)
-                    bill.Parent = plr.Character
-                    local label = Instance.new("TextLabel")
-                    label.Size = UDim2.new(1,0,1,0)
-                    label.BackgroundTransparency = 1
-                    label.TextColor3 = settings.espColor
-                    label.TextScaled = true
-                    label.Font = Enum.Font.GothamBold
-                    label.Parent = bill
-                    local function updateText()
-                        local name = settings.espName and plr.Name or ""
-                        local dist = settings.espDistance and (" " .. math.round((root.Position - (player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character.HumanoidRootPart.Position or Vector3.zero)).Magnitude) .. "m") or ""
-                        label.Text = name .. dist
-                    end
-                    updateText()
-                    local conn = runService.RenderStepped:Connect(function()
-                        if not bill.Parent then conn:Disconnect() return end
-                        updateText()
-                    end)
-                    table.insert(espObjects, bill)
-                    table.insert(espObjects, conn)
-                end
-            end
-        end
-    end
-end
-
--- ESP'yi oyuncu girip çıkınca yenile
-players.PlayerAdded:Connect(refreshESP)
-players.PlayerRemoving:Connect(refreshESP)
-
--- ============================================================
--- DÜKKAN & DUVAR KONTROL FONKSİYONLARI
--- ============================================================
-local shopCache = {}
-local wallCache = {}
-
-function toggleShops()
-    -- Tüm dükkanları bul (örnek: "Shop" etiketli veya isimli)
-    local shops = workspace:FindFirstChild("Shops") or workspace:FindFirstChild("Stores")
-    if not shops then return end
-    for _, shop in pairs(shops:GetChildren()) do
-        if shop:IsA("Model") then
-            if settings.shopsVisible then
-                if shopCache[shop] then
-                    shop.Parent = shopCache[shop].Parent
-                    shop.Position = shopCache[shop].Position
-                    shopCache[shop] = nil
-                end
-            else
-                if not shopCache[shop] then
-                    shopCache[shop] = {Parent = shop.Parent, Position = shop.Position}
-                    shop.Parent = nil  -- veya workspace'a at, gizlemek için
-                end
-            end
-        end
-    end
-end
-
-function toggleWalls()
-    -- Duvarları bul (örnek: "Wall" isimli)
-    local walls = workspace:FindFirstChild("Walls") or workspace:FindFirstChild("Barriers")
-    if not walls then return end
-    for _, wall in pairs(walls:GetChildren()) do
-        if wall:IsA("BasePart") or wall:IsA("Model") then
-            if settings.wallsVisible then
-                if wallCache[wall] then
-                    wall.CanCollide = true
-                    wall.Transparency = 0
-                    wallCache[wall] = nil
-                end
-            else
-                if not wallCache[wall] then
-                    wallCache[wall] = true
-                    wall.CanCollide = false
-                    wall.Transparency = 1
-                end
-            end
-        end
-    end
-end
-
--- ============================================================
--- AİMBOT (RenderStep ile)
--- ============================================================
-local camera = workspace.CurrentCamera
-local aimTarget = nil
-
-runService.RenderStepped:Connect(function()
-    if settings.aimbotEnabled then
-        local target = getClosestPlayer()
-        if target and target.Character then
-            local part = target.Character:FindFirstChild(settings.aimPart) or target.Character:FindFirstChild("HumanoidRootPart")
-            if part then
-                if settings.silentAim then
-                    aimTarget = part
-                else
-                    local lookVector = (part.Position - camera.CFrame.Position).Unit
-                    local targetCFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + lookVector)
-                    camera.CFrame = camera.CFrame:Lerp(targetCFrame, settings.aimSmoothness)
-                end
-            end
-        end
-    else
-        aimTarget = nil
-    end
-end)
-
-function getClosestPlayer()
-    local maxDist = settings.aimFOV
-    local target = nil
-    local char = player.Character
-    if not char then return nil end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return nil end
-
-    for _, plr in pairs(players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-            local targetRoot = plr.Character:FindFirstChild(settings.aimPart) or plr.Character:FindFirstChild("HumanoidRootPart")
-            if targetRoot then
-                local screenPos, onScreen = camera:WorldToScreenPoint(targetRoot.Position)
-                if onScreen then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
-                    if dist < maxDist then
-                        maxDist = dist
-                        target = plr
-                    end
-                end
-            end
-        end
-    end
-    return target
-end
-
--- ============================================================
--- OTOMATİK YENİDEN BAŞLATMA KONTROLÜ (Farm durduysa)
--- ============================================================
--- Her 10 saniyede bir farmlar çalışıyor mu kontrol et
+-- ============ RAINBOW EFECT ============
+local hue = 0
 runService.Heartbeat:Connect(function()
-    if FarmManager.running then
-        -- Eğer farm ayarları kapalıysa durdur
-        if not settings.oilFarm and not settings.mobFarm and not settings.breedFarm and not settings.autoBuy then
-            FarmManager:stop()
-        end
-        -- Farm çalışıyor ama belki oyuncu öldü, karakter yoksa yeniden başlat
-        if not player.Character then
-            FarmManager:stop()
-            wait(2)
-            if settings.oilFarm or settings.mobFarm or settings.breedFarm or settings.autoBuy then
-                FarmManager:start()
+    hue = (hue + 0.008) % 1
+    local rainbow = Color3.fromHSV(hue, 1, 0.7)
+    frame.BackgroundColor3 = rainbow
+    hookBtn.BackgroundColor3 = settings.autoHook and Color3.fromHSV(hue, 1, 0.5) or Color3.fromHSV(0, 0, 0.3)
+end)
+
+-- ============ AYAR FONKSİYONLARI ============
+local function updateStatus()
+    statusLabel.Text = "Hız:" .. settings.speed .. " | Güç:" .. settings.strength .. " | Hook:" .. (settings.autoHook and "AÇIK" or "KAPALI")
+end
+
+speedBox.FocusLost:Connect(function()
+    local val = tonumber(speedBox.Text)
+    if val then
+        settings.speed = val
+        humanoid.WalkSpeed = val
+        updateStatus()
+    else
+        speedBox.Text = tostring(settings.speed)
+    end
+end)
+
+strBox.FocusLost:Connect(function()
+    local val = tonumber(strBox.Text)
+    if val then
+        settings.strength = val
+        updateStatus()
+    else
+        strBox.Text = tostring(settings.strength)
+    end
+end)
+
+hookBtn.MouseButton1Click:Connect(function()
+    settings.autoHook = not settings.autoHook
+    hookBtn.Text = "Auto Hook: " .. (settings.autoHook and "AÇIK" or "KAPALI")
+    updateStatus()
+end)
+
+-- ============ SPEED KORUMA (oyun sıfırlarsa tekrar düzelt) ============
+runService.Heartbeat:Connect(function()
+    if humanoid.WalkSpeed ~= settings.speed then
+        humanoid.WalkSpeed = settings.speed
+    end
+end)
+
+-- ============ AUTO HOOK (AIMBOT) KALBİ ============
+local function getClosestPlayer()
+    local closest = nil
+    local minDist = settings.range
+    local myRoot = character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        if plr ~= player then
+            local targetChar = plr.Character
+            if targetChar then
+                local root = targetChar:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local dist = (root.Position - myRoot.Position).Magnitude
+                    if dist < minDist then
+                        closest = root
+                        minDist = dist
+                    end
+                end
             end
         end
-    else
-        -- FarmManager durdu ama ayarlar açık mı? tekrar başlat
-        if settings.oilFarm or settings.mobFarm or settings.breedFarm or settings.autoBuy then
-            FarmManager:start()
+    end
+    return closest
+end
+
+-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-- !!!   BURASI ÇOK ÖNEMLİ : OYUNDAKİ GERÇEK KANCA FONKSİYONUNU BUL !!!
+-- !!!   Aşağıdaki "fireHook" fonksiyonunu oyuna göre düzenle.  !!!
+-- !!!   Genelde ReplicatedStorage içinde "FireHook" veya "Hook" diye bir RemoteEvent olur.
+-- !!!   Onu bularak: remote:FireServer(targetRoot) şeklinde çağıracaksın.
+-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+local function fireHook(targetRoot)
+    if not targetRoot then return end
+    
+    -- ⬇⬇⬇ ÖRNEK (BUNU OYUNA GÖRE DEĞİŞTİR!) ⬇⬇⬇
+    -- local remote = game:GetService("ReplicatedStorage"):FindFirstChild("HookEvent")
+    -- if remote then
+    --     remote:FireServer(targetRoot)
+    -- end
+    
+    -- EĞER YUKARIDAKİ GİBİ BİR REMOTEEVENT BULAMAZSAN,
+    -- OYUNDAKİ TOOL'U BULUP ONUN İÇİNDEKİ FONKSİYONU ÇAĞIR:
+    -- local tool = character:FindFirstChild("HookTool") or player.Backpack:FindFirstChild("HookTool")
+    -- if tool then tool:Activate() end
+    
+    -- ŞİMDİLİK BUNU KONSOLA YAZAR (ÇALIŞIP ÇALIŞMADIĞINI GÖRÜRSÜN)
+    warn("🔫 HEDEF BULUNDU -> ATEŞ EDİLECEK: " .. tostring(targetRoot))
+    -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+end
+
+-- Auto Hook döngüsü (her 0.1 saniyede çalışır)
+game:GetService("RunService").Heartbeat:Connect(function()
+    if settings.autoHook then
+        local target = getClosestPlayer()
+        if target then
+            fireHook(target)
         end
     end
 end)
 
--- ============================================================
--- BAŞLANGIÇ AYARLARI
--- ============================================================
--- Menü başlangıçta kapalı
-mainFrame.Visible = false
+-- ============ SUPER STRENGTH (Fırlatma Gücünü Artır) ============
+-- Bu oyunda genelde bir nesneyi tutunca ona velocity uygulanır.
+-- Aşağıdaki fonksiyon, oyundaki tüm BodyVelocity'leri yakalayıp gücünü artırır.
+-- (Çoğu fling oyunu için çalışır)
+local function boostStrength()
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("BodyVelocity") or v:IsA("BodyThrust") or v:IsA("BodyForce") then
+            local currentVel = v.Velocity
+            if currentVel and currentVel.Magnitude > 0 then
+                -- Mevcut hızı strength ayarı ile çarp
+                local direction = currentVel.Unit
+                v.Velocity = direction * (currentVel.Magnitude * (settings.strength / 50))
+            end
+        end
+    end
+end
 
--- FarmManager başlangıçta kapalı
-FarmManager:stop()
+-- Bunu da sürekli kontrol edelim (performans için 0.2 sn aralık)
+game:GetService("RunService").Stepped:Connect(function()
+    boostStrength()
+end)
 
--- ESP'yi başlat (kapalı)
-refreshESP()
-
-print("✅ ULTIMATE PRO MENU başarıyla yüklendi!")
-print("📌 Sağ alttaki ☰ butonuna tıklayarak menüyü aç/kapat.")
-print("🔄 Farmlar durursa otomatik yeniden başlatılır.")
-print("⚠️ Tüm özellikler risk içerir, dikkatli kullan.")
+-- ============ GİRİŞ MESAJI ============
+print("✅ FLING HILE SCRIPT YÜKLENDİ! (Kanka her şey hazır)")
+updateStatus()
