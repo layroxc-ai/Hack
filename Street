@@ -1,351 +1,392 @@
--- =============================================================
---  Layroxc Street Life Remastered Ultimate Farm v4.0
---  Delta Executor Uyumlu | Tüm Farmlar | Otomatik Yeniden Başlatma
---  Tuşlar: F5 Menü Aç/Kapa | F6 Tüm Farmları Durdur
---  Her farm ayrı buton ile kontrol edilir.
--- =============================================================
+--[[
+    Roblox Street Life Remastered - Ultimate Script
+    Gelişmiş Özellikler:
+    - Silent Aim (hedefe anında nişan)
+    - Aimbot (otomatik hedef takibi)
+    - ESP (kutu, isim, sağlık, mesafe)
+    - Wallhack (duvarları şeffaflaştır)
+    - Otomatik Saldırı (hedefe ateş et)
+    - Money Farm (otomatik para kasma)
+    - Oil Farm (petrol topla & sat)
+    Tüm ayarlar "Config" tablosunda düzenlenebilir.
+--]]
 
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TeleportService = game:GetService("TeleportService")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
+local StarterGui = game:GetService("StarterGui")
+local Lighting = game:GetService("Lighting")
 
--- =============================================================
---  KONFİGÜRASYON
--- =============================================================
-local CONFIG = {
-    ToggleMenuKey = Enum.KeyCode.F5,      -- Menü aç/kapa
-    EmergencyStopKey = Enum.KeyCode.F6,   -- Tüm farmları acil durdur
-    FarmInterval = 0.3,                   -- Döngü hızı (saniye)
-    AutoRestart = true,                   -- Ölüm/sunucu değişiminde otomatik yeniden başlat
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- =================== KONFIGÜRASYON ===================
+local Config = {
+    Aimbot = {
+        Enabled = true,
+        Silent = true,           -- true = silent aim (hedefe anında yönelme)
+        FOV = 120,               -- derece olarak görüş açısı
+        Smoothness = 0.2,        -- 0-1 arası, ne kadar yumuşak takip
+        TargetTeam = "Enemy",    -- "Enemy" veya "All"
+        AimPart = "Head"         -- "Head", "Torso", "HumanoidRootPart"
+    },
+    ESP = {
+        Enabled = true,
+        ShowBox = true,
+        ShowName = true,
+        ShowHealth = true,
+        ShowDistance = true,
+        BoxColor = Color3.fromRGB(255, 0, 0),
+        NameColor = Color3.fromRGB(255, 255, 255),
+        HealthColor = Color3.fromRGB(0, 255, 0),
+        DistanceColor = Color3.fromRGB(200, 200, 200)
+    },
+    Wallhack = {
+        Enabled = true,
+        Transparency = 0.3      -- 0 = tam görünmez, 1 = tam opak
+    },
+    AutoShoot = {
+        Enabled = true,
+        Delay = 0.1,            -- saniye cinsinden atış aralığı
+        AimKey = Enum.KeyCode.MouseButton1 -- varsayılan sol tık
+    },
+    MoneyFarm = {
+        Enabled = true,
+        Interval = 5,           -- saniyede bir para kasma işlemi
+        UseClick = true        -- true ise simüle tıklama, false ise remote event
+    },
+    OilFarm = {
+        Enabled = true,
+        CollectInterval = 3,    -- oil toplama aralığı
+        SellInterval = 10,      -- satma aralığı
+        OilSourceName = "OilPump", -- oyundaki petrol kuyusu objesi ismi
+        SellButton = "SellOil"  -- satış butonunun adı (GUI veya Remote)
+    }
 }
 
--- =============================================================
---  MENÜ OLUŞTURMA (GUI)
--- =============================================================
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = player:WaitForChild("PlayerGui")
-screenGui.ResetOnSpawn = false
+-- =================== YARDIMCI FONKSİYONLAR ===================
+local function getClosestPlayer(ignoreTeam)
+    local closest = nil
+    local closestDist = Config.Aimbot.FOV
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return nil end
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 420, 0, 560)
-mainFrame.Position = UDim2.new(0.5, -210, 0.5, -280)
-mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
-mainFrame.BackgroundTransparency = 0.1
-mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false
-mainFrame.Parent = screenGui
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        if ignoreTeam and player.Team == LocalPlayer.Team then continue end
+        local char = player.Character
+        if not char then continue end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if not humanoid or humanoid.Health <= 0 then continue end
 
--- Başlık
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 45)
-title.BackgroundTransparency = 1
-title.Text = "🔥 Layroxc Street Life Farm"
-title.TextColor3 = Color3.fromRGB(255, 200, 50)
-title.TextScaled = true
-title.Font = Enum.Font.GothamBold
-title.Parent = mainFrame
+        local targetPos = hrp.Position
+        local aimPart = char:FindFirstChild(Config.Aimbot.AimPart) or hrp
+        local aimPos = aimPart.Position
 
--- Durum göstergesi (çalışıyor/durduruldu)
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, 0, 0, 25)
-statusLabel.Position = UDim2.new(0, 0, 0, 45)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "Durum: DURDURULDU"
-statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-statusLabel.TextScaled = true
-statusLabel.Font = Enum.Font.GothamMedium
-statusLabel.Parent = mainFrame
+        -- Açı hesaplama (FOV)
+        local cameraPos = Camera.CFrame.Position
+        local direction = (aimPos - cameraPos).Unit
+        local lookVector = Camera.CFrame.LookVector
+        local angle = math.deg(math.acos(lookVector:Dot(direction)))
+        if angle > Config.Aimbot.FOV then continue end
 
--- ScrollContainer
-local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -20, 1, -100)
-scroll.Position = UDim2.new(0, 10, 0, 75)
-scroll.BackgroundTransparency = 1
-scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-scroll.ScrollBarThickness = 8
-scroll.Parent = mainFrame
-
-local UIList = Instance.new("UIListLayout")
-UIList.Parent = scroll
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Padding = UDim.new(0, 5)
-
--- Buton oluşturucu
-local function createJobButton(label, action, color)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 38)
-    btn.BackgroundColor3 = color or Color3.fromRGB(40, 40, 60)
-    btn.BorderSizePixel = 0
-    btn.Text = label
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextScaled = true
-    btn.Font = Enum.Font.GothamMedium
-    btn.BackgroundTransparency = 0.3
-    btn.Parent = scroll
-
-    btn.MouseButton1Click:Connect(function()
-        handleAction(action)
-    end)
-    return btn
+        local dist = (rootPart.Position - aimPos).Magnitude
+        if not closest or dist < closestDist then
+            closest = player
+            closestDist = dist
+        end
+    end
+    return closest
 end
 
--- =============================================================
---  TÜM FARM İŞLEMLERİ (OYUNA GÖRE DOLDUR!)
--- =============================================================
--- Buradaki her fonksiyon, oyundaki gerçek işlemi tetiklemeli.
--- Örnek olarak simülasyon (rastgele para) koydum.
--- Gerçekte ReplicatedStorage içindeki RemoteEvent'leri çağır.
--- =============================================================
+-- =================== AIMBOT & SILENT AIM ===================
+local aimbotTarget = nil
+local function updateAimbot()
+    if not Config.Aimbot.Enabled then return end
+    local target = getClosestPlayer(Config.Aimbot.TargetTeam == "Enemy")
+    if not target then 
+        aimbotTarget = nil 
+        return 
+    end
+    aimbotTarget = target
+    local char = target.Character
+    if not char then return end
+    local aimPart = char:FindFirstChild(Config.Aimbot.AimPart) or char:FindFirstChild("HumanoidRootPart")
+    if not aimPart then return end
 
-local farmActions = {
-    -- 1. MOB FARM (NPC öldürme)
-    mob = function()
-        -- Örnek: ReplicatedStorage.Remotes.KillMob:FireServer()
-        print("[Farm] Mob öldürülüyor...")
-        task.wait(1.2)
-        return math.random(100, 300)
-    end,
-
-    -- 2. TRASH FARM (Çöp toplama)
-    trash = function()
-        -- ReplicatedStorage.Remotes.CollectTrash:FireServer()
-        print("[Farm] Çöp toplanıyor...")
-        task.wait(0.8)
-        return math.random(20, 80)
-    end,
-
-    -- 3. ARABA SOYMA FARM
-    car = function()
-        -- ReplicatedStorage.Remotes.RobCar:FireServer()
-        print("[Farm] Araba soyuluyor...")
-        task.wait(2.5)
-        return math.random(150, 400)
-    end,
-
-    -- 4. OTOMATİK BANKA SOYMA
-    bank = function()
-        -- ReplicatedStorage.Remotes.RobBank:FireServer()
-        print("[Farm] Banka soyuluyor...")
-        task.wait(4.0)
-        return math.random(500, 1200)
-    end,
-
-    -- 5. OTOMATİK MÜZE SOYMA
-    museum = function()
-        -- ReplicatedStorage.Remotes.RobMuseum:FireServer()
-        print("[Farm] Müze soyuluyor...")
-        task.wait(5.0)
-        return math.random(800, 2000)
-    end,
-
-    -- 6. OIL FARM (Petrol çıkarma)
-    oil = function()
-        -- ReplicatedStorage.Remotes.ExtractOil:FireServer()
-        print("[Farm] Petrol çıkarılıyor...")
-        task.wait(2.0)
-        return math.random(200, 500)
-    end,
-
-    -- 7. BALIKÇILIK (varsayılan)
-    fishing = function()
-        print("[Farm] Balık tutuluyor...")
-        task.wait(1.5)
-        return math.random(50, 150)
-    end,
-
-    -- 8. MADENCİLİK
-    mining = function()
-        print("[Farm] Maden kazılıyor...")
-        task.wait(1.2)
-        return math.random(80, 200)
-    end,
-
-    -- 9. KARGO TESLİMAT
-    delivery = function()
-        print("[Farm] Kargo teslim ediliyor...")
-        task.wait(2.0)
-        return math.random(100, 250)
-    end,
-
-    -- 10. FAST FOOD
-    fastfood = function()
-        print("[Farm] Fast food yapılıyor...")
-        task.wait(0.8)
-        return math.random(30, 90)
-    end,
-}
-
--- =============================================================
---  FARM YÖNETİCİSİ (Başlat/Durdur/Yeniden Başlat)
--- =============================================================
-local farmState = {
-    isRunning = false,
-    currentJob = nil,      -- Hangi iş çalışıyor ("all" veya tek)
-    loopConnection = nil,
-    restartCheck = nil,
-}
-
--- Durum güncelleme (GUI)
-local function updateStatus(text, color)
-    statusLabel.Text = "Durum: " .. text
-    statusLabel.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+    if Config.Aimbot.Silent then
+        -- Silent Aim: kamera yönünü hedefe çevir (smooth)
+        local targetPos = aimPart.Position
+        local cameraPos = Camera.CFrame.Position
+        local newCF = CFrame.lookAt(cameraPos, targetPos)
+        local currentCF = Camera.CFrame
+        local lerped = currentCF:Lerp(newCF, Config.Aimbot.Smoothness)
+        Camera.CFrame = lerped
+    else
+        -- Normal aimbot (sadece hedefi seç, manuel nişan alma)
+        -- Burada ekstra işlem yapma
+    end
 end
 
--- Tüm farmları durdur
-function stopFarming()
-    if farmState.loopConnection then
-        farmState.loopConnection:Disconnect()
-        farmState.loopConnection = nil
-    end
-    if farmState.restartCheck then
-        farmState.restartCheck:Disconnect()
-        farmState.restartCheck = nil
-    end
-    farmState.isRunning = false
-    farmState.currentJob = nil
-    updateStatus("DURDURULDU", Color3.fromRGB(255, 80, 80))
-    print("[Farm] Tüm işlemler durduruldu.")
+-- =================== ESP (ÇİZİM) ===================
+local espObjects = {}
+local function createESP(player)
+    if not Config.ESP.Enabled then return end
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    -- Kutu çizimi (Drawing nesneleri LocalScript'te çalışır)
+    local box = Drawing.new("Square")
+    box.Thickness = 2
+    box.Color = Config.ESP.BoxColor
+    box.Transparency = 0.6
+    box.Visible = true
+
+    local nameTag = Drawing.new("Text")
+    nameTag.Size = 14
+    nameTag.Color = Config.ESP.NameColor
+    nameTag.Visible = true
+    nameTag.Center = true
+
+    local healthTag = Drawing.new("Text")
+    healthTag.Size = 12
+    healthTag.Color = Config.ESP.HealthColor
+    healthTag.Visible = true
+    healthTag.Center = true
+
+    local distTag = Drawing.new("Text")
+    distTag.Size = 12
+    distTag.Color = Config.ESP.DistanceColor
+    distTag.Visible = true
+    distTag.Center = true
+
+    espObjects[player] = {box, nameTag, healthTag, distTag}
 end
 
--- Farm başlat (jobType: string veya "all")
-function startFarming(jobType)
-    if farmState.isRunning then
-        print("[Farm] Zaten çalışıyor, önce durdur.")
-        return
-    end
-
-    -- Geçersiz iş kontrolü
-    if jobType ~= "all" and not farmActions[jobType] then
-        print("[Farm] Geçersiz iş tipi: " .. tostring(jobType))
-        return
-    end
-
-    farmState.currentJob = jobType
-    farmState.isRunning = true
-    updateStatus(jobType:upper() .. " ÇALIŞIYOR", Color3.fromRGB(80, 255, 80))
-    print("[Farm] '" .. tostring(jobType) .. "' başlatıldı.")
-
-    -- Ana döngü
-    farmState.loopConnection = RunService.Heartbeat:Connect(function()
-        if not farmState.isRunning then return end
-
-        local jobList = {}
-        if farmState.currentJob == "all" then
-            for name, func in pairs(farmActions) do
-                table.insert(jobList, {name = name, func = func})
-            end
-        else
-            table.insert(jobList, {name = farmState.currentJob, func = farmActions[farmState.currentJob]})
+local function updateESP()
+    if not Config.ESP.Enabled then return end
+    for player, objects in pairs(espObjects) do
+        local char = player.Character
+        if not char then
+            for _, obj in ipairs(objects) do obj.Visible = false end
+            continue
+        end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if not hrp or not humanoid or humanoid.Health <= 0 then
+            for _, obj in ipairs(objects) do obj.Visible = false end
+            continue
         end
 
-        for _, job in ipairs(jobList) do
-            if not farmState.isRunning then break end
-            local success, earned = pcall(job.func)
-            if success and earned then
-                print("[Farm] " .. job.name .. " -> $" .. earned .. " kazanıldı.")
-                -- Gerçek para ekleme event'inizi buraya ekleyin:
-                -- ReplicatedStorage.Remotes.AddMoney:FireServer(earned)
-            else
-                print("[Farm] HATA: " .. job.name .. " çalışırken sorun oluştu.")
-                -- Hata durumunda işlemi atla ve devam et
-            end
-            task.wait(CONFIG.FarmInterval)
+        local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+        if not onScreen then
+            for _, obj in ipairs(objects) do obj.Visible = false end
+            continue
         end
-    end)
 
-    -- Otomatik yeniden başlatma (karakter ölümü, sunucu değişimi vs.)
-    if CONFIG.AutoRestart then
-        farmState.restartCheck = RunService.Heartbeat:Connect(function()
-            if not farmState.isRunning then return end
-            local char = player.Character
-            if not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then
-                print("[Farm] Karakter öldü veya kayboldu, yeniden başlatılıyor...")
-                stopFarming()
-                -- Biraz bekle ve tekrar başlat
-                task.wait(2)
-                if farmState.currentJob then
-                    startFarming(farmState.currentJob)
+        -- Kutu boyutlandırma
+        local size = 60 / (pos.Z * 0.5 + 1) -- uzaklığa göre boyut
+        local box = objects[1]
+        box.Position = Vector2.new(pos.X - size/2, pos.Y - size)
+        box.Size = Vector2.new(size, size * 1.5)
+        box.Visible = true
+
+        -- İsim
+        local nameTag = objects[2]
+        nameTag.Text = player.Name
+        nameTag.Position = Vector2.new(pos.X, pos.Y - size - 20)
+        nameTag.Visible = true
+
+        -- Sağlık
+        local healthTag = objects[3]
+        healthTag.Text = "HP: " .. math.round(humanoid.Health)
+        healthTag.Position = Vector2.new(pos.X, pos.Y - size + 5)
+        healthTag.Visible = true
+
+        -- Mesafe
+        local distTag = objects[4]
+        local dist = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") 
+            and (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude) or 0
+        distTag.Text = math.round(dist) .. "m"
+        distTag.Position = Vector2.new(pos.X, pos.Y + size + 10)
+        distTag.Visible = true
+    end
+end
+
+-- =================== WALLHACK (DUVAR ŞEFFAFLAŞTIRMA) ===================
+local function applyWallhack()
+    if not Config.Wallhack.Enabled then return end
+    for _, part in ipairs(Workspace:GetDescendants()) do
+        if part:IsA("BasePart") and part.Material ~= Enum.Material.Neon then
+            pcall(function()
+                if part.Transparency < Config.Wallhack.Transparency then
+                    part.Transparency = Config.Wallhack.Transparency
                 end
-            end
-        end)
-    end
-end
-
--- =============================================================
---  MENÜ AKSİYONLARI
--- =============================================================
-function handleAction(action)
-    if action == "stop" then
-        stopFarming()
-        return
-    end
-    -- Eğer aynı iş zaten çalışıyorsa, durdurup yeniden başlat
-    if farmState.isRunning and farmState.currentJob == action then
-        stopFarming()
-        task.wait(0.5)
-    end
-    startFarming(action)
-end
-
--- =============================================================
---  MENÜ BUTONLARINI OLUŞTUR
--- =============================================================
-local jobList = {
-    {"👾 Mob Farm", "mob", Color3.fromRGB(180, 50, 50)},
-    {"🗑️ Trash Farm", "trash", Color3.fromRGB(100, 180, 80)},
-    {"🚗 Araba Soyma", "car", Color3.fromRGB(200, 150, 30)},
-    {"🏦 Banka Soyma", "bank", Color3.fromRGB(50, 200, 200)},
-    {"🏛️ Müze Soyma", "museum", Color3.fromRGB(200, 100, 200)},
-    {"🛢️ Oil Farm", "oil", Color3.fromRGB(80, 80, 200)},
-    {"🌾 Balıkçılık", "fishing", Color3.fromRGB(80, 180, 255)},
-    {"⛏️ Madencilik", "mining", Color3.fromRGB(160, 160, 160)},
-    {"📦 Kargo Teslimat", "delivery", Color3.fromRGB(255, 180, 50)},
-    {"🍔 Fast Food", "fastfood", Color3.fromRGB(255, 120, 50)},
-    {"🔄 TÜM İŞLER", "all", Color3.fromRGB(255, 215, 0)},
-    {"⏹️ DURDUR", "stop", Color3.fromRGB(255, 50, 50)},
-}
-
-for _, job in ipairs(jobList) do
-    createJobButton(job[1], job[2], job[3])
-end
-
--- Canvas boyutu
-scroll.CanvasSize = UDim2.new(0, 0, 0, #jobList * 44 + 20)
-
--- =============================================================
---  KLAVYE KONTROLLERİ (F5 Aç/Kapa, F6 Acil Durdur)
--- =============================================================
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == CONFIG.ToggleMenuKey then
-        mainFrame.Visible = not mainFrame.Visible
-        if mainFrame.Visible then
-            print("[Menu] Açıldı.")
-        else
-            print("[Menu] Kapandı.")
+            end)
         end
-    elseif input.KeyCode == CONFIG.EmergencyStopKey then
-        stopFarming()
-        print("[Acil] Tüm farmlar durduruldu.")
+    end
+end
+
+-- =================== OTOMATİK SALDIRI ===================
+local autoShootTimer = 0
+local function autoShoot()
+    if not Config.AutoShoot.Enabled then return end
+    if not aimbotTarget then return end
+    local char = LocalPlayer.Character
+    if not char then return end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool then return end
+
+    -- Simüle et tıklama (eğer silah varsa)
+    pcall(function()
+        -- Remote event veya fire fonksiyonu
+        local fireRemote = tool:FindFirstChild("FireRemote") or tool:FindFirstChild("Activate")
+        if fireRemote and fireRemote:IsA("RemoteEvent") then
+            fireRemote:FireServer()
+        elseif UserInputService then
+            -- Mouse tıklamasını simüle et
+            UserInputService:SetMouseButtonDown(Enum.UserInputType.MouseButton1)
+            task.wait(0.02)
+            UserInputService:SetMouseButtonUp(Enum.UserInputType.MouseButton1)
+        end
+    end)
+end
+
+-- =================== MONEY FARM ===================
+local function moneyFarm()
+    if not Config.MoneyFarm.Enabled then return end
+    -- Örnek: Oyun içi para butonuna tıkla veya remote event gönder
+    pcall(function()
+        local moneyButton = LocalPlayer.PlayerGui:FindFirstChild("MoneyFarmButton")
+        if moneyButton and moneyButton:IsA("TextButton") then
+            moneyButton:Activate()
+        else
+            -- Remote event aracılığıyla
+            local remote = ReplicatedStorage:FindFirstChild("GetMoney")
+            if remote and remote:IsA("RemoteEvent") then
+                remote:FireServer()
+            end
+        end
+    end)
+end
+
+-- =================== OIL FARM (TOPLA & SAT) ===================
+local function oilFarm()
+    if not Config.OilFarm.Enabled then return end
+    -- Petrol kuyusunu bul ve topla
+    pcall(function()
+        local oilPump = nil
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj.Name == Config.OilFarm.OilSourceName and obj:IsA("BasePart") then
+                oilPump = obj
+                break
+            end
+        end
+        if oilPump then
+            -- Toplama işlemi (örnek: remote event veya tıklama)
+            local collectRemote = ReplicatedStorage:FindFirstChild("CollectOil")
+            if collectRemote and collectRemote:IsA("RemoteEvent") then
+                collectRemote:FireServer(oilPump)
+            end
+        end
+
+        -- Satış işlemi
+        local sellButton = LocalPlayer.PlayerGui:FindFirstChild(Config.OilFarm.SellButton)
+        if sellButton and sellButton:IsA("TextButton") then
+            sellButton:Activate()
+        else
+            local sellRemote = ReplicatedStorage:FindFirstChild("SellOil")
+            if sellRemote and sellRemote:IsA("RemoteEvent") then
+                sellRemote:FireServer()
+            end
+        end
+    end)
+end
+
+-- =================== ZAMANLAYICILAR & DÖNGÜ ===================
+local oilTimer = 0
+local moneyTimer = 0
+local shootTimer = 0
+
+RunService.RenderStepped:Connect(function(delta)
+    pcall(function()
+        -- Aimbot ve ESP her karede
+        updateAimbot()
+        updateESP()
+        applyWallhack() -- sürekli uygula (güvenli)
+
+        -- Otomatik atış
+        if Config.AutoShoot.Enabled then
+            shootTimer = shootTimer + delta
+            if shootTimer >= Config.AutoShoot.Delay then
+                shootTimer = 0
+                autoShoot()
+            end
+        end
+
+        -- Money Farm
+        if Config.MoneyFarm.Enabled then
+            moneyTimer = moneyTimer + delta
+            if moneyTimer >= Config.MoneyFarm.Interval then
+                moneyTimer = 0
+                moneyFarm()
+            end
+        end
+
+        -- Oil Farm (toplama ve satma ayrı ayrı)
+        if Config.OilFarm.Enabled then
+            oilTimer = oilTimer + delta
+            if oilTimer >= Config.OilFarm.CollectInterval then
+                oilFarm()
+            end
+            if oilTimer >= Config.OilFarm.SellInterval then
+                oilFarm() -- satış için aynı fonksiyon içinde yapılıyor
+                oilTimer = 0
+            end
+        end
+    end)
+end)
+
+-- =================== BAŞLANGIÇ AYARLARI ===================
+-- ESP'yi başlat
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        createESP(player)
+    end
+end
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        createESP(player)
+    end
+end)
+Players.PlayerRemoving:Connect(function(player)
+    if espObjects[player] then
+        for _, obj in ipairs(espObjects[player]) do
+            obj:Remove()
+        end
+        espObjects[player] = nil
     end
 end)
 
--- =============================================================
---  BAŞLANGIÇ MESAJI
--- =============================================================
-print("====================================================")
-print("  🔥 Layroxc Street Life Ultimate Farm v4.0")
-print("  F5 → Menü Aç/Kapa")
-print("  F6 → Tüm Farmları Acil Durdur")
-print("  Menüden istediğin işi seç, otomatik başlasın!")
-print("  NOT: Her işin içini oyuna göre düzenlemeyi unutma.")
-print("  Delta Executor ile test edilmiştir.")
-print("====================================================")
+-- Wallhack başlangıç
+applyWallhack()
 
--- Menü başlangıçta kapalı
-mainFrame.Visible = false
-updateStatus("DURDURULDU", Color3.fromRGB(255, 80, 80))
+-- GUI mesajı (isteğe bağlı)
+StarterGui:SetCore("SendNotification", {
+    Title = "destroyerr666 Script",
+    Text = "Tüm özellikler aktif! Config ile ayarlayın.",
+    Duration = 5
+})
+
+print("[destroyerr666] Street Life Remastered Ultimate Script yüklendi ve çalışıyor!")
