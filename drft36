@@ -1,68 +1,56 @@
 --[destroyerr666 Advanced Code Creator]
--- Mobil Araç Hızlandırma Mod Menüsü (Sabit, Dokunmatik, Gelişmiş)
+-- MOBİL HIZ MOD MENÜSÜ (Butonla Aç/Kapa, Görünürlük Garantili)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local vehicle = nil
 local speedMultiplier = 1.0
-local maxSpeed = 350
-local isMenuOpen = true
 
--- UI Nesneleri
+-- GUI oluştur (her ihtimale karşı farklı parent)
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "SpeedModMenu"
-screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Name = "SpeedMenuGUI"
 screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Ana Panel (sabit konum - sağ alt)
+-- Eğer PlayerGui'ye eklenmezse CoreGui dene
+if not screenGui.Parent then
+    screenGui.Parent = game:GetService("CoreGui")
+end
+
+-- ===== ANA MENÜ (başlangıçta kapalı) =====
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 220, 0, 280)
-mainFrame.Position = UDim2.new(1, -240, 1, -300)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-mainFrame.BackgroundTransparency = 0.15
-mainFrame.BorderSizePixel = 2
+mainFrame.Position = UDim2.new(0.5, -110, 0.5, -140)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 30)
+mainFrame.BackgroundTransparency = 0.1
+mainFrame.BorderSizePixel = 3
 mainFrame.BorderColor3 = Color3.fromRGB(0, 200, 255)
-mainFrame.ClipsDescendants = true
+mainFrame.Visible = false  -- Başlangıçta kapalı
 mainFrame.Parent = screenGui
-
--- Gölge efekti
-local shadow = Instance.new("ImageLabel")
-shadow.Name = "Shadow"
-shadow.Size = UDim2.new(1, 10, 1, 10)
-shadow.Position = UDim2.new(0, -5, 0, -5)
-shadow.BackgroundTransparency = 1
-shadow.Image = "rbxassetid://1316045468"
-shadow.ImageColor3 = Color3.fromRGB(0, 150, 255)
-shadow.ImageTransparency = 0.6
-shadow.Parent = mainFrame
 
 -- Başlık
 local title = Instance.new("TextLabel")
-title.Name = "Title"
-title.Size = UDim2.new(1, 0, 0, 35)
-title.Position = UDim2.new(0, 0, 0, 0)
+title.Size = UDim2.new(1, 0, 0, 40)
 title.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-title.BackgroundTransparency = 0.3
-title.Text = "🚗 SPEED BOOST"
+title.BackgroundTransparency = 0.2
+title.Text = "🚗 HIZ MODU"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
-title.BorderSizePixel = 0
 title.Parent = mainFrame
 
--- Hız Göstergesi
+-- Hız göstergesi
 local speedDisplay = Instance.new("TextLabel")
-speedDisplay.Name = "SpeedDisplay"
-speedDisplay.Size = UDim2.new(1, -20, 0, 40)
-speedDisplay.Position = UDim2.new(0, 10, 0, 45)
-speedDisplay.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
-speedDisplay.BackgroundTransparency = 0.4
+speedDisplay.Size = UDim2.new(1, -20, 0, 45)
+speedDisplay.Position = UDim2.new(0, 10, 0, 50)
+speedDisplay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+speedDisplay.BackgroundTransparency = 0.5
 speedDisplay.Text = "0 km/h"
 speedDisplay.TextColor3 = Color3.fromRGB(0, 255, 200)
 speedDisplay.TextScaled = true
@@ -71,36 +59,31 @@ speedDisplay.BorderSizePixel = 1
 speedDisplay.BorderColor3 = Color3.fromRGB(0, 200, 255)
 speedDisplay.Parent = mainFrame
 
--- Hız Çubuğu (Animasyonlu)
-local speedBar = Instance.new("Frame")
-speedBar.Name = "SpeedBar"
-speedBar.Size = UDim2.new(0.9, 0, 0, 12)
-speedBar.Position = UDim2.new(0.05, 0, 0, 90)
-speedBar.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-speedBar.BorderSizePixel = 1
-speedBar.BorderColor3 = Color3.fromRGB(0, 150, 255)
-speedBar.Parent = mainFrame
+-- Hız çubuğu
+local bar = Instance.new("Frame")
+bar.Size = UDim2.new(0.9, 0, 0, 14)
+bar.Position = UDim2.new(0.05, 0, 0, 100)
+bar.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+bar.BorderSizePixel = 1
+bar.BorderColor3 = Color3.fromRGB(0, 150, 255)
+bar.Parent = mainFrame
 
-local speedFill = Instance.new("Frame")
-speedFill.Name = "SpeedFill"
-speedFill.Size = UDim2.new(0, 0, 1, 0)
-speedFill.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
-speedFill.BorderSizePixel = 0
-speedFill.Parent = speedBar
+local fill = Instance.new("Frame")
+fill.Size = UDim2.new(0, 0, 1, 0)
+fill.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+fill.BorderSizePixel = 0
+fill.Parent = bar
 
--- Hız Butonları (Satır)
-local buttonY = 115
-local buttonSpacing = 55
-local speedLevels = {0.5, 1.0, 1.5, 2.5, 4.0}
-local speedLabels = {"0.5x", "1x", "1.5x", "2.5x", "4x"}
+-- Hız butonları (satır)
+local levels = {0.5, 1.0, 1.8, 3.0, 5.0}
+local labels = {"0.5x", "1x", "1.8x", "3x", "5x"}
 
-for i, level in ipairs(speedLevels) do
+for i = 1, 5 do
     local btn = Instance.new("TextButton")
-    btn.Name = "SpeedBtn_" .. i
     btn.Size = UDim2.new(0, 40, 0, 35)
-    btn.Position = UDim2.new(0.05 + (i-1)*0.19, 0, 0, buttonY)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 40, 60)
-    btn.Text = speedLabels[i]
+    btn.Position = UDim2.new(0.03 + (i-1)*0.19, 0, 0, 130)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 40, 70)
+    btn.Text = labels[i]
     btn.TextColor3 = Color3.fromRGB(220, 220, 255)
     btn.TextScaled = true
     btn.Font = Enum.Font.GothamBold
@@ -109,62 +92,81 @@ for i, level in ipairs(speedLevels) do
     btn.Parent = mainFrame
     
     btn.MouseButton1Click:Connect(function()
-        speedMultiplier = level
-        -- Buton geri bildirimi
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 200, 255)}):Play()
-        task.wait(0.2)
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 40, 60)}):Play()
+        speedMultiplier = levels[i]
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 255, 200)}):Play()
+        task.wait(0.15)
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(30, 40, 70)}):Play()
     end)
 end
 
--- Kapat / Aç Butonu
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Name = "ToggleBtn"
-toggleBtn.Size = UDim2.new(0, 60, 0, 30)
-toggleBtn.Position = UDim2.new(0.5, -30, 0, buttonY + 50)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-toggleBtn.Text = "⏻"
-toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.TextScaled = true
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.BorderSizePixel = 2
-toggleBtn.BorderColor3 = Color3.fromRGB(255, 100, 100)
-toggleBtn.Parent = mainFrame
+-- Kapatma butonu (menü içinde)
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 80, 0, 30)
+closeBtn.Position = UDim2.new(0.5, -40, 0, 180)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeBtn.Text = "✕ KAPAT"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextScaled = true
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.BorderSizePixel = 2
+closeBtn.BorderColor3 = Color3.fromRGB(255, 100, 100)
+closeBtn.Parent = mainFrame
 
-toggleBtn.MouseButton1Click:Connect(function()
-    isMenuOpen = not isMenuOpen
-    local targetPos = isMenuOpen and UDim2.new(1, -240, 1, -300) or UDim2.new(1, -40, 1, -40)
-    TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {Position = targetPos}):Play()
+closeBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
 end)
 
--- Mobil Sürükleme Desteği
-local dragging = false
+-- ===== AÇMA BUTONU (her zaman görünür, sol üst) =====
+local openBtn = Instance.new("TextButton")
+openBtn.Name = "OpenButton"
+openBtn.Size = UDim2.new(0, 60, 0, 60)
+openBtn.Position = UDim2.new(0, 10, 0, 10)
+openBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+openBtn.BorderSizePixel = 3
+openBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+openBtn.Text = "🚀"
+openBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+openBtn.TextScaled = true
+openBtn.Font = Enum.Font.GothamBold
+openBtn.BackgroundTransparency = 0.2
+openBtn.Parent = screenGui
+
+-- Butona tıkla / dokun → menüyü aç
+openBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = true
+    -- Animasyonlu açılış
+    mainFrame.Position = UDim2.new(0.5, -110, 0.5, -160)
+    TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -110, 0.5, -140)}):Play()
+end)
+
+-- Menüyü sürüklemek için (dokunmatik)
+local dragToggle = false
 local dragStart, dragStartPos
 
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
+        dragToggle = true
         dragStart = input.Position
         dragStartPos = mainFrame.Position
     end
 end)
 
 mainFrame.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.Touch then
+    if dragToggle and input.UserInputType == Enum.UserInputType.Touch then
         local delta = input.Position - dragStart
-        local newX = dragStartPos.X.Scale + (delta.X / screenGui.AbsoluteSize.X)
-        local newY = dragStartPos.Y.Scale + (delta.Y / screenGui.AbsoluteSize.Y)
-        mainFrame.Position = UDim2.new(newX, 0, newY, 0)
+        local scaleX = dragStartPos.X.Scale + (delta.X / screenGui.AbsoluteSize.X)
+        local scaleY = dragStartPos.Y.Scale + (delta.Y / screenGui.AbsoluteSize.Y)
+        mainFrame.Position = UDim2.new(scaleX, 0, scaleY, 0)
     end
 end)
 
 mainFrame.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
+        dragToggle = false
     end
 end)
 
--- Araç Bulma ve Hızlandırma
+-- Araç hızlandırma fonksiyonu
 local function getVehicle()
     if character and character:FindFirstChild("Humanoid") and character.Humanoid.SeatPart then
         local seat = character.Humanoid.SeatPart
@@ -176,44 +178,32 @@ local function getVehicle()
     return nil
 end
 
--- Hızlandırma Döngüsü
+-- Hız döngüsü
 RunService.Heartbeat:Connect(function(delta)
     vehicle = getVehicle()
     if vehicle and vehicle:IsA("Model") then
         local root = vehicle:FindFirstChild("PrimaryPart") or vehicle:FindFirstChildWhichIsA("BasePart")
         if root then
             local velocity = root.Velocity
-            local currentSpeed = velocity.Magnitude * 3.6 -- m/s -> km/h
-            speedDisplay.Text = string.format("%.1f km/h", currentSpeed)
+            local speed = velocity.Magnitude * 3.6
+            speedDisplay.Text = string.format("%.1f km/h", speed)
+            local pct = math.clamp(speed / 350, 0, 1)
+            fill.Size = UDim2.new(pct, 0, 1, 0)
+            fill.BackgroundColor3 = Color3.fromRGB(math.clamp(pct*2,0,1)*255, (1-math.clamp(pct*0.5,0,1))*255, 50)
             
-            local fillPercent = math.clamp(currentSpeed / maxSpeed, 0, 1)
-            speedFill.Size = UDim2.new(fillPercent, 0, 1, 0)
-            
-            -- Hız rengi dinamik
-            local r = math.clamp(fillPercent * 2, 0, 1)
-            local g = math.clamp(1 - fillPercent * 0.5, 0.3, 1)
-            speedFill.BackgroundColor3 = Color3.fromRGB(r * 255, g * 255, 50)
-            
-            -- Hızlandırma uygula (orijinal fonksiyonun gelişmiş hali)
             if speedMultiplier > 1 then
-                local forward = root.CFrame.LookVector
-                local extraForce = forward * (speedMultiplier - 1) * 200
-                root:ApplyImpulse(extraForce * delta * 10)
+                local f = root.CFrame.LookVector
+                root:ApplyImpulse(f * (speedMultiplier - 1) * 250 * delta)
             end
         end
     else
         speedDisplay.Text = "🚫 Araç yok"
-        speedFill.Size = UDim2.new(0, 0, 1, 0)
+        fill.Size = UDim2.new(0, 0, 1, 0)
     end
 end)
 
--- Karakter değişiminde güncelle
 player.CharacterAdded:Connect(function(newChar)
     character = newChar
 end)
 
--- Başlangıç animasyonu
-mainFrame.Position = UDim2.new(1, -200, 1, 100)
-TweenService:Create(mainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Back), {Position = UDim2.new(1, -240, 1, -300)}):Play()
-
-print("[destroyerr666] Mobil Speed Mod Menüsü yüklendi! Ekran sağ alt köşede.")
+print("[destroyerr666] Mobil Hız Mod Menüsü Başarıyla Yüklendi! Sol üstte 🚀 butonuna tıkla.")
