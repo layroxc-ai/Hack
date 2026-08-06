@@ -1,0 +1,232 @@
+-- [[ Layroxc Drift 36 - Mobil Executor Script ]] --
+-- Gelişmiş ReiAspired Menü Sistemi | Auto Farm & Speed Hack
+-- Creator: destroyerr666 Advanced Code Creator
+-- Versiyon: 3.7.2 | 2035 Optimize
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- [[ Anti-Ban Koruması ]] --
+local function AntiBan()
+    local mt = getrawmetatable(game)
+    local old = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local args = {...}
+        if string.lower(tostring(args[1])):find("detect") or string.lower(tostring(args[1])):find("ban") then
+            return
+        end
+        return old(self, ...)
+    end)
+    setreadonly(mt, true)
+end
+AntiBan()
+
+-- [[ Değişkenler ]] --
+local MenuToggle = false
+local AutoFarm = false
+local SpeedHack = false
+local SpeedMultiplier = 1.5
+local FarmPart = nil
+
+-- [[ ReiAspired Menü Tasarımı ]] --
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "LayroxcDrift36"
+ScreenGui.Parent = CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 380, 0, 520)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+MainFrame.BackgroundTransparency = 0.15
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
+
+-- Arkaplan efekti (cam blur)
+local Blur = Instance.new("BlurEffect", game:GetService("Lighting"))
+Blur.Size = 0
+
+local function OpenMenu()
+    MenuToggle = not MenuToggle
+    MainFrame.Visible = MenuToggle
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {BackgroundTransparency = 0.15}):Play()
+    if MenuToggle then
+        Blur.Size = 12
+    else
+        TweenService:Create(Blur, TweenInfo.new(0.3), {Size = 0}):Play()
+    end
+end
+
+-- Başlık
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+Title.BackgroundTransparency = 0.3
+Title.Text = "⚡ Layroxc Drift 36 ⚡"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.Parent = MainFrame
+
+-- Auto Farm Butonu
+local FarmBtn = Instance.new("TextButton")
+FarmBtn.Size = UDim2.new(0.8, 0, 0, 50)
+FarmBtn.Position = UDim2.new(0.1, 0, 0.15, 0)
+FarmBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+FarmBtn.Text = "🚗 Auto Farm: KAPALI"
+FarmBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+FarmBtn.TextScaled = true
+FarmBtn.Font = Enum.Font.Gotham
+FarmBtn.Parent = MainFrame
+
+-- Speed Hack Butonu
+local SpeedBtn = Instance.new("TextButton")
+SpeedBtn.Size = UDim2.new(0.8, 0, 0, 50)
+SpeedBtn.Position = UDim2.new(0.1, 0, 0.35, 0)
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+SpeedBtn.Text = "💨 Speed Hack: KAPALI"
+SpeedBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+SpeedBtn.TextScaled = true
+SpeedBtn.Font = Enum.Font.Gotham
+SpeedBtn.Parent = MainFrame
+
+-- Hız Ayar Slider (sadece Speed açıkken aktif)
+local SpeedSlider = Instance.new("TextLabel")
+SpeedSlider.Size = UDim2.new(0.8, 0, 0, 30)
+SpeedSlider.Position = UDim2.new(0.1, 0, 0.55, 0)
+SpeedSlider.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
+SpeedSlider.Text = "Hız Çarpanı: 1.5x"
+SpeedSlider.TextColor3 = Color3.fromRGB(255, 200, 100)
+SpeedSlider.TextScaled = true
+SpeedSlider.Font = Enum.Font.Gotham
+SpeedSlider.Parent = MainFrame
+
+-- Kapatma Butonu (X)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 40, 0, 40)
+CloseBtn.Position = UDim2.new(0.9, -10, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextScaled = true
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = MainFrame
+CloseBtn.MouseButton1Click:Connect(function()
+    OpenMenu()
+end)
+
+-- [[ Açma/Kapama Butonu (Mobil için) ]] --
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0, 70, 0, 70)
+ToggleBtn.Position = UDim2.new(0.85, 0, 0.8, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+ToggleBtn.BackgroundTransparency = 0.2
+ToggleBtn.Text = "⚡"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextScaled = true
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.MouseButton1Click:Connect(OpenMenu)
+
+-- [[ Auto Farm Fonksiyonu ]] --
+local function FindFarmPart()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and v.Name:lower():find("track") or v.Name:lower():find("road") then
+            if v.Size.X > 50 and v.Size.Z > 50 then
+                return v
+            end
+        end
+    end
+    return nil
+end
+
+local function StartAutoFarm()
+    FarmPart = FindFarmPart()
+    if not FarmPart then return end
+    local vehicle = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("VehicleSeat")
+    if not vehicle then return end
+    local hrp = vehicle:FindFirstChild("HumanoidRootPart") or vehicle.PrimaryPart
+    if not hrp then return end
+    local targetPos = FarmPart.Position + Vector3.new(0, 5, 0)
+    local tween = TweenService:Create(hrp, TweenInfo.new(2, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPos)})
+    tween:Play()
+end
+
+-- [[ Speed Hack ]] --
+local function ApplySpeed()
+    local vehicle = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("VehicleSeat")
+    if not vehicle then return end
+    local engine = vehicle:FindFirstChild("Engine") or vehicle:FindFirstChild("Throttle")
+    if engine then
+        engine.Throttle = SpeedMultiplier * 2
+    end
+    -- Alternatif: Hızlandırma
+    local hrp = vehicle:FindFirstChild("HumanoidRootPart") or vehicle.PrimaryPart
+    if hrp and SpeedHack then
+        hrp.Velocity = hrp.CFrame.LookVector * (hrp.Velocity.Magnitude * SpeedMultiplier)
+    end
+end
+
+-- [[ Buton İşlevleri ]] --
+FarmBtn.MouseButton1Click:Connect(function()
+    AutoFarm = not AutoFarm
+    FarmBtn.Text = AutoFarm and "🚗 Auto Farm: AÇIK" or "🚗 Auto Farm: KAPALI"
+    FarmBtn.BackgroundColor3 = AutoFarm and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(30, 30, 50)
+    if AutoFarm then
+        StartAutoFarm()
+        while AutoFarm and RunService.RenderStepped:Wait() do
+            StartAutoFarm()
+        end
+    end
+end)
+
+SpeedBtn.MouseButton1Click:Connect(function()
+    SpeedHack = not SpeedHack
+    SpeedBtn.Text = SpeedHack and "💨 Speed Hack: AÇIK" or "💨 Speed Hack: KAPALI"
+    SpeedBtn.BackgroundColor3 = SpeedHack and Color3.fromRGB(200, 200, 50) or Color3.fromRGB(30, 30, 50)
+    while SpeedHack do
+        ApplySpeed()
+        RunService.RenderStepped:Wait()
+    end
+end)
+
+-- [[ Slider Kontrolü (Dokunmatik) ]] --
+local function UpdateSpeedLabel()
+    SpeedSlider.Text = "Hız Çarpanı: " .. string.format("%.1f", SpeedMultiplier) .. "x"
+end
+
+SpeedSlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        local dragStart = input.Position.X
+        SpeedSlider.MouseButton1Down:Connect(function()
+            local con
+            con = RunService.RenderStepped:Connect(function()
+                local pos = UserInputService:GetMouseLocation().X
+                local multiplier = math.clamp((pos - dragStart) / 200, 0.5, 3.0)
+                SpeedMultiplier = math.round(multiplier * 10) / 10
+                UpdateSpeedLabel()
+            end)
+            UserInputService.InputEnded:Connect(function(endInput)
+                if endInput.UserInputType == Enum.UserInputType.Touch then
+                    con:Disconnect()
+                end
+            end)
+        end)
+    end
+end)
+
+-- [[ Giriş Koruması ]] --
+LocalPlayer.CharacterAdded:Connect(function(char)
+    wait(1)
+    if AutoFarm then StartAutoFarm() end
+end)
+
+-- [[ Başlangıç Mesajı ]] --
+print("✅ Layroxc Drift 36 Yüklendi! | Menü için ⚡ butonuna dokunun.")
